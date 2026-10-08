@@ -1,0 +1,269 @@
+# AR Elec — builds an Android APK from index.html + scan-test.html in this repository.
+# Upload this file as .github/workflows/build-apk.yml, plus index.html and scan-test.html at the repo root.
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Move web files out of the way
+        run: |
+          mkdir -p /tmp/web
+          cp index.html scan-test.html /tmp/web/
+      - name: Write settings.gradle
+        run: |
+          cat > settings.gradle <<'ARELEC_EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "AR Elec"
+          include ':app'
+          ARELEC_EOF
+      - name: Write build.gradle
+        run: |
+          cat > build.gradle <<'ARELEC_EOF'
+          plugins { id 'com.android.application' version '8.5.2' apply false }
+          ARELEC_EOF
+      - name: Write gradle.properties
+        run: |
+          cat > gradle.properties <<'ARELEC_EOF'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          ARELEC_EOF
+      - name: Write app/build.gradle
+        run: |
+          mkdir -p app
+          cat > app/build.gradle <<'ARELEC_EOF'
+          plugins { id 'com.android.application' }
+
+          android {
+              namespace 'com.arelec.app'
+              compileSdk 34
+              defaultConfig {
+                  applicationId 'com.arelec.app'
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName '0.1-prototype'
+              }
+              buildTypes {
+                  release { minifyEnabled false }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.7.0'
+              implementation 'androidx.webkit:webkit:1.11.0'
+          }
+          ARELEC_EOF
+      - name: Write app/src/main/AndroidManifest.xml
+        run: |
+          mkdir -p app/src/main
+          cat > app/src/main/AndroidManifest.xml <<'ARELEC_EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
+              <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+              <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+              <application
+                  android:label="@string/app_name"
+                  android:theme="@style/Theme.AppCompat.NoActionBar"
+                  android:hardwareAccelerated="true"
+                  android:allowBackup="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
+                      android:screenOrientation="unspecified">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          ARELEC_EOF
+      - name: Write app/src/main/res/values/strings.xml
+        run: |
+          mkdir -p app/src/main/res/values
+          cat > app/src/main/res/values/strings.xml <<'ARELEC_EOF'
+          <resources>
+              <string name="app_name">AR Elec</string>
+          </resources>
+          ARELEC_EOF
+      - name: Write app/src/main/java/com/arelec/app/MainActivity.java
+        run: |
+          mkdir -p app/src/main/java/com/arelec/app
+          cat > app/src/main/java/com/arelec/app/MainActivity.java <<'ARELEC_EOF'
+          package com.arelec.app;
+
+          import android.Manifest;
+          import android.annotation.SuppressLint;
+          import android.content.pm.PackageManager;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import android.webkit.GeolocationPermissions;
+          import android.webkit.PermissionRequest;
+          import android.webkit.ValueCallback;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebResourceResponse;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          import androidx.annotation.NonNull;
+          import androidx.appcompat.app.AppCompatActivity;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+          import androidx.webkit.WebViewAssetLoader;
+
+          /**
+           * Thin WebView shell around the AR Elec web app.
+           * Pages are served from https://appassets.androidplatform.net/assets/ so the WebView treats them
+           * as a secure origin: camera (getUserMedia), GPS and motion sensors all work.
+           * Note: Android WebView has no WebXR, so the app uses its sensor-fusion tracking here.
+           */
+          public class MainActivity extends AppCompatActivity {
+              private static final int REQ = 42;
+              private static final String START = "https://appassets.androidplatform.net/assets/index.html";
+              private WebView web;
+              private PermissionRequest pendingCam;
+              private ValueCallback<Uri[]> fileCallback;
+
+              @SuppressLint("SetJavaScriptEnabled")
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+                  final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
+                          .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                          .build();
+
+                  web = new WebView(this);
+                  setContentView(web);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setGeolocationEnabled(true);
+                  s.setMediaPlaybackRequiresUserGesture(false);
+                  s.setAllowFileAccess(false);
+
+                  web.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                          return loader.shouldInterceptRequest(request.getUrl());
+                      }
+                  });
+
+                  web.setWebChromeClient(new WebChromeClient() {
+                      @Override
+                      public void onPermissionRequest(final PermissionRequest request) {
+                          runOnUiThread(() -> {
+                              if (has(Manifest.permission.CAMERA)) {
+                                  request.grant(request.getResources());
+                              } else {
+                                  pendingCam = request;
+                                  askPermissions();
+                              }
+                          });
+                      }
+
+                      @Override
+                      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                          callback.invoke(origin, has(Manifest.permission.ACCESS_FINE_LOCATION), false);
+                      }
+
+                      @Override
+                      public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                          fileCallback = callback;
+                          try {
+                              startActivityForResult(params.createIntent(), 7);
+                          } catch (Exception e) {
+                              fileCallback = null;
+                              return false;
+                          }
+                          return true;
+                      }
+                  });
+
+                  askPermissions();
+                  web.loadUrl(START);
+              }
+
+              private boolean has(String p) {
+                  return ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED;
+              }
+
+              private void askPermissions() {
+                  if (!has(Manifest.permission.CAMERA) || !has(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                      ActivityCompat.requestPermissions(this, new String[]{
+                              Manifest.permission.CAMERA,
+                              Manifest.permission.ACCESS_FINE_LOCATION,
+                              Manifest.permission.ACCESS_COARSE_LOCATION}, REQ);
+                  }
+              }
+
+              @Override
+              public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] results) {
+                  super.onRequestPermissionsResult(code, perms, results);
+                  if (pendingCam != null) {
+                      if (has(Manifest.permission.CAMERA)) pendingCam.grant(pendingCam.getResources());
+                      else pendingCam.deny();
+                      pendingCam = null;
+                  }
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+                  super.onActivityResult(requestCode, resultCode, data);
+                  if (requestCode == 7 && fileCallback != null) {
+                      fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                      fileCallback = null;
+                  }
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack();
+                  else super.onBackPressed();
+              }
+          }
+          ARELEC_EOF
+      - name: Bundle web app and three.js into the APK
+        run: |
+          mkdir -p app/src/main/assets
+          cp /tmp/web/index.html /tmp/web/scan-test.html app/src/main/assets/
+          curl -fsSL https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js -o app/src/main/assets/three.min.js
+          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js#three.min.js#' app/src/main/assets/*.html
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ar-elec-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
