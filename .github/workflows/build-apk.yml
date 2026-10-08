@@ -69,8 +69,9 @@ jobs:
           }
 
           dependencies {
-              implementation 'androidx.appcompat:appcompat:1.7.0'
+              // only the WebView helper; no AppCompat (avoids the Kotlin stdlib duplicate-class clash)
               implementation 'androidx.webkit:webkit:1.11.0'
+              implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
           }
           ARELEC_EOF
       - name: Write app/src/main/AndroidManifest.xml
@@ -90,7 +91,7 @@ jobs:
 
               <application
                   android:label="@string/app_name"
-                  android:theme="@style/Theme.AppCompat.NoActionBar"
+                  android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
                   android:hardwareAccelerated="true"
                   android:allowBackup="true">
                   <activity
@@ -121,6 +122,7 @@ jobs:
           package com.arelec.app;
 
           import android.Manifest;
+          import android.app.Activity;
           import android.annotation.SuppressLint;
           import android.content.pm.PackageManager;
           import android.net.Uri;
@@ -136,10 +138,6 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
 
-          import androidx.annotation.NonNull;
-          import androidx.appcompat.app.AppCompatActivity;
-          import androidx.core.app.ActivityCompat;
-          import androidx.core.content.ContextCompat;
           import androidx.webkit.WebViewAssetLoader;
 
           /**
@@ -148,7 +146,7 @@ jobs:
            * as a secure origin: camera (getUserMedia), GPS and motion sensors all work.
            * Note: Android WebView has no WebXR, so the app uses its sensor-fusion tracking here.
            */
-          public class MainActivity extends AppCompatActivity {
+          public class MainActivity extends Activity {
               private static final int REQ = 42;
               private static final String START = "https://appassets.androidplatform.net/assets/index.html";
               private WebView web;
@@ -217,12 +215,12 @@ jobs:
               }
 
               private boolean has(String p) {
-                  return ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED;
+                  return checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED;
               }
 
               private void askPermissions() {
                   if (!has(Manifest.permission.CAMERA) || !has(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                      ActivityCompat.requestPermissions(this, new String[]{
+                      requestPermissions(new String[]{
                               Manifest.permission.CAMERA,
                               Manifest.permission.ACCESS_FINE_LOCATION,
                               Manifest.permission.ACCESS_COARSE_LOCATION}, REQ);
@@ -230,7 +228,7 @@ jobs:
               }
 
               @Override
-              public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] results) {
+              public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
                   super.onRequestPermissionsResult(code, perms, results);
                   if (pendingCam != null) {
                       if (has(Manifest.permission.CAMERA)) pendingCam.grant(pendingCam.getResources());
