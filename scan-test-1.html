@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>AR Elec Scan Test</title>
+<style>
+/* Field test for the sensors AR Elec relies on: camera, gyro/compass, steps, GPS, WebXR camera tracking + surface scan. */
+:root{--bg:#101412;--card:#1a201d;--line:#2e3732;--fg:#e8ece9;--muted:#93a09a;--accent:#e08a43;--ok:#5cc184;--warn:#e2b23e;--bad:#ef6b5f;
+  --mono:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.4 var(--sans)}
+#vid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:1;touch-action:none}
+.ui{position:fixed;z-index:5;left:12px;right:12px}
+#top{top:calc(10px + env(safe-area-inset-top,0px));display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.card{background:rgba(20,26,23,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.card h3{margin:0 0 4px;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.card .v{font:500 12px var(--mono);white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+#map{width:100%;height:110px;display:block;border-radius:8px;background:rgba(0,0,0,.3)}
+#bottom{bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{font:700 14px var(--sans);border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:13px 16px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#1a1209}
+button:disabled{opacity:.4}
+#msg{position:fixed;z-index:6;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));text-align:center;font:12px var(--mono);color:var(--fg);text-shadow:0 1px 3px #000}
+#intro{position:fixed;inset:0;z-index:9;display:grid;place-items:center;padding:24px;background:var(--bg)}
+#intro div{max-width:420px;display:flex;flex-direction:column;gap:12px}
+#intro h1{margin:0;font-size:22px}#intro p{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<video id="vid" playsinline muted autoplay></video>
+<canvas id="gl"></canvas>
+<div id="intro"><div>
+  <h1>AR Elec · scan test</h1>
+  <p>Checks the camera, gyroscope/compass, step counter, GPS and, if your phone supports ARCore in Chrome, real camera tracking with a surface scan.</p>
+  <button class="primary" id="go">Start test</button>
+  <p style="font-size:12px">Camera and sensors need HTTPS in Chrome, or the AR Elec APK.</p>
+</div></div>
+<div class="ui" id="top">
+  <div class="card"><h3>Camera <span class="dot" id="dCam"></span></h3><div class="v" id="vCam">–</div></div>
+  <div class="card"><h3>Orientation <span class="dot" id="dOri"></span></h3><div class="v" id="vOri">–</div></div>
+  <div class="card"><h3>Steps <span class="dot" id="dStep"></span></h3><div class="v" id="vStep">–</div></div>
+  <div class="card"><h3>GPS <span class="dot" id="dGps"></span></h3><div class="v" id="vGps">–</div></div>
+  <div class="card"><h3>Camera tracking (WebXR) <span class="dot" id="dXr"></span></h3><div class="v" id="vXr">checking…</div></div>
+  <div class="card"><h3>Path (dead reckoning)</h3><canvas id="map"></canvas></div>
+</div>
+<div id="msg"></div>
+<div class="ui" id="bottom">
+  <button id="bXr" class="primary" disabled>AR scan</button>
+  <button id="bZero">Reset path</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),D=Math.PI/180;
+const set=(id,cls,txt)=>{$('d'+id).className='dot '+cls;$('v'+id).textContent=txt;};
+const msg=t=>$('msg').textContent=t;
+// ---------- three: gyro-driven grid (sensor mode) ----------
+const renderer=new THREE.WebGLRenderer({canvas:$('gl'),alpha:true,antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));renderer.xr.enabled=true;
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(60,1,0.02,100);
+scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1));
+const grid=new THREE.GridHelper(10,20,0xe08a43,0xe08a43);grid.position.y=-1.5;grid.material.transparent=true;grid.material.opacity=.5;scene.add(grid);
+const box=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),new THREE.MeshLambertMaterial({color:0xe08a43}));box.position.set(0,-1.2,-2);scene.add(box); // 2 m ahead of start
+function size(){renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}addEventListener('resize',size);size();
+// ---------- sensors ----------
+let ori=null,abs=false,steps=0,lastStep=0,lp=9.8,prev=9.8,rising=false,pos={x:0,z:0},path=[[0,0]],stride=0.65,yaw0=null,geo0=null;
+function onOri(e){if(e.alpha==null)return;if(e.type==='deviceorientationabsolute')abs=true;else if(abs&&!e.absolute)return;
+  ori=e;const head=e.webkitCompassHeading!=null?e.webkitCompassHeading:(360-e.alpha)%360;
+  set('Ori',abs||e.webkitCompassHeading!=null?'ok':'warn',`α ${e.alpha.toFixed(0)}° β ${(e.beta||0).toFixed(0)}° γ ${(e.gamma||0).toFixed(0)}°\nheading ${head.toFixed(0)}° ${abs?'(compass)':'(relative)'}`);}
+function onMot(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;const m=Math.hypot(a.x,a.y,a.z);lp+=(m-lp)*.25;const now=performance.now();
+  if(lp>prev&&lp>10.6)rising=true;
+  if(rising&&lp<prev&&now-lastStep>320){rising=false;lastStep=now;steps++;const y=new THREE.Euler().setFromQuaternion(cam.quaternion,'YXZ').y;pos.x-=Math.sin(y)*stride;pos.z-=Math.cos(y)*stride;path.push([pos.x,pos.z]);}
+  prev=lp;set('Step',steps?'ok':'warn',`${steps} steps · ${(steps*stride).toFixed(1)} m\n|a| ${m.toFixed(1)} m/s²`);}
+function onGeo(p){const c=p.coords;if(!geo0)geo0=c;const n=(c.latitude-geo0.latitude)*111320,e=(c.longitude-geo0.longitude)*111320*Math.cos(c.latitude*D);
+  set('Gps',c.accuracy<=8?'ok':c.accuracy<=25?'warn':'bad',`${c.latitude.toFixed(6)}, ${c.longitude.toFixed(6)}\n±${c.accuracy.toFixed(0)} m · moved ${Math.hypot(n,e).toFixed(1)} m`);}
+const _e=new THREE.Euler(),_q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),_q0=new THREE.Quaternion(),_z=new THREE.Vector3(0,0,1);
+function drawMap(){const c=$('map'),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  const s=12,cx=r.width/2,cy=r.height/2;g.strokeStyle='#2e3732';for(let i=-20;i<=20;i++){g.beginPath();g.moveTo(cx+i*s,0);g.lineTo(cx+i*s,r.height);g.moveTo(0,cy+i*s);g.lineTo(r.width,cy+i*s);g.stroke();}
+  g.strokeStyle='#e08a43';g.lineWidth=2;g.beginPath();path.forEach(([x,z],i)=>i?g.lineTo(cx+x*s,cy+z*s):g.moveTo(cx+x*s,cy+z*s));g.stroke();
+  g.fillStyle='#5cc184';g.beginPath();g.arc(cx+pos.x*s,cy+pos.z*s,4,0,7);g.fill();}
+async function start(){$('intro').hidden=true;
+  try{if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)await DeviceOrientationEvent.requestPermission();}catch(_){}
+  try{if(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)await DeviceMotionEvent.requestPermission();}catch(_){}
+  try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('vid').srcObject=st;await $('vid').play().catch(()=>{});
+    const t=st.getVideoTracks()[0].getSettings();set('Cam','ok',`${t.width}×${t.height} · ${t.facingMode||'camera'}`);}
+  catch(e){set('Cam','bad',(e.name||'error')+(location.protocol==='http:'?' · needs HTTPS':''));}
+  addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);addEventListener('devicemotion',onMot,true);
+  setTimeout(()=>{if(!ori)set('Ori','bad','no gyroscope events');if(!steps&&$('vStep').textContent==='–')set('Step','bad','no motion events');},2500);
+  if(navigator.geolocation)navigator.geolocation.watchPosition(onGeo,e=>set('Gps','bad',e.message||'denied'),{enableHighAccuracy:true,maximumAge:0,timeout:20000});else set('Gps','bad','unavailable');
+  msg('Walk a few steps holding the phone up. The orange box sits 2 m ahead of where you started.');
+  renderer.setAnimationLoop(loop);}
+$('go').onclick=start;
+$('bZero').onclick=()=>{pos={x:0,z:0};path=[[0,0]];steps=0;yaw0=null;};
+// ---------- WebXR camera tracking + surface scan ----------
+let xr=null,hitSrc=null,reticle,pts=[],cloud,marks=[],lastAdd=0,xrRef=null,xrStart=null;
+(async()=>{try{const ok=navigator.xr&&await navigator.xr.isSessionSupported('immersive-ar');set('Xr',ok?'ok':'bad',ok?'ARCore available':'not supported here\n(Chrome Android + ARCore + HTTPS)');$('bXr').disabled=!ok;}catch(e){set('Xr','bad','not supported');}})();
+$('bXr').onclick=async()=>{if(xr){xr.end();return;}
+  try{xr=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test','local-floor'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});}
+  catch(e){msg('AR failed: '+e.message);return;}
+  $('vid').hidden=true;grid.visible=false;box.visible=false;renderer.xr.setReferenceSpaceType('local-floor');await renderer.xr.setSession(xr);
+  hitSrc=await xr.requestHitTestSource({space:await xr.requestReferenceSpace('viewer')});
+  reticle=new THREE.Mesh(new THREE.RingGeometry(.05,.07,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xe08a43}));reticle.matrixAutoUpdate=false;scene.add(reticle);
+  cloud=new THREE.Points(new THREE.BufferGeometry(),new THREE.PointsMaterial({color:0x5cc184,size:.02}));scene.add(cloud);pts=[];marks=[];xrStart=null;
+  xr.addEventListener('select',()=>{if(!reticle.visible)return;const p=new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.02),new THREE.MeshBasicMaterial({color:0xffffff}));m.position.copy(p);scene.add(m);marks.push(p);
+    if(marks.length>1){const a=marks[marks.length-2];scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,p]),new THREE.LineBasicMaterial({color:0xffffff})));msg(`Distance: ${(a.distanceTo(p)*100).toFixed(1)} cm`);}
+    else msg('Point 1 set. Tap another spot to measure.');});
+  xr.addEventListener('end',()=>{xr=null;hitSrc=null;$('vid').hidden=false;grid.visible=true;box.visible=true;$('bXr').textContent='AR scan';size();});
+  $('bXr').textContent='Stop AR';msg('Move the phone slowly over floor and walls: green points are scanned surfaces. Tap to measure.');};
+function loop(t,frame){
+  if(frame&&hitSrc){const ref=renderer.xr.getReferenceSpace(),vp=frame.getViewerPose(ref);const h=frame.getHitTestResults(hitSrc);
+    if(h.length){reticle.visible=true;reticle.matrix.fromArray(h[0].getPose(ref).transform.matrix);
+      if(t-lastAdd>120&&pts.length<60000){lastAdd=t;const p=new THREE.Vector3().setFromMatrixPosition(reticle.matrix);pts.push(p.x,p.y,p.z);cloud.geometry.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));}}
+    else reticle.visible=false;
+    if(vp){const q=vp.transform.position;if(!xrStart)xrStart={x:q.x,z:q.z};pos={x:q.x-xrStart.x,z:q.z-xrStart.z};const lp_=path[path.length-1];if(Math.hypot(pos.x-lp_[0],pos.z-lp_[1])>0.05)path.push([pos.x,pos.z]);
+      set('Xr','ok',`tracking · ${pts.length/3|0} pts\nx ${q.x.toFixed(2)} y ${q.y.toFixed(2)} z ${q.z.toFixed(2)} m`);}}
+  else if(ori){if(yaw0==null){_e.set(ori.beta*D,ori.alpha*D,-ori.gamma*D,'YXZ');yaw0=new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromEuler(_e).multiply(_q1),'YXZ').y;}
+    _e.set((ori.beta||0)*D,ori.alpha*D-yaw0,-(ori.gamma||0)*D,'YXZ');cam.quaternion.setFromEuler(_e).multiply(_q1).multiply(_q0.setFromAxisAngle(_z,-((screen.orientation&&screen.orientation.angle)||0)*D));
+    cam.position.set(pos.x,0,pos.z);}
+  if((loop.n=(loop.n||0)+1)%10===0)drawMap();
+  renderer.render(scene,cam);}
+window.__t={get steps(){return steps},get pos(){return pos},cam};
+})();
+</script>
+</body>
+</html>
