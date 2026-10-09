@@ -152,6 +152,7 @@ jobs:
               private WebView web;
               private PermissionRequest pendingCam;
               private ValueCallback<Uri[]> fileCallback;
+              private NativeBridge bridge;
 
               @SuppressLint("SetJavaScriptEnabled")
               @Override
@@ -171,11 +172,17 @@ jobs:
                   s.setGeolocationEnabled(true);
                   s.setMediaPlaybackRequiresUserGesture(false);
                   s.setAllowFileAccess(false);
+                  bridge = new NativeBridge(this, web);
 
                   web.setWebViewClient(new WebViewClient() {
                       @Override
                       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                           return loader.shouldInterceptRequest(request.getUrl());
+                      }
+
+                      @Override
+                      public void onPageFinished(WebView view, String url) {
+                          if (bridge != null) bridge.sendCamera();
                       }
                   });
 
@@ -230,6 +237,7 @@ jobs:
               @Override
               public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
                   super.onRequestPermissionsResult(code, perms, results);
+                  if (bridge != null) bridge.start();
                   if (pendingCam != null) {
                       if (has(Manifest.permission.CAMERA)) pendingCam.grant(pendingCam.getResources());
                       else pendingCam.deny();
@@ -247,9 +255,153 @@ jobs:
               }
 
               @Override
+              protected void onResume() {
+                  super.onResume();
+                  if (bridge != null) bridge.start();
+              }
+
+              @Override
+              protected void onPause() {
+                  if (bridge != null) bridge.stop();
+                  super.onPause();
+              }
+
+              @Override
               public void onBackPressed() {
                   if (web.canGoBack()) web.goBack();
                   else super.onBackPressed();
+              }
+          }
+          ARELEC_EOF
+      - name: Write app/src/main/java/com/arelec/app/NativeBridge.java
+        run: |
+          mkdir -p app/src/main/java/com/arelec/app
+          cat > app/src/main/java/com/arelec/app/NativeBridge.java <<'ARELEC_EOF'
+          package com.arelec.app;
+
+          import android.Manifest;
+          import android.app.Activity;
+          import android.content.Context;
+          import android.content.pm.PackageManager;
+          import android.hardware.camera2.CameraCharacteristics;
+          import android.hardware.camera2.CameraManager;
+          import android.location.GnssStatus;
+          import android.location.Location;
+          import android.location.LocationListener;
+          import android.location.LocationManager;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.util.SizeF;
+          import android.webkit.WebView;
+
+          /**
+           * Gives the web app what the WebView alone cannot:
+           *  - raw satellite GPS fixes (GPS_PROVIDER, 2 per second) with the number of satellites used and dual-frequency (L5) status;
+           *  - the real field of view of the back camera (focal length / sensor size), so the 3D walls line up with the image.
+           */
+          final class NativeBridge implements LocationListener {
+              private final Activity act;
+              private final WebView web;
+              private final LocationManager lm;
+              private final Handler main = new Handler(Looper.getMainLooper());
+              private boolean running;
+              private int total, used;
+              private boolean dual;
+              private GnssStatus.Callback gnssCb;
+
+              NativeBridge(Activity act, WebView web) {
+                  this.act = act;
+                  this.web = web;
+                  this.lm = (LocationManager) act.getSystemService(Context.LOCATION_SERVICE);
+              }
+
+              void start() {
+                  if (running || lm == null) return;
+                  if (act.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return;
+                  try {
+                      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 0f, this, Looper.getMainLooper());
+                      gnssCb = new GnssStatus.Callback() {
+                          @Override
+                          public void onSatelliteStatusChanged(GnssStatus st) {
+                              int n = st.getSatelliteCount(), u = 0;
+                              boolean l5 = false;
+                              for (int i = 0; i < n; i++) {
+                                  if (!st.usedInFix(i)) continue;
+                                  u++;
+                                  if (Build.VERSION.SDK_INT >= 26 && st.hasCarrierFrequencyHz(i) && st.getCarrierFrequencyHz(i) < 1.3e9f) l5 = true;
+                              }
+                              total = n;
+                              used = u;
+                              dual = l5;
+                          }
+                      };
+                      lm.registerGnssStatusCallback(gnssCb, main);
+                      running = true;
+                  } catch (SecurityException | IllegalArgumentException e) {
+                      running = false;
+                  }
+              }
+
+              void stop() {
+                  if (!running) return;
+                  try {
+                      lm.removeUpdates(this);
+                      if (gnssCb != null) lm.unregisterGnssStatusCallback(gnssCb);
+                  } catch (Exception ignored) {
+                  }
+                  running = false;
+              }
+
+              private void js(final String code) {
+                  main.post(new Runnable() {
+                      @Override
+                      public void run() {
+                          web.evaluateJavascript(code, null);
+                      }
+                  });
+              }
+
+              @Override
+              public void onLocationChanged(Location l) {
+                  double acc = l.hasAccuracy() ? l.getAccuracy() : 99.0;
+                  double alt = l.hasAltitude() ? l.getAltitude() : 0.0;
+                  js("window.__nativeGnss&&window.__nativeGnss(" + l.getLatitude() + "," + l.getLongitude() + "," + acc + "," + alt + ","
+                          + used + "," + total + "," + (dual ? 1 : 0) + ")");
+              }
+
+              @Override
+              public void onStatusChanged(String provider, int status, Bundle extras) {
+              }
+
+              @Override
+              public void onProviderEnabled(String provider) {
+              }
+
+              @Override
+              public void onProviderDisabled(String provider) {
+              }
+
+              /** Long-side field of view of the main back camera, in degrees. */
+              void sendCamera() {
+                  try {
+                      CameraManager cm = (CameraManager) act.getSystemService(Context.CAMERA_SERVICE);
+                      if (cm == null) return;
+                      for (String id : cm.getCameraIdList()) {
+                          CameraCharacteristics c = cm.getCameraCharacteristics(id);
+                          Integer facing = c.get(CameraCharacteristics.LENS_FACING);
+                          if (facing == null || facing != CameraCharacteristics.LENS_FACING_BACK) continue;
+                          float[] fl = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                          SizeF sz = c.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+                          if (fl == null || fl.length == 0 || sz == null || fl[0] <= 0) continue;
+                          double longSide = Math.max(sz.getWidth(), sz.getHeight());
+                          double fov = Math.toDegrees(2 * Math.atan(longSide / (2 * fl[0])));
+                          js("window.__nativeCam&&window.__nativeCam(" + fov + "," + fl[0] + ")");
+                          return;
+                      }
+                  } catch (Exception ignored) {
+                  }
               }
           }
           ARELEC_EOF
