@@ -431,11 +431,11 @@ function gridTex(){if(gridBase)return gridBase;const c=document.createElement('c
   gridBase=new THREE.CanvasTexture(c);gridBase.wrapS=gridBase.wrapT=THREE.RepeatWrapping;return gridBase;}
 function buildWalls(){
   clear(gWalls); if(floorMesh){world.remove(floorMesh);floorMesh.geometry.dispose();floorMesh.material.dispose();} if(gridHelper){world.remove(gridHelper);gridHelper.geometry.dispose();gridHelper.material.dispose();}
-  const b=bounds();
-  floorMesh=new THREE.Mesh(new THREE.PlaneGeometry(b.w+2,b.h+2),new THREE.MeshLambertMaterial({color:tok('--floor'),transparent:true,opacity:(typeof live!=='undefined'&&live)?0.12:1,depthWrite:!(typeof live!=='undefined'&&live)}));
-  floorMesh.rotation.x=-Math.PI/2;floorMesh.position.set(b.cx,0,b.cy);world.add(floorMesh);
-  gridHelper=new THREE.GridHelper(Math.ceil(Math.max(b.w,b.h)+2),Math.ceil(Math.max(b.w,b.h)+2)*2,tok('--grid'),tok('--grid'));
-  gridHelper.position.set(b.cx,0.002,b.cy);world.add(gridHelper);
+  const b=bounds(),ax=planAxisAng(),ab=axisBounds(ax);
+  floorMesh=new THREE.Mesh(new THREE.PlaneGeometry(ab.w+2,ab.h+2),new THREE.MeshLambertMaterial({color:tok('--floor'),transparent:true,opacity:(typeof live!=='undefined'&&live)?0.12:1,depthWrite:!(typeof live!=='undefined'&&live)}));
+  floorMesh.rotation.set(-Math.PI/2,0,-ax);floorMesh.position.set(ab.cx,0,ab.cy);world.add(floorMesh);
+  const gs=Math.ceil(Math.max(ab.w,ab.h)+2);gridHelper=new THREE.GridHelper(gs,gs*2,tok('--grid'),tok('--grid'));
+  gridHelper.rotation.y=-ax;gridHelper.position.set(ab.cx,0.002,ab.cy);world.add(gridHelper);
   const mat=new THREE.MeshLambertMaterial({color:tok('--wall'),transparent:true,opacity:xray?0.22:0.95,side:THREE.DoubleSide,depthWrite:!xray});
   const isLive=typeof live!=='undefined'&&!!live;
   const edge=new THREE.LineBasicMaterial({color:isLive?0xffffff:tok('--plan-ink'),transparent:true,opacity:isLive?0.95:0.9});
@@ -543,7 +543,7 @@ function fpsStart(){const b=bounds();let best=[b.cx,b.cy],bestYaw=0,score=-1;
   for(let i=1;i<12;i++)for(let j=1;j<12;j++){const x=b.x0+b.w*i/12,z=b.y0+b.h*j/12;if(distToWalls(x,z)<0.7)continue;
     for(let k=0;k<16;k++){const a=k/16*Math.PI*2,d=sight(x,z,a);if(d>score){score=d;best=[x,z];bestYaw=a;}}}
   cam.fov=65;cam.updateProjectionMatrix();cam.position.set(best[0],EYE,best[1]);yaw=bestYaw;pitch=-0.15;applyLook();}
-function orbitStart(){const b=bounds();orb.target.set(b.cx,0.8,b.cy);orb.r=Math.max(b.w,b.h,3)*1.5;orb.theta=0.35;orb.phi=0.85;cam.fov=50;cam.updateProjectionMatrix();applyOrbit();}
+function orbitStart(){const b=bounds(),hf=2*Math.atan(Math.tan(25*Math.PI/180)*Math.max(0.3,cam.aspect));orb.target.set(b.cx,0.8,b.cy);orb.r=Math.max(b.w,b.h,3)*0.62/Math.tan(Math.min(50*Math.PI/180,hf)/2)+1;orb.theta=0.35;orb.phi=0.85;cam.fov=50;cam.updateProjectionMatrix();applyOrbit();}
 function resetCam(){fly=null;if(fps)fpsStart();else orbitStart();}
 function setCam(isFps){fps=isFps;syncTop();resetCam();setStatus();}
 function flyTo(o){fly=Object.assign({t:0},o);}
@@ -671,9 +671,14 @@ function svgPt(x,y){const q=s2w(x,y,curPV());let X=Math.round(q[0]*10)/10,Y=Math
 // ---------- 2D view: one finger pans, two fingers zoom + rotate, double tap fits; inertia and snapping to 90° ----------
 let PV=null;
 function svgSize(){const r=svg.getBoundingClientRect();return{W:r.width||innerWidth,H:r.height||innerHeight,L:r.left,T:r.top};}
-function fitPV(){const b=bounds(),pad=1.2,{W,H}=svgSize(),top=78,bot=editing?250:200,ww=Math.max(b.w,4)+pad*2,hh=Math.max(b.h,3)+pad*2;
-  const s=Math.max(6,Math.min(W/ww,(H-top-bot)/hh));return{cx:b.cx,cy:b.cy+((bot-top)/2)/s,s,rot:0};}
+function fitPV(){const a=planAxisAng(),b=axisBounds(a),pad=1.2,{W,H}=svgSize(),top=78,bot=editing?250:200,ww=Math.max(b.w,4)+pad*2,hh=Math.max(b.h,3)+pad*2;
+  const s=Math.max(6,Math.min(W/ww,(H-top-bot)/hh)),rot=-a*180/Math.PI,[ox,oy]=rotV(0,((bot-top)/2)/s,-rot);return{cx:b.cx+ox,cy:b.cy+oy,s,rot};}
 function curPV(){return PV||fitPV();}
+// the plan's main direction (longest wall, folded into 0–90°): the grid and floor are drawn along it so the model is always parallel to the grid
+function planAxisAng(){let best=0,a=0;plan.walls.forEach(([[ax,ay],[bx,by]])=>{const L=Math.hypot(bx-ax,by-ay);if(L>best){best=L;a=Math.atan2(by-ay,bx-ax);}});
+  a=((a%(Math.PI/2))+Math.PI/2)%(Math.PI/2);if(a>Math.PI/4)a-=Math.PI/2;return a;}
+function axisBounds(a){const c=Math.cos(-a),s=Math.sin(-a);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;plan.walls.forEach(w=>w.forEach(([x,y])=>{const u=x*c-y*s,v=x*s+y*c;x0=Math.min(x0,u);x1=Math.max(x1,u);y0=Math.min(y0,v);y1=Math.max(y1,v);}));
+  if(x0>x1){x0=y0=0;x1=y1=1;}const mu=(x0+x1)/2,mv=(y0+y1)/2,ca=Math.cos(a),sa=Math.sin(a);return{w:x1-x0,h:y1-y0,cx:mu*ca-mv*sa,cy:mu*sa+mv*ca};}
 const rotV=(x,y,deg)=>{const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return[x*c-y*s,x*s+y*c];};
 function s2w(x,y,V){const{W,H,L,T}=svgSize(),[dx,dy]=rotV((x-L-W/2)/V.s,(y-T-H/2)/V.s,-V.rot);return[V.cx+dx,V.cy+dy];}
 function keepAt(V,wp,x,y){const{W,H,L,T}=svgSize(),[dx,dy]=rotV((x-L-W/2)/V.s,(y-T-H/2)/V.s,-V.rot);V.cx=wp[0]-dx;V.cy=wp[1]-dy;return V;}
@@ -704,7 +709,7 @@ svg.addEventListener('pointermove',e=>{if(!PG.ptrs.has(e.pointerId)){if(drawing&
   if(PG.mode==='pan'){const V={...PG.V0};keepAt(V,PG.wp,e.clientX,e.clientY);PV=V;drawPlan();const now=performance.now(),dt=Math.max(1,now-PG.lt);
     PG.vel=[(e.clientX-PG.lp[0])/dt*0.6+PG.vel[0]*0.4,(e.clientY-PG.lp[1])/dt*0.6+PG.vel[1]*0.4];PG.lt=now;PG.lp=[e.clientX,e.clientY];}});
 function pgEnd(e,cancel){if(!PG.ptrs.delete(e.pointerId))return;const mode=PG.mode;
-  if(mode==='pinch'){if(PG.ptrs.size===1){PG.mode='idle';}else if(!PG.ptrs.size){PG.mode=null;const V=curPV(),n=Math.round(V.rot/90)*90;if(Math.abs(V.rot-n)<7&&V.rot!==n)animPV({...V,rot:n},220);}return;}
+  if(mode==='pinch'){if(PG.ptrs.size===1){PG.mode='idle';}else if(!PG.ptrs.size){PG.mode=null;const V=curPV(),b0=-planAxisAng()*180/Math.PI,n=b0+Math.round((V.rot-b0)/90)*90;if(Math.abs(V.rot-n)<7&&V.rot!==n)animPV({...V,rot:n},220);}return;}
   if(PG.ptrs.size){return;}PG.mode=null;
   if(mode==='corner'){const d=wdrag;wdrag=null;if(d&&d.moved){save();build();}drawPlan();return;}
   if(mode==='op'){if(PG.moved){save();build();}osel=PG.op?PG.op.id:null;wsel=null;drawPlan();renderWallSheet();return;}
@@ -849,7 +854,7 @@ const inRow=(id,icn,title,val,step,min,max,type)=>`<label class="li">${icn?ic(ic
 const grp=(title,body)=>`<div class="grp">${title?`<h4>${title}</h4>`:''}<div class="gl">${body}</div></div>`;
 function renderMenu(){const tab='plan';let h='';
   if(tab==='plan'){
-    h+=grp('',row('bLive','cube-scan','Scan room')+row('bDraw','vector-polyline','Draw walls')+`<label class="li" for="fImg">${ic('image-plus-outline')}<span>Import plan</span>${ic('chevron-right')}</label>`);
+    h+=grp('',row('bDraw','vector-polyline','Draw walls')+`<label class="li" for="fImg">${ic('image-plus-outline')}<span>Import plan</span>${ic('chevron-right')}</label>`);
     if(bgImg)h+=grp('',inRow('iBgW','arrow-expand-horizontal','Image width (m)',bgW,0.1,1,100));
     h+=grp('Dimensions',inRow('iCeil','arrow-expand-vertical','Ceiling height',plan.height,0.05,2,6)+inRow('iThick','wall','Wall thickness',plan.thick,0.01,0.05,0.5)+inRow('iPh','cellphone','Phone height',hPhone.toFixed(2),0.05,0.5,2.2)+inRow('iFov','camera','Camera angle (°)',lensFov.toFixed(1),0.5,40,110));
     h+=grp('',row('bClear','delete-sweep-outline','Clear plan',null,'danger'));
@@ -939,7 +944,7 @@ let buildQ=0;function requestBuild(){if(!buildQ)buildQ=requestAnimationFrame(()=
 document.addEventListener('visibilitychange',()=>{if(live==='xr')return;renderer.setAnimationLoop(document.hidden?null:loop);if(!document.hidden){last=performance.now();needsRender=true;}});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeScene);}catch(_){}
 new MutationObserver(themeScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
+window.__ar={refresh:()=>refresh(),get floor(){return floorMesh},get world(){return world},get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
 // ---------- Live camera navigation ----------
 // Two tracking engines, picked automatically:
 //  1. WebXR "immersive-ar" (Chrome Android + ARCore, HTTPS): the camera itself tracks position and rotation (visual-inertial odometry).
@@ -1680,9 +1685,10 @@ function navRefresh(){if(!navEl)return;
       editing?'edit':'cap',editing?{ic:'check',label:'Finish editing',on:()=>toggleEdit(false)}:{ic:p[0],label:p[1],on:svPrimary});return;}
   const home=document.body.classList.contains('home'),has=curHasPlan(),more=$('drawer').classList.contains('on');
   const act=more?'more':home?'pj':'plan';
-  navRender([{k:'pj',ic:'folder',label:'Projects',on:()=>{openMenu(false);if(editing)toggleEdit(false);goHome();}},{k:'plan',ic:'floor-plan',label:'Plan',dis:!has&&home,on:()=>{openMenu(false);openPlan();}},
-    {k:'new',ic:'plus',label:'New',on:()=>{openMenu(false);navThen('new',newProject);}},{k:'ar',ic:'view',label:'AR Viewer',dis:!has,on:()=>{openMenu(false);if(editing)toggleEdit(false);navThen('ar',startAR);}},
-    {k:'more',ic:'menu',label:'More',on:()=>{if(more)openMenu(false);else{menuTab=null;openMenu(true);}}}],act,{ic:{pj:'folder',plan:'floor-plan',more:'menu'}[act],label:act,on:act==='more'?()=>openMenu(false):null});}
+  const act2=act==='plan'?'pj':act;
+  navRender([{k:'pj',ic:'folder',label:'Projects',on:()=>{openMenu(false);if(editing)toggleEdit(false);goHome();}},
+    {k:'new',ic:'plus',label:'New',on:()=>{openMenu(false);if(editing)toggleEdit(false);navThen('new',newProject);}},
+    {k:'more',ic:'menu',label:'More',on:()=>{if(more)openMenu(false);else{menuTab=null;openMenu(true);}}}],act2,{ic:{pj:'folder',more:'menu'}[act2],label:act2,on:act2==='more'?()=>openMenu(false):()=>{if(!home){if(editing)toggleEdit(false);goHome();}}});}
 function toggleSvPop(){const o=$('svPop').hidden;$('svPop').hidden=!o;if(o){const x=navX('tools');$('svPop').style.left=Math.max(12,x-30)+'px';}}
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#svPop,#nav-tools'))$('svPop').hidden=true;},true);
 
