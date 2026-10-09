@@ -261,22 +261,36 @@ body.editing #lineCv{display:none}
 #vlBar em{font-style:normal;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
 #vlBar.learn{width:fit-content;padding:6px 12px;gap:6px}#vlBar.learn .ic{width:16px;height:16px}
 #spotLayer{position:fixed;inset:0;z-index:6;pointer-events:none}
-.spot,#spotGhost,.spPulse{position:fixed;left:0;top:0;width:60px;height:60px;border-radius:50%;background:center/cover no-repeat;
+.spot,#spotGhost .gimg,.spPulse{position:fixed;left:0;top:0;width:84px;height:84px;border-radius:50%;background:center/cover no-repeat;
   -webkit-mask:radial-gradient(circle,#000 45%,rgba(0,0,0,.55) 62%,transparent 71%);mask:radial-gradient(circle,#000 45%,rgba(0,0,0,.55) 62%,transparent 71%);transition:opacity .25s}
 .spot{pointer-events:auto;touch-action:none;cursor:grab;will-change:transform}
 .spot i,#spotGhost i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px rgba(17,17,19,.8)}
 .spot.ok i{background:var(--ok)}.spot.auto i{background:#9be2b8}
-#spotGhost{z-index:45;width:76px;height:76px;pointer-events:none;opacity:.9}
-#spotGhost::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:40px;margin-left:-1px;background:rgba(255,255,255,.85)}
+#spotGhost{position:fixed;left:0;top:0;z-index:45;pointer-events:none}
+#spotGhost .gimg{position:absolute;inset:0;width:auto;height:auto;opacity:.6}
+#spotGhost::before{content:"";position:absolute;inset:15%;border-radius:50%;border:2px dashed rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(17,17,19,.35)}
+#spotGhost .cx{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;background:linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;filter:drop-shadow(0 0 1px rgba(0,0,0,.7))}
+#spPlace{position:fixed;inset:0;z-index:43;touch-action:none;cursor:move}
+#spGal{position:fixed;inset:0;z-index:50;background:rgba(17,17,19,.32);display:flex;align-items:flex-end;animation:fadeIn .3s var(--ease)}
+#spGal .sg{width:100%;max-height:78%;overflow:auto;background:var(--bg);border-radius:24px 24px 0 0;padding:10px 16px calc(18px + var(--sb));animation:sheetUp .45s var(--ease)}
+#spGal .sgh{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 12px}#spGal .sgh b{font-size:20px}
+#spGal .sgg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#spGal .sgi{border:0;background:var(--surface);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:6px;cursor:pointer;box-shadow:var(--sh);text-align:left}
+#spGal .sgi:active{transform:scale(.97)}
+#spGal .ph{position:relative;display:block;aspect-ratio:3/4;border-radius:12px;background:center/cover no-repeat var(--surface-2);overflow:hidden}
+#spGal .ph em{display:none;position:absolute;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(17,17,19,.5)}
+#spGal .ph.full em{display:block}
+#spGal .sgi small{font:600 13px var(--f-display);padding:0 4px 4px}#spGal .sgi.ok small{color:var(--ok)}
+#spotTray .sgo{width:52px;height:52px;flex:none;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;cursor:pointer}#spotTray .sgo .ic{width:22px;height:22px}
 .spPulse{z-index:44;width:70px;height:70px;margin:-35px 0 0 -35px;animation:spIn .7s var(--ease) forwards;pointer-events:none}
 @keyframes spIn{0%{transform:scale(1.6);opacity:0}30%{opacity:1}100%{transform:scale(.6);opacity:0}}
 #spotTray{left:12px;right:12px;bottom:calc(var(--navH) + 92px);border-radius:999px;padding:6px;display:flex;gap:6px;overflow-x:auto;width:fit-content;max-width:calc(100vw - 24px);background:rgba(255,255,255,.92)}
-#spotTray .st{width:44px;height:44px;flex:none;border-radius:50%;border:0;padding:0;background:center/cover no-repeat;box-shadow:inset 0 0 0 2px #fff,0 0 0 1px var(--line);cursor:grab;touch-action:none}
+#spotTray .st{width:52px;height:52px;flex:none;border-radius:50%;border:0;padding:0;background:center/cover no-repeat;box-shadow:inset 0 0 0 2px #fff,0 0 0 1px var(--line);cursor:grab;touch-action:none}
 #spotTray .st.ok{box-shadow:inset 0 0 0 2px #fff,0 0 0 2.5px var(--ok)}#spotTray .st.auto{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px #9be2b8}
 .spot.prop{animation:spProp 1.1s ease-in-out infinite}
 .spot.prop i{background:#fff;box-shadow:0 0 0 2px var(--ok),0 0 0 6px rgba(31,164,90,.35)}
 @keyframes spProp{50%{filter:brightness(1.15)}}
-#spConfirm{left:0;right:0;margin-inline:auto;width:fit-content;bottom:calc(var(--navH) + 150px);border-radius:999px;padding:6px 6px 6px 6px;display:flex;align-items:center;gap:10px;animation:popUp .35s var(--ease)}
+#spConfirm{z-index:46;left:0;right:0;margin-inline:auto;width:fit-content;bottom:calc(var(--navH) + 150px);border-radius:999px;padding:6px 6px 6px 6px;display:flex;align-items:center;gap:10px;animation:popUp .35s var(--ease)}
 #spConfirm i{width:42px;height:42px;border-radius:50%;background:center/cover;flex:none;-webkit-mask:radial-gradient(circle,#000 50%,transparent 71%);mask:radial-gradient(circle,#000 50%,transparent 71%)}
 #spConfirm span{font:500 13px/1.25 var(--f-display);padding-right:4px}#spConfirm span b{font-size:15px}
 #spConfirm button{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;transition:transform .2s var(--spring)}
@@ -333,7 +347,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><i></i></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1156,7 +1170,7 @@ function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();vlSa
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
-  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;$('spConfirm').hidden=true;$('spSuggest').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
+  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;$('spConfirm').hidden=true;$('spSuggest').hidden=true;$('spPlace').hidden=true;$('spotGhost').hidden=true;$('spGal').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
   goHome();if(n)flash('Saved');}
 
@@ -1526,14 +1540,17 @@ function spPoint(x,y){castAt(x,y);const hits=ray.intersectObjects(gWalls.childre
   const o=ray.ray.origin,d=ray.ray.direction;if(d.y<-0.02){const t=-o.y/d.y;p=o.clone().addScaledVector(d,t);}
   if(hits[0]&&(!p||hits[0].distance<o.distanceTo(p))){p=hits[0].point.clone();kind='wall';}return p&&o.distanceTo(p)<12?{p,kind,dist:o.distanceTo(p)}:null;}
 function addSpot(x,y){const hit=spPoint(x,y);if(!hit){flash('Aim at the floor or a wall');return;}const G=spGray();if(!G){flash('Camera not ready');return;}
-  const T=24,cx=Math.round(x*G.k),cy=Math.round(y*G.k);if(cx<T/2||cy<T/2||cx>G.W-T/2||cy>G.H-T/2){flash('Too close to the edge');return;}
+  const T=32,cx=Math.round(x*G.k),cy=Math.round(y*G.k);if(cx<T/2||cy<T/2||cx>G.W-T/2||cy>G.H-T/2){flash('Too close to the edge');return;}
   const tpl=[];for(let j=0;j<T;j++)for(let i=0;i<T;i++)tpl.push(Math.round(G.Y[(cy-T/2+j)*G.W+cx-T/2+i]));
   let m=0;tpl.forEach(v=>m+=v);m/=tpl.length;let sd=0;tpl.forEach(v=>sd+=(v-m)*(v-m));if(Math.sqrt(sd/tpl.length)<4){flash('Pick a spot with more detail');return;}
   // round photo for display
-  const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d'),vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),R=60/sc;
-  const vx=(vw-innerWidth/sc)/2+x/sc,vy=(vh-innerHeight/sc)/2+y/sc;g.drawImage(vid,vx-R,vy-R,2*R,2*R,0,0,96,96);
-  const s={id:spots().reduce((a,q)=>Math.max(a,q.id),0)+1,p:[+hit.p.x.toFixed(3),+hit.p.y.toFixed(3),+hit.p.z.toFixed(3)],kind:hit.kind,dist:+hit.dist.toFixed(2),img:c.toDataURL('image/jpeg',0.72),tpl,T,t:Date.now()};
-  spots().push(s);save();spPulse(x,y,s);flash(`Spot ${s.id} saved`);spRender();}
+  const DI=220,c=document.createElement('canvas');c.width=c.height=192;const g=c.getContext('2d'),vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),R=DI/2/sc;
+  const vx=(vw-innerWidth/sc)/2+x/sc,vy=(vh-innerHeight/sc)/2+y/sc;g.drawImage(vid,vx-R,vy-R,2*R,2*R,0,0,192,192);
+  const s={id:spots().reduce((a,q)=>Math.max(a,q.id),0)+1,p:[+hit.p.x.toFixed(3),+hit.p.y.toFixed(3),+hit.p.z.toFixed(3)],kind:hit.kind,dist:+hit.dist.toFixed(2),diam:DI,img:c.toDataURL('image/jpeg',0.75),tpl,T,t:Date.now(),fx:+(x/innerWidth).toFixed(4),fy:+(y/innerHeight).toFixed(4)};
+  spots().push(s);save();spPulse(x,y,s);flash(`Spot ${s.id} saved · photo in gallery`);spRender();
+  // full photo of what the screen shows, kept in the gallery
+  try{const f=document.createElement('canvas'),W=720,H=Math.round(W*innerHeight/innerWidth);f.width=W;f.height=H;f.getContext('2d').drawImage(vid,(vw-innerWidth/sc)/2,(vh-innerHeight/sc)/2,innerWidth/sc,innerHeight/sc,0,0,W,H);
+    f.toBlob(async b=>{if(!b)return;try{const id=await mPut({type:'photo',blob:b,t:Date.now(),wall:null,spot:s.id,pj:curId,gps:L.geo&&!L.geo.err?L.geo:null,pose:{x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2)}});s.photo=id;save();}catch(_){}} ,'image/jpeg',0.82);}catch(_){}}
 function spPulse(x,y,s){const e=document.createElement('div');e.className='spPulse';e.style.left=x+'px';e.style.top=y+'px';e.style.backgroundImage=`url(${s.img})`;document.body.appendChild(e);setTimeout(()=>e.remove(),700);}
 // ---- floating markers + tray ----
 const _sv=new THREE.Vector3();
@@ -1543,18 +1560,39 @@ function spRender(){const lay=$('spotLayer'),tray=$('spotTray');const on=!!(S&&!
   const list=spots();if(lay.childElementCount!==list.length){lay.innerHTML=list.map(s=>`<div class="spot" data-sp="${s.id}" style="background-image:url(${s.img})"><i></i></div>`).join('');
     lay.querySelectorAll('.spot').forEach(el=>el.addEventListener('pointerdown',e=>{if(!S||S.phase!=='locate')return;e.preventDefault();e.stopPropagation();spStartDrag(+el.dataset.sp,e);}));}
   if(S.phase==='locate'){const sig=list.map(s=>s.id+':'+spState(s.id)).join(',');if(tray.dataset.sig!==sig){tray.dataset.sig=sig;
-    tray.innerHTML=list.map(s=>`<button class="st ${spState(s.id)}" data-sp="${s.id}" aria-label="Spot ${s.id}" style="background-image:url(${s.img})"></button>`).join('');
-    tray.querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();spStartDrag(+b.dataset.sp,e);}));}}}
+    tray.innerHTML=list.map(s=>`<button class="st ${spState(s.id)}" data-sp="${s.id}" aria-label="Spot ${s.id}" style="background-image:url(${s.img})"></button>`).join('')+`<button class="sgo" id="trGal" aria-label="Photo gallery">${ic('image-multiple')}</button>`;
+    $('trGal').onclick=()=>spGallery(true);
+    tray.querySelectorAll('button.st').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();spStartDrag(+b.dataset.sp,e);}));}}}
 function spState(id){const o=S&&S.obs&&S.obs.find(q=>q.id===id);return !o?'':'ok';}
 function spLayout(){const lay=$('spotLayer');if(lay.hidden)return;lay.querySelectorAll('.spot').forEach(el=>{const s=spots().find(q=>q.id===+el.dataset.sp);if(!s)return;
-  if(SP.drag&&SP.drag.id===s.id){el.style.opacity=0;return;}const pr=S.prop&&S.prop.id===s.id,p=pr?spDirScreen(S.prop.d):spProject(s);
+  if((SP.drag&&SP.drag.id===s.id)||(S.pend&&S.pend.id===s.id)){el.style.opacity=0;el.style.pointerEvents='none';return;}const pr=S.prop&&S.prop.id===s.id,p=pr?spDirScreen(S.prop.d):spProject(s);
   if(!p||p[0]<-60||p[1]<-60||p[0]>innerWidth+60||p[1]>innerHeight+60){el.style.opacity=0;el.style.pointerEvents='none';return;}
-  const st=pr?'prop':spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-30}px,${p[1]-30}px)`;});}
-function spStartDrag(id,e){const s=spots().find(q=>q.id===id);if(!s)return;const gh=$('spotGhost');gh.style.backgroundImage=`url(${s.img})`;gh.hidden=false;
-  SP.drag={id,pid:e.pointerId};const mv=ev=>{if(ev.pointerId!==SP.drag.pid)return;gh.style.transform=`translate(${ev.clientX-38}px,${ev.clientY-38-46}px)`;};
-  const up=ev=>{if(ev.pointerId!==SP.drag.pid)return;removeEventListener('pointermove',mv,true);removeEventListener('pointerup',up,true);removeEventListener('pointercancel',up,true);gh.hidden=true;
-    const x=ev.clientX,y=ev.clientY-46;SP.drag=null;if(ev.type==='pointerup'&&y>60&&y<innerHeight-120)spObserve(id,x,y,true);};
+  const st=pr?'prop':spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-42}px,${p[1]-42}px)`;});}
+function spSize(s){const d=Math.max(0.3,cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])));return Math.max(90,Math.min(320,(s.diam||120)*(s.dist||d)/d));}
+function spGhost(s,x,y){const gh=$('spotGhost'),z=spSize(s);gh.firstChild.style.backgroundImage=`url(${s.img})`;gh.style.width=gh.style.height=z+'px';gh.style.transform=`translate(${x-z/2}px,${y-z/2}px)`;gh.hidden=false;return z;}
+function spStartDrag(id,e){const s=spots().find(q=>q.id===id);if(!s)return;spEndPlace();const z=spSize(s);SP.drag={id,pid:e.pointerId};
+  const mv=ev=>{if(ev.pointerId!==SP.drag.pid)return;spGhost(s,ev.clientX,ev.clientY-z/2-18);};
+  const up=ev=>{if(ev.pointerId!==SP.drag.pid)return;removeEventListener('pointermove',mv,true);removeEventListener('pointerup',up,true);removeEventListener('pointercancel',up,true);
+    const x=ev.clientX,y=ev.clientY-z/2-18;SP.drag=null;if(ev.type==='pointerup')spBeginPlace(id,x,Math.max(70,Math.min(innerHeight-160,y)));else $('spotGhost').hidden=true;};
   addEventListener('pointermove',mv,true);addEventListener('pointerup',up,true);addEventListener('pointercancel',up,true);mv(e);}
+// fine placement: the photo (see-through, real size) can be moved with a finger anywhere on the screen, then ✓
+function spBeginPlace(id,x,y){const s=spots().find(q=>q.id===id);if(!s)return;spPropClose();S.pend={id,x,y};spGhost(s,x,y);$('spotGhost').classList.add('fine');
+  const lay=$('spPlace');lay.hidden=false;const el=$('spConfirm');
+  el.innerHTML=`<i style="background-image:url(${s.img})"></i><span>Spot ${id}<br><b>Align the photo</b></span><button class="no" id="spNo" aria-label="Cancel">${ic('close')}</button><button class="yes" id="spYes" aria-label="Place here">${ic('check')}</button>`;el.hidden=false;
+  $('spYes').onclick=()=>{const p=S.pend;spEndPlace();if(p)spObserve(p.id,p.x,p.y,true);};$('spNo').onclick=()=>spEndPlace();spRender();}
+function spEndPlace(){if(!S)return;const was=S.pend;S.pend=null;$('spPlace').hidden=true;$('spotGhost').hidden=true;$('spotGhost').classList.remove('fine');if(was&&!S.prop)$('spConfirm').hidden=true;}
+(()=>{const lay=$('spPlace');let last=null;lay.addEventListener('pointerdown',e=>{e.preventDefault();last=[e.clientX,e.clientY];try{lay.setPointerCapture(e.pointerId)}catch(_){}});
+  lay.addEventListener('pointermove',e=>{if(!last||!S||!S.pend)return;const k=e.pointerType==='mouse'?1:0.6;S.pend.x+=(e.clientX-last[0])*k;S.pend.y+=(e.clientY-last[1])*k;last=[e.clientX,e.clientY];
+    const s=spots().find(q=>q.id===S.pend.id);if(s)spGhost(s,S.pend.x,S.pend.y);});
+  const end=()=>{last=null;};lay.addEventListener('pointerup',end);lay.addEventListener('pointercancel',end);})();
+// ---- gallery of the photos taken while scanning ----
+const spURL={};
+async function spPhotoURL(s){if(!s.photo)return null;if(spURL[s.photo])return spURL[s.photo];try{const m=await mGet(s.photo);if(m&&m.blob)return spURL[s.photo]=URL.createObjectURL(m.blob);}catch(_){}return null;}
+async function spGallery(open){const el=$('spGal');if(!open){el.hidden=true;return;}const list=spots();
+  el.innerHTML=`<div class="sg"><div class="sgh"><b>Photos</b><button class="icon" id="sgClose" aria-label="Close">${ic('close')}</button></div><div class="sgg">${list.map(s=>`<button class="sgi ${spState(s.id)}" data-sp="${s.id}"><span class="ph" style="background-image:url(${s.img})"><em style="left:${(s.fx||.5)*100}%;top:${(s.fy||.5)*100}%"></em></span><small>Spot ${s.id}${spState(s.id)?' · placed':''}</small></button>`).join('')||'<p class="note">No photos</p>'}</div></div>`;
+  el.hidden=false;$('sgClose').onclick=()=>spGallery(false);el.onclick=e=>{if(e.target===el)spGallery(false);};
+  el.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{spGallery(false);spBeginPlace(+b.dataset.sp,innerWidth/2,innerHeight*0.42);});
+  for(const s of list){const u=await spPhotoURL(s);const b=el.querySelector(`[data-sp="${s.id}"] .ph`);if(u&&b){b.style.backgroundImage=`url(${u})`;b.classList.add('full');}}}
 // an observation = the ray (with the current heading correction removed) through the screen point where the spot really is
 function spDir(x,y){castAt(x,y);const d=ray.ray.direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0),-(L.dragYaw||0));return[d.x,d.y,d.z];}
 function spObserve(id,x,y,user){spObserveDir(id,spDir(x,y),user);}
@@ -1571,7 +1609,7 @@ function spPropose(id,x,y,score){if(S.prop)return;const s=spots().find(q=>q.id==
   $('spNo').onclick=()=>{const p=S.prop;if(!p)return;(S.rejected||(S.rejected=new Map())).set(p.id,performance.now());spPropClose();flash('Refused · drag it yourself');};}
 function spPropClose(){S.prop=null;$('spConfirm').hidden=true;}
 // ---- re-place photos (Tools) ----
-function spRespot(){S.respot=true;S.obs=[];S.spotFix=false;S.spotConf=0;if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}spPropClose();S.rejected=new Map();S.sugOff=performance.now();$("spSuggest").hidden=true;spRender();vlUI();svUI();flash("Drag each photo onto its real place");}
+function spRespot(){S.respot=true;S.obs=[];S.spotFix=false;S.spotConf=0;if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}spPropClose();S.rejected=new Map();S.sugOff=performance.now();$("spSuggest").hidden=true;spRender();vlUI();svUI();flash("Pick a photo and align it");spGallery(true);}
 function spSuggestTick(now){const el=$('spSuggest');if(!S||S.phase!=='locate'||S.gate||!spots().length||S.prop||SP.drag){if(!el.hidden&&(!S||S.phase!=='locate'))el.hidden=true;return;}
   if(S.sugOff&&now-S.sugOff<30000)return;const V=S.vl;let why=null;
   if(!S.spotFix&&!(V&&V.located)&&now-(S.t0||(S.t0=now))>9000&&!(S.obs||[]).length)why='Place the photos to pin the model';
@@ -1601,13 +1639,13 @@ function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===
 function solve4(A,b){const n=4,M=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let k=i+1;k<n;k++)if(Math.abs(M[k][i])>Math.abs(M[p][i]))p=k;if(Math.abs(M[p][i])<1e-12)return null;[M[i],M[p]]=[M[p],M[i]];
   for(let k=0;k<n;k++){if(k===i)continue;const f=M[k][i]/M[i][i];for(let c=i;c<=n;c++)M[k][c]-=f*M[i][c];}}return M.map((r,i)=>r[n]/r[i]);}
 // ---- automatic search: look for each spot's photo around where it should be (zero-mean NCC) ----
-function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||now-SP.last<450)return;SP.last=now;const list=spots();if(!list.length)return;let G=null;
+function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||S.pend||now-SP.last<((S.obs||[]).length?250:450))return;SP.last=now;const list=spots();if(!list.length)return;let G=null;
   if(S.prop)return;
   for(const s of list){if((S.obs||[]).some(o=>o.id===s.id))continue;const rj=S.rejected&&S.rejected.get(s.id);if(rj&&now-rj<20000)continue;const p=spProject(s);if(!p||p[0]<0||p[1]<0||p[0]>innerWidth||p[1]>innerHeight)continue;
     G=G||spGray();if(!G)return;const dist=cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])),scl=Math.max(0.55,Math.min(1.8,(s.dist||dist)/dist));
     const T=s.T,Ts=Math.max(10,Math.round(T*scl)),tp=new Float32Array(Ts*Ts);for(let j=0;j<Ts;j++)for(let i=0;i<Ts;i++)tp[j*Ts+i]=s.tpl[Math.min(T-1,(j*T/Ts)|0)*T+Math.min(T-1,(i*T/Ts)|0)];
     let tm=0;tp.forEach(v=>tm+=v);tm/=tp.length;let ts=0;for(let i=0;i<tp.length;i++){tp[i]-=tm;ts+=tp[i]*tp[i];}if(ts<1)continue;
-    const cx=Math.round(p[0]*G.k),cy=Math.round(p[1]*G.k),R=Math.round(G.W*(S.spotFix||(S.vl&&S.vl.located)?0.2:0.45));const sc=[];
+    const cx=Math.round(p[0]*G.k),cy=Math.round(p[1]*G.k),R=Math.round(G.W*(S.spotFix||(S.vl&&S.vl.located)?0.18:(S.obs||[]).length?0.25:0.45));const sc=[];
     const ncc=(x,y)=>{const x0=x-(Ts>>1),y0=y-(Ts>>1);if(x0<0||y0<0||x0+Ts>G.W||y0+Ts>G.H)return -1;let m=0;
       for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++)m+=G.Y[row+i];}m/=Ts*Ts;let num=0,den=0;
       for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++){const v=G.Y[row+i]-m;num+=v*tp[j*Ts+i];den+=v*v;}}return den>1?num/Math.sqrt(den*ts):-1;};
@@ -1636,7 +1674,7 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
@@ -1644,7 +1682,7 @@ function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
-  on('svRespot','click',()=>{done();spRespot();});
+  on('svRespot','click',()=>{done();spRespot();});on('svGal','click',()=>{done();spGallery(true);});
   on('svFloor','click',()=>{S.floorMode=!S.floorMode;done();svUI();flash(S.floorMode?'Drag up or down to sit the walls on the floor':'');});
   on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position held':'Following your steps');});
   on('svUndoSpot','click',()=>{spots().pop();save();$('spotLayer').innerHTML='';spRender();svUI();done();});
