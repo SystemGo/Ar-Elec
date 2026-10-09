@@ -254,6 +254,12 @@ body.surveying #nav svg.navBg path{fill:rgba(255,255,255,.96)}
 #scanBtn,#nextBtn,#doneBtn,#svMenuBtn,#devBar,#stepTag,#menuBtn,.hmGo,#svTools{display:none!important}
 body.surveying #editBtn,body.surveying .tr{display:none!important}
 body.editing #lineCv{display:none}
+#vlBar{top:calc(56px + var(--st));left:0;right:0;margin-inline:auto;width:min(280px,calc(100vw - 150px));border-radius:999px;padding:7px 12px;display:flex;align-items:center;gap:10px;font:600 13px var(--f-display);background:rgba(255,255,255,.94);animation:rise .35s var(--ease)}
+#vlBar i{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:block}
+#vlBar i b{display:block;height:100%;background:var(--fg);border-radius:3px;transition:width .5s var(--ease),background .4s}
+#vlBar.ok i b{background:var(--ok)}#vlBar.ok{color:#0c5132}
+#vlBar em{font-style:normal;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+#vlBar.learn{width:fit-content;padding:6px 12px;gap:6px}#vlBar.learn .ic{width:16px;height:16px}
 /* ---- wall editor ---- */
 #plan .hdl{cursor:grab;touch-action:none}
 #plan .hdl.drag{cursor:grabbing}
@@ -302,6 +308,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 <button class="float fab" id="scanBtn" aria-label="Start live camera scan" data-ic="cube-scan"></button>
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
+<div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -814,7 +821,7 @@ function openPjSheet(id){if(id!==curId){saveNow();loadProject(id);refresh();rend
   on('paAR','click',()=>{close();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
   on('paScan','click',()=>{close();startSurvey(!has);});
   on('paPlan','click',()=>{close();document.body.classList.remove('home');sel=null;setView(true);setCam(false);refresh();});
-  on('paDel','click',()=>{close();projects=projects.filter(q=>q.id!==id);if(curId===id){curId=null;emptyPlan();}saveNow();try{localStorage.setItem('arelec-projects',JSON.stringify(projects));}catch(e){}refresh();renderHome();});}
+  on('paDel','click',()=>{close();mDel('kf-'+id).catch(()=>{});projects=projects.filter(q=>q.id!==id);if(curId===id){curId=null;emptyPlan();}saveNow();try{localStorage.setItem('arelec-projects',JSON.stringify(projects));}catch(e){}refresh();renderHome();});}
 function newProject(){saveNow();curId=Date.now();emptyPlan();plan.name=`Project ${projects.length+1}`;projects.unshift({id:curId,plan,devs});saveNow();startSurvey(true);}
 function renderSheet(){if(document.body.classList.contains('home'))renderHome();const m=metrics();if(!plan.name)plan.name='Project';
   $('pjName').textContent=plan.name;
@@ -919,7 +926,7 @@ let buildQ=0;function requestBuild(){if(!buildQ)buildQ=requestAnimationFrame(()=
 document.addEventListener('visibilitychange',()=>{if(live==='xr')return;renderer.setAnimationLoop(document.hidden?null:loop);if(!document.hidden){last=performance.now();needsRender=true;}});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeScene);}catch(_){}
 new MutationObserver(themeScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
+window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
 // ---------- Live camera navigation ----------
 // Two tracking engines, picked automatically:
 //  1. WebXR "immersive-ar" (Chrome Android + ARCore, HTTPS): the camera itself tracks position and rotation (visual-inertial odometry).
@@ -1072,6 +1079,7 @@ let dbP=null;
 function db(){return dbP||(dbP=new Promise((res,rej)=>{const r=indexedDB.open('arelec',1);r.onupgradeneeded=()=>r.result.createObjectStore('media',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));}
 async function mPut(o){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('media','readwrite');const q=t.objectStore('media').put(o);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
 async function mGet(id){const d=await db();return new Promise(res=>{const q=d.transaction('media').objectStore('media').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);});}
+async function mGet(id){const d=await db();return new Promise(res=>{const q=d.transaction('media').objectStore('media').get(id);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}
 async function mAll(){const d=await db();return new Promise(res=>{const q=d.transaction('media').objectStore('media').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([]);});}
 async function mDel(id){const d=await db();return new Promise(res=>{const t=d.transaction('media','readwrite');t.objectStore('media').delete(id);t.oncomplete=res;});}
 
@@ -1101,20 +1109,20 @@ function askSurvey(){ // called from the round button (a user tap, so permission
   $('status').innerHTML=`<button class="btn primary" id="svNew">${ic('plus')}New plan</button><button class="btn" id="svAdd">${ic('vector-polyline')}Add rooms</button><button class="btn" id="svX" aria-label="Cancel">${ic('close')}</button>`;
   $('status').classList.add('live');$('status').hidden=false;
   $('svNew').onclick=()=>startSurvey(true);$('svAdd').onclick=()=>startSurvey(false);$('svX').onclick=()=>setStatus();}
-async function startSurvey(fresh){L.lockPos=false;
+async function startSurvey(fresh){L.lockPos=false;if(fresh){VL.frames=[];VL.key='kf-'+curId;VL.dirty=true;}else await vlLoad(curId);
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
   if(fresh){const nm=plan.name;plan.walls=[];plan.wallTex={};plan.openings=[];plan.rooms=[];plan.geo=null;plan.geoFrame=null;plan.gpsTrack=[];plan.cornerGps=[];plan.height=2.5;plan.date=Date.now();plan.name=nm;devs=[];save();}
   S={phase:fresh?'height':'corners',low:null,chain:[],chainWall0:plan.walls.length,rec:null,fresh,assist:true};
   await startSensor({survey:true,fresh});
   if(fresh){L.pos.set(0,EYE,0);L.calYaw=0;L.yawOff=null;}
   aim.visible=true;svRender();svUI();openGate();}
-async function startLocate(){
+async function startLocate(){await vlLoad(curId);
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
   L.lockPos=true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
   await startSensor({survey:true});aim.visible=true;svUI();openGate();}
 function enterLocate(){const keep=S?S.assist:true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:keep,needFix:false,align:null};
   clear(svGroup);prevLine.visible=false;setAimLabel('');xray=true;build();svUI();}
-function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();
+function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();vlSave();$('vlBar').hidden=true;
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
@@ -1156,9 +1164,10 @@ function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=g
   if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
 function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
   L.headLock=true; // from here on the compass no longer turns the walls; only the gyroscope does
+  if(S.phase==='locate')S.vl={votes:[],conf:0,located:false,recent:[]};
   if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
-    if(S.phase==='locate'){S.needFix=false;S.alignMode=true;flash('Aim at a corner');}}
+    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length){S.alignMode=true;flash('Aim at a corner');}else flash('Turn slowly around you');}}
   if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
 $('gpsSkip').addEventListener('click',()=>passGate(false));
 $('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
@@ -1306,7 +1315,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${g.L.toFixed(2)} m`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}
+function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}try{vlTick(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.phase==='corners'&&S.autoOp!==false&&L.stream&&!editing&&now-OD.t>320){OD.t=now;try{odTick();}catch(err){console.warn(err);}}
@@ -1406,6 +1415,75 @@ function odShow(i,g){clear(OD.grp);const list=(OD.cand[i]||[]).filter(q=>q.hits>
     const lb=label(`${OPEN[q.type].label}?`,'pill');const c=P(q.c,q.sill+q.h+0.12);lb.position.copy(c);OD.grp.add(lb);});}
 function odReset(){OD.acc={};OD.cand={};clear(OD.grp);}
 
+// ---------- visual anchoring: small photos of walls & floor taken while scanning, matched live in AR Viewer ----------
+// Each view = a 36-px-wide grey thumbnail of what the screen shows (roll removed) + the exact camera direction & position.
+// Matching the live image against them gives the true heading (horizontal shift → angle) and a position estimate.
+const VL={W:36,frames:[],key:null,dirty:false,cv:document.createElement('canvas'),last:0,prevQ:new THREE.Quaternion(),busy:false};
+VL.g=VL.cv.getContext('2d',{willReadFrequently:true});
+const _ve=new THREE.Euler();
+function vlPose(){_ve.setFromQuaternion(cam.quaternion,'YXZ');return{yaw:_ve.y,pitch:_ve.x,roll:_ve.z};}
+function vlDims(){const W=VL.W,H=Math.round(W*innerHeight/innerWidth);return[W,H];}
+function vlGrab(roll){const vw=vid.videoWidth,vh=vid.videoHeight;if(!vw||vid.hidden)return null;const[W,H]=vlDims();
+  if(VL.cv.width!==W||VL.cv.height!==H){VL.cv.width=W;VL.cv.height=H;}const sc=Math.max(innerWidth/vw,innerHeight/vh),cw=innerWidth/sc,ch=innerHeight/sc;
+  const g=VL.g;g.setTransform(1,0,0,1,0,0);g.fillStyle='#808080';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(-roll);
+  g.drawImage(vid,(vw-cw)/2,(vh-ch)/2,cw,ch,-W/2,-H/2,W,H);g.setTransform(1,0,0,1,0,0);
+  const d=g.getImageData(0,0,W,H).data,Y=new Uint8Array(W*H);for(let i=0,j=0;i<Y.length;i++,j+=4)Y[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;return{Y,W,H};}
+// local contrast normalisation: robust to light changes
+function vlNorm(Y,W,H){const N=W*H,A=new Float32Array(N),M=new Float32Array(N);let tex=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;s+=Y[yy*W+xx];n++;}A[y*W+x]=s/n;}
+  const R=3;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,s2=0,n=0;for(let dy=-R;dy<=R;dy+=1)for(let dx=-R;dx<=R;dx+=1){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const v=A[yy*W+xx];s+=v;s2+=v*v;n++;}
+    const m=s/n,sd=Math.sqrt(Math.max(0,s2/n-m*m));M[y*W+x]=(A[y*W+x]-m)/(sd+6);tex+=sd;}
+  return{M,W,H,tex:tex/N};}
+function vlHalf(f){const W=f.W>>1,H=f.H>>1,M=new Float32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=2*y*f.W+2*x;M[y*W+x]=(f.M[i]+f.M[i+1]+f.M[i+f.W]+f.M[i+f.W+1])/4;}return{M,W,H};}
+function vlScore(a,b,dx,dy){const W=a.W,H=a.H;let s=0,sa=0,sb=0,n=0;const x0=Math.max(0,-dx),x1=Math.min(W,W-dx),y0=Math.max(0,-dy),y1=Math.min(H,H-dy);
+  for(let y=y0;y<y1;y++){const ra=y*W,rb=(y+dy)*W+dx;for(let x=x0;x<x1;x++){const p=a.M[ra+x],q=b.M[rb+x];s+=p*q;sa+=p*p;sb+=q*q;n++;}}
+  return n<W*H*0.55||!sa||!sb?-1:s/Math.sqrt(sa*sb);}
+function vlFocal(W,H){const vf=cam.fov*Math.PI/180,fy=(H/2)/Math.tan(vf/2),hf=2*Math.atan(Math.tan(vf/2)*W/H);return{fx:(W/2)/Math.tan(hf/2),fy};}
+function vlPrep(fr){if(!fr.n){fr.n=vlNorm(fr.Y,fr.W,fr.H);fr.h=vlHalf(fr.n);}return fr;}
+// best match of the live view among stored views (coarse-to-fine shift search)
+function vlMatch(live,pose,near){const{W,H}=live,{fx,fy}=vlFocal(W,H),lh=vlHalf(live);const cand=[];
+  for(const kf of VL.frames){if(kf.W!==W||kf.H!==H||Math.abs(kf.pitch-pose.pitch)>0.26)continue;if(near&&Math.hypot(kf.x-near.x,kf.z-near.z)>near.r)continue;vlPrep(kf);
+    const dyp=Math.round((kf.pitch-pose.pitch)*fy/2);let best=-1,bdx=0,bdy=0;
+    for(let dy=dyp-1;dy<=dyp+1;dy++)for(let dx=-7;dx<=7;dx++){const sc=vlScore(lh,kf.h,dx,dy);if(sc>best){best=sc;bdx=dx;bdy=dy;}}
+    cand.push({kf,s:best,dx:bdx,dy:bdy});}
+  if(!cand.length)return null;cand.sort((a,b)=>b.s-a.s);
+  let top=null;for(const c of cand.slice(0,3)){let best=-1,bdx=0;for(let dy=2*c.dy-1;dy<=2*c.dy+1;dy++)for(let dx=2*c.dx-2;dx<=2*c.dx+2;dx++){const sc=vlScore(live,c.kf.n,dx,dy);if(sc>best){best=sc;bdx=dx;}}
+    if(!top||best>top.s)top={kf:c.kf,s:best,dx:bdx};}
+  const other=cand.find(c=>c.kf!==top.kf&&Math.abs(Math.atan2(Math.sin(c.kf.yaw-top.kf.yaw),Math.cos(c.kf.yaw-top.kf.yaw)))>0.35);
+  top.yaw=top.kf.yaw-Math.atan(top.dx/fx);top.margin=top.s-(other?other.s:0);return top;}
+function vlNovel(p,pose){return !VL.frames.some(f=>Math.abs(Math.atan2(Math.sin(f.yaw-pose.yaw),Math.cos(f.yaw-pose.yaw)))<0.17&&Math.abs(f.pitch-pose.pitch)<0.26&&Math.hypot(f.x-p.x,f.z-p.z)<1.2);}
+function vlAdd(fr,pose,learned){if(VL.frames.length>=160){const i=VL.frames.findIndex(f=>f.learned);if(i<0)return;VL.frames.splice(i,1);}
+  VL.frames.push({Y:fr.Y,W:fr.W,H:fr.H,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),yaw:pose.yaw,pitch:pose.pitch,t:Date.now(),learned:!!learned,n:fr.n});VL.dirty=true;}
+async function vlLoad(id){VL.frames=[];VL.key='kf-'+id;try{const r=await mGet(VL.key);if(r&&r.frames)VL.frames=r.frames.map(f=>({...f}));}catch(_){}}
+async function vlSave(){if(!VL.dirty||!VL.key)return;VL.dirty=false;try{await mPut({id:VL.key,type:'kfset',t:Date.now(),frames:VL.frames.map(({n,h,...f})=>f)});}catch(_){}}
+// ---- per frame (called from svTick) ----
+function vlTick(now){if(!S||S.gate||!L.stream||editing||now-VL.last<(S.phase==='locate'?380:260))return;VL.last=now;
+  const pose=vlPose(),turn=cam.quaternion.angleTo(VL.prevQ);VL.prevQ.copy(cam.quaternion);if(turn>0.06)return; // moving too fast → blurred
+  if(Math.abs(pose.roll)>0.5)return;const fr=vlGrab(pose.roll);if(!fr)return;fr.n=vlNorm(fr.Y,fr.W,fr.H);if(fr.n.tex<3.2)return; // plain wall, nothing to recognise
+  if(S.phase!=='locate'){if(L.headLock&&pose.pitch>-1.05&&pose.pitch<0.6&&vlNovel(L.pos,pose)){vlAdd(fr,pose,false);vlUI();}return;}
+  const V=S.vl;if(!V||!VL.frames.length)return;
+  const g=L.geoAvg,near=V.located?{x:L.pos.x,z:L.pos.z,r:4}:g&&g.acc<20&&plan.geoFrame?{x:L.pos.x,z:L.pos.z,r:Math.max(5,g.acc*1.5+2)}:null;
+  const m=vlMatch(fr.n,pose,near);V.lastScore=m?m.s:0;
+  if(m&&m.s>0.42&&m.margin>0.04){const c=Math.atan2(Math.sin(m.yaw-pose.yaw),Math.cos(m.yaw-pose.yaw));V.votes.push({c,kf:m.kf,s:m.s,t:now});V.votes=V.votes.filter(v=>now-v.t<25000).slice(-24);
+    if(!V.located)vlEvaluate(V);else{V.recent.push(c);if(V.recent.length>5)V.recent.shift();const md=[...V.recent].sort((a,b)=>a-b)[V.recent.length>>1];
+      if(V.recent.length>=3&&Math.abs(md)>0.004&&V.recent.every(x=>Math.abs(x-md)<0.03)){L.dragYaw+=md*0.35;V.recent=V.recent.map(x=>x-md*0.35);} // keeps the walls pinned to the image (gyro drift)
+      if(m.s>0.6&&vlNovel(L.pos,pose))vlAdd(fr,pose,true);}}
+  vlUI();}
+function vlEvaluate(V){let best=null;for(const v of V.votes){const cl=V.votes.filter(w=>Math.abs(Math.atan2(Math.sin(w.c-v.c),Math.cos(w.c-v.c)))<0.045);if(!best||cl.length>best.length)best=cl;}
+  if(!best)return;const dirs=[];best.forEach(v=>{if(!dirs.some(y=>Math.abs(Math.atan2(Math.sin(y-v.kf.yaw),Math.cos(y-v.kf.yaw)))<0.3))dirs.push(v.kf.yaw);});
+  const ms=best.reduce((t,v)=>t+v.s,0)/best.length,g=L.geoAvg,gpsOk=g&&g.acc<=GPS_OK;
+  V.conf=Math.min(1,(Math.min(dirs.length,3)/3)*0.6+(Math.min(best.length,6)/6)*0.25+(gpsOk?0.15:0.08)*Math.min(1,ms/0.6));
+  if(dirs.length>=3&&best.length>=5)V.conf=Math.max(V.conf,1);
+  if(V.conf>=1){const c=Math.atan2(best.reduce((t,v)=>t+Math.sin(v.c),0),best.reduce((t,v)=>t+Math.cos(v.c),0));L.dragYaw+=c;
+    // position: views matched were taken near here; blend with GPS by accuracy
+    let wx=0,wz=0,ww=0;best.forEach(v=>{const w=v.s*v.s;wx+=v.kf.x*w;wz+=v.kf.z*w;ww+=w;});const kx=wx/ww,kz=wz/ww,ga=g?g.acc:99,wg=1/(ga*ga),wk=1/(1.6*1.6);
+    if(!plan.geoFrame||ga>25){L.pos.x=kx;L.pos.z=kz;}else{L.pos.x=(L.pos.x*wg+kx*wk)/(wg+wk);L.pos.z=(L.pos.z*wg+kz*wk)/(wg+wk);}
+    V.located=true;V.recent=[];S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
+function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
+  if(S.phase!=='locate'){el.hidden=!L.headLock;el.className='float learn';el.innerHTML=`${ic('camera')}<span>${VL.frames.length} views</span>`;return;}
+  const V=S.vl;if(!V||!VL.frames.length){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,(V.lastScore||.5)/.6))*100):Math.round(V.conf*100);
+  el.hidden=false;el.className='float'+(V.located?' ok':'');el.innerHTML=`<span>${V.located?'Pinned':'Identifying'}</span><i><b style="width:${V.located?100:p}%"></b></i><em>${p}%</em>`;}
+
 // AR view: the device goes on the wall in the middle of the screen, at its standard height
 function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
   const i=h.object.userData.wall,g=wallGeo(i),P=h.point;let t=((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L;t=Math.min(0.98,Math.max(0.02,t));
@@ -1441,7 +1519,7 @@ function svUI(){window.__survey=!!S;
 
 
 // ---- gallery (menu) ----
-async function renderGallery(){const el=$('gallery');if(!el)return;let all=[];try{all=await mAll();}catch(_){}
+async function renderGallery(){const el=$('gallery');if(!el)return;let all=[];try{all=(await mAll()).filter(m=>m.type!=='kfset');}catch(_){}
   el.innerHTML='';const add=document.createElement('button');add.className='thumb add';add.setAttribute('aria-label','Add photo');add.innerHTML=ic('plus');add.onclick=()=>{const f=$('fPhoto');if(f)f.click();};el.appendChild(add);all.slice().reverse().forEach(m=>{const b=document.createElement('button');b.className='thumb';b.setAttribute('aria-label',m.type+' '+new Date(m.t).toLocaleString());
     if(m.type==='photo'){const i=document.createElement('img');i.src=URL.createObjectURL(m.blob);b.appendChild(i);}else{b.innerHTML=ic('play-circle-outline')+'<span>Video</span>';}
     if(m.wall!=null)b.insertAdjacentHTML('beforeend',`<em>W${m.wall+1}</em>`);b.onclick=()=>openViewer(m);el.appendChild(b);});}
