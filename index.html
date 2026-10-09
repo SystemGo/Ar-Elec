@@ -250,6 +250,20 @@ body:not(.surveying) #nextBtn{bottom:calc(var(--sheetH) + 22px + var(--sb))}
 body:not(.surveying) #status{bottom:calc(var(--sheetH) + 92px + var(--sb))}
 body.surveying #sheet{display:none}
 #props{max-height:calc(100% - 64px - var(--sheetH) - 110px - var(--st) - var(--sb))}
+#gpsOv{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(36,36,44,.78);-webkit-backdrop-filter:grayscale(1) blur(3px);backdrop-filter:grayscale(1) blur(3px);color:#fff;font-family:var(--f-display,inherit)}
+#gpsOv[hidden]{display:none}
+.gpsBox{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;text-align:center}
+.gpsBox .fig8{width:180px;height:auto}
+.gpsBox .ph{offset-path:path('M80 45 C55 10 15 10 15 45 S55 80 80 45 S145 10 145 45 S105 80 80 45Z');offset-rotate:auto 90deg;animation:fig8 3.2s linear infinite}
+@keyframes fig8{from{offset-distance:0%}to{offset-distance:100%}}
+@media (prefers-reduced-motion:reduce){.gpsBox .ph{animation:none;offset-distance:25%}}
+.gpsBox b{font-size:19px;font-weight:600}
+.gpsChips{display:flex;gap:10px}
+.gpsChips span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.12);font-size:14px;font-variant-numeric:tabular-nums}
+.gpsChips span svg{width:18px;height:18px}
+.gpsChips span.ok{background:#22a35a}.gpsChips span.weak{background:#c98a12}.gpsChips span.off{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7)}
+.gpsBtns{display:flex;gap:22px;margin-top:6px}
+.gpsBtns .lnk{background:none;border:0;color:rgba(255,255,255,.8);font:500 15px inherit;padding:10px 6px;min-height:44px;text-decoration:underline;text-underline-offset:3px}
 #startOv{position:fixed;inset:0;z-index:8;display:grid;place-items:center;pointer-events:none;background:rgba(0,0,0,.25)}
 #startOv div{display:flex;flex-direction:column;align-items:center;gap:14px;color:#fff;font:500 15px var(--f-display);text-shadow:0 1px 3px rgba(0,0,0,.5)}
 #startOv svg{width:150px;height:auto;animation:sweep 2.4s ease-in-out infinite}
@@ -334,6 +348,11 @@ body.devbar #svRead{bottom:calc(140px + var(--sb))}
 <button class="float fab" id="svMenuBtn" hidden aria-label="Survey tools" aria-expanded="false"></button>
 <div class="float" id="svPop" hidden role="menu" aria-label="Survey tools"></div>
 <canvas class="float" id="miniMap" hidden aria-label="Traced plan"></canvas>
+<div id="gpsOv" hidden aria-live="polite"><div class="gpsBox">
+<svg class="fig8" viewBox="0 0 160 90" aria-hidden="true"><path d="M80 45 C55 10 15 10 15 45 S55 80 80 45 S145 10 145 45 S105 80 80 45Z" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="4 5"/><g class="ph"><rect x="-11" y="-19" width="22" height="38" rx="4" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="2.4"/><circle cx="0" cy="13" r="1.8" fill="#fff"/></g></svg>
+<b id="gpsT">Turn on GPS</b>
+<div class="gpsChips"><span id="gcGps"></span><span id="gcCmp"></span></div>
+<div class="gpsBtns"><button id="gpsSkip" class="lnk">Without GPS</button><button id="gpsCancel" class="lnk">Cancel</button></div></div></div>
 <div id="startOv" hidden aria-live="polite"><div><svg viewBox="0 0 160 90" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"><path d="M10 70 L50 40 L150 40 L110 70 Z" opacity=".9"/><rect x="66" y="10" width="26" height="46" rx="5" fill="rgba(255,255,255,.18)"/><circle cx="79" cy="50" r="2" fill="#fff" stroke="none"/></svg><span>Move phone to start</span></div></div>
 <div id="viewer" hidden role="dialog" aria-label="Photo or video"></div>
 
@@ -775,7 +794,7 @@ function renderHome(){const cur=projects.find(q=>q.id===curId);
   $('pjList').querySelectorAll('[data-pj]').forEach(x=>x.onclick=()=>openPjSheet(+x.dataset.pj));}
 function openPjSheet(id){if(id!==curId){saveNow();loadProject(id);refresh();renderHome();}const p=projects.find(q=>q.id===id);
   $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p);const has=p.plan.walls.length>0;
-  $('pjsActs').innerHTML=(has?row('paAR','video-3d','AR view'):'')+row('paScan','cube-scan',has?'Scan more rooms':'Scan')+(has?row('paPlan','floor-plan','Plan'):'')+row('paDel','trash-can-outline','Delete',null,'danger');
+  $('pjsActs').innerHTML=(has?row('paAR','video-3d','AR Viewer'):'')+row('paScan','cube-scan',has?'Scan more rooms':'Scan')+(has?row('paPlan','floor-plan','Plan'):'')+row('paDel','trash-can-outline','Delete',null,'danger');
   $('pjSheet').hidden=false;const close=()=>{$('pjSheet').hidden=true;};
   on('paAR','click',()=>{close();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
   on('paScan','click',()=>{close();startSurvey(!has);});
@@ -967,7 +986,7 @@ function stepForward(){const y=new THREE.Euler().setFromQuaternion(cam.quaternio
   if(!blocked(nx,L.pos.z))L.pos.x=nx;if(!blocked(L.pos.x,nz))L.pos.z=nz;}
 function onGeo(p){const c=p.coords;L.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy};
   if(S&&S.phase!=='locate'&&c.accuracy<30&&(!plan.geo||c.accuracy<plan.geo.acc)){plan.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:L.pos.x,z:L.pos.z};save();}
-  recordGps(c);gpsNav(c);}
+  recordGps(c);gpsNav(c);if(S&&S.gate)gateUI(gateState());}
 const _z=new THREE.Vector3(0,0,1),_qt=new THREE.Quaternion(),_e=new THREE.Euler(),_q0=new THREE.Quaternion(),_q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5));
 function screenAngle(){return ((screen.orientation&&screen.orientation.angle)||window.orientation||0)*Math.PI/180;}
 function tickLive(dt,frame){
@@ -1063,21 +1082,18 @@ async function startSurvey(fresh){
   S={phase:fresh?'height':'corners',low:null,chain:[],chainWall0:plan.walls.length,rec:null,fresh,assist:true};
   await startSensor({survey:true,fresh});
   if(fresh){L.pos.set(0,EYE,0);L.calYaw=0;L.yawOff=null;}
-  aim.visible=true;svRender();svUI();S.intro={t:performance.now(),a:null};$('startOv').hidden=false;
-  flash(fresh?'Mark the floor line':'Mark a corner');}
+  aim.visible=true;svRender();svUI();openGate();}
 async function startLocate(){
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
   S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
-  await startSensor({survey:true});aim.visible=true;svUI();S.intro={t:performance.now(),a:null};$('startOv').hidden=false;
-  if(L.geo&&!L.geo.err&&L.geo.acc<=30)applyFix(L.geo);
-  flash(plan.geoFrame?'Locating…':'Align on a corner');}
+  await startSensor({survey:true});aim.visible=true;svUI();openGate();}
 function enterLocate(){const keep=S?S.assist:true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:keep,needFix:false,align:null};
   clear(svGroup);prevLine.visible=false;setAimLabel('');xray=true;build();svUI();}
 function finishSurvey(){if(!S)return;
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
-  $('startOv').hidden=true;const n=plan.walls.length;S=null;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
+  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
   goHome();if(n)flash('Saved');}
 
@@ -1096,12 +1112,32 @@ function fitGeoFrame(){const T=(plan.gpsTrack||[]).filter(s=>s.acc<=25);if(!T.le
   return{lat0:lat,lon0:lon,x0:x,z0:z,theta,method,acc:Math.min(...T.map(s=>s.acc)),n:T.length};}
 function clampInside(x,z){const b=bounds();if(x>=b.x0&&x<=b.x1&&z>=b.y0&&z<=b.y1&&!blocked(x,z))return[x,z];let best=[b.cx,b.cy],bd=Infinity;
   for(let i=0;i<=24;i++)for(let j=0;j<=24;j++){const px=b.x0+b.w*i/24,pz=b.y0+b.h*j/24;if(blocked(px,pz))continue;const d=Math.hypot(px-x,pz-z);if(d<bd){bd=d;best=[px,pz];}}return best;}
-function applyFix(g){if(!plan.geoFrame||!S)return;const[x,z]=geoToPlan(g.lat,g.lon);const c=clampInside(x,z);L.pos.x=c[0];L.pos.z=c[1];S.needFix=false;
+// pin the building exactly where it is in the world: GPS gives the position, the compass the heading — never re-centred
+function applyFix(g){if(!plan.geoFrame||!S)return;const[x,z]=geoToPlan(g.lat,g.lon);L.pos.x=x;L.pos.z=z;cam.position.x=x;cam.position.z=z;S.needFix=false;
+  if(plan.geoFrame.method!=='none'&&L.ori&&L.ori.abs){L.yawOff=plan.geoFrame.theta;L.dragYaw=0;L.yawSrc='abs';L.qInit=false;}
   flash(`GPS ±${Math.round(g.acc)} m`);}
+// ---- GPS gate: the screen stays grey until GPS (precise) and compass are on ----
+const GPS_OK=15;
+function gateState(){const g=L.geo;const gps=!g?'wait':g.err?'off':g.acc<=GPS_OK?'ok':'weak';const cmp=!L.ori?'wait':L.ori.abs?'ok':'weak';return{gps,cmp,acc:g&&!g.err?g.acc:null};}
+function openGate(){if(!S)return;S.gate={t0:performance.now(),okT:0,ui:0};$('startOv').hidden=true;$('gpsOv').hidden=false;
+  gateUI(gateState());}
+function gateUI(st){const T={off:'Turn on GPS',wait:'Waiting for GPS',weak:'GPS not precise'};
+  $('gpsT').textContent=st.gps!=='ok'?T[st.gps]:st.cmp!=='ok'?'Calibrate compass':'GPS ready';
+  const g=$('gcGps');g.className=st.gps==='wait'?'off':st.gps;g.innerHTML=ic('crosshairs-gps')+(st.acc!=null?`±${Math.round(st.acc)} m`:st.gps==='off'?'Off':'…');
+  const c=$('gcCmp');c.className=st.cmp==='wait'?'off':st.cmp;c.innerHTML=ic('compass-outline')+(st.cmp==='ok'?'On':st.cmp==='weak'?'Off':'…');}
+function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=gateState();gateUI(st);
+  if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
+function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
+  if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geo);
+  else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
+    if(S.phase==='locate'){S.needFix=false;S.alignMode=true;flash('Aim at a corner');}}
+  if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
+$('gpsSkip').addEventListener('click',()=>passGate(false));
+$('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
 function recordGps(c){if(!S||S.phase==='locate'||c.accuracy>25)return;const T=plan.gpsTrack||(plan.gpsTrack=[]);const last=T[T.length-1];const now=Date.now();
   if(!last||Math.hypot(last.x-L.pos.x,last.z-L.pos.z)>1||now-last.t>8000){T.push({lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),t:now});if(T.length>300)T.shift();}}
 function gpsNav(c){const f=plan.geoFrame;if(!f)return;
-  if(S&&S.phase==='locate'){if(S.needFix&&c.accuracy<=30)applyFix({lat:c.latitude,lon:c.longitude,acc:c.accuracy});return;}
+  if(S&&S.phase==='locate'){if(S.needFix&&!S.gate&&c.accuracy<=GPS_OK)applyFix({lat:c.latitude,lon:c.longitude,acc:c.accuracy});return;}
   else if(S||c.accuracy>6||L.lockPos)return;
   const[x,z]=geoToPlan(c.latitude,c.longitude);const p=clampInside(x,z);if(Math.hypot(p[0]-L.pos.x,p[1]-L.pos.z)<c.accuracy*0.6)return;const w=0.06;L.pos.x+=(p[0]-L.pos.x)*w;L.pos.z+=(p[1]-L.pos.z)*w;}
 
@@ -1242,7 +1278,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${g.L.toFixed(2)} m`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();
+function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.assist&&L.stream&&now-LD.t>140){LD.t=now;LD.res=detectLines();drawLines(LD.res);}else if(!S.assist&&LD.res){LD.res=null;drawLines(null);}
@@ -1321,7 +1357,7 @@ function svUI(){const b=$('scanBtn');window.__survey=!!S;
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
   on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position locked':'Position free');});
   on('svAssist','click',()=>{S.assist=!S.assist;svUI();done();flash(S.assist?'Line assist on':'Line assist off');});
-  on('svGps','click',()=>{done();if(L.geo&&!L.geo.err){S.align=null;applyFix(L.geo);}else{S.needFix=true;flash('Waiting for GPS…');}});}
+  on('svGps','click',()=>{done();S.align=null;S.alignMode=false;openGate();});}
 $('svMenuBtn').innerHTML=ic('menu');$('svMenuBtn').addEventListener('click',e=>{e.stopPropagation();const o=$('svPop').hidden;$('svPop').hidden=!o;$('svMenuBtn').setAttribute('aria-expanded',o);});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#svPop,#svMenuBtn')){$('svPop').hidden=true;$('svMenuBtn').setAttribute('aria-expanded','false');}},true);
 $('doneBtn').innerHTML=ic('chevron-right');$('doneBtn').addEventListener('click',()=>finishSurvey());
@@ -1339,7 +1375,7 @@ function openViewer(m){const v=$('viewer');const url=URL.createObjectURL(m.blob)
   $('vDel').onclick=async()=>{await mDel(m.id);if(plan.wallTex)for(const k in plan.wallTex)if(plan.wallTex[k]===m.id)delete plan.wallTex[k];delete texCache[m.id];save();build();v.hidden=true;v.innerHTML='';renderGallery();};}
 
 $('nextBtn').insertAdjacentHTML('beforeend',ic('arrow-right'));
-$('hmNew').innerHTML=ic('plus')+'<span>New project</span>';$('hmAR').innerHTML=ic('video-3d')+'<span>AR view</span>';
+$('hmNew').innerHTML=ic('plus')+'<span>New project</span>';$('hmAR').innerHTML=ic('video-3d')+'<span>AR Viewer</span>';
 $('hmNew').onclick=()=>newProject();$('pjSheet').addEventListener('click',e=>{if(e.target.id==='pjSheet')$('pjSheet').hidden=true;});$('hmAR').onclick=()=>{startLocate().catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();});};
 paintIcons();size();setCam(true);themeScene();refresh();goHome();renderer.setAnimationLoop(loop);
 })();
