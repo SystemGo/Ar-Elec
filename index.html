@@ -265,6 +265,8 @@ body.editing #lineCv{display:none}
 #wallSheet .stp{display:flex;align-items:center;gap:4px}
 #wallSheet .stp button{width:36px;height:40px;border:0;border-radius:10px;background:var(--surface-2);font:600 18px var(--f-display);cursor:pointer;flex:none}
 #wallSheet .stp input{text-align:center;padding:9px 4px}
+#wallSheet .wadd{display:grid;grid-template-columns:1fr 1fr;gap:8px}#wallSheet .wadd .btn{justify-content:center}
+#wallSheet .whd .seg{flex:1;margin-right:10px}
 body.editing #sheet,body.surveying #sheet{display:none}
 body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 
@@ -337,6 +339,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 (()=>{
 // ---------- Model ----------
 let editing=false,wsel=null,wdrag=null,editPrev3d=true;
+let lensFov=67;try{lensFov=parseFloat(localStorage.getItem('arelec-fov'))||67;}catch(_){} // long-side field of view of the back camera
 const TYPES={
   panel:  {ic:'fuse',label:'Electrical panel',short:'TAB',h:1.30,kind:null,  plate:[0.46,0.60,0.12],col:'#d9dcd6'},
   socket: {ic:'power-socket-fr',label:'Socket 2P+T',     short:'PC', h:0.30,kind:'power',plate:[0.085,0.085,0.02],col:'#f2f0ea'},
@@ -530,7 +533,7 @@ function tickFly(dt){if(!fly)return;needsRender=true;fly.t=Math.min(1,fly.t+dt/0
 function rotateBy(dx,dy){needsRender=true;if(fps){yaw+=dx*0.0045;pitch=Math.max(-1.45,Math.min(1.45,pitch+dy*0.0045));applyLook();}
   else{orb.theta-=dx*0.008;orb.phi=Math.max(0.08,Math.min(1.5,orb.phi-dy*0.008));applyOrbit();}}
 function zoomBy(f){needsRender=true; // f>1 zoom in
-  if(fps){cam.fov=Math.max(20,Math.min(95,cam.fov/f));cam.updateProjectionMatrix();}
+  if(fps){if(live)return;cam.fov=Math.max(20,Math.min(95,cam.fov/f));cam.updateProjectionMatrix();}
   else{orb.r=Math.max(0.8,Math.min(60,orb.r/f));applyOrbit();}}
 
 // ---------- Gestures ----------
@@ -561,7 +564,7 @@ function doubleTap(x,y){castAt(x,y);
   if(fps){let tx=P.x,tz=P.z;if(h.object!==floorMesh){const dx=cam.position.x-P.x,dz=cam.position.z-P.z,L=Math.hypot(dx,dz)||1;tx=P.x+dx/L*0.8;tz=P.z+dz/L*0.8;}
     for(let i=0;i<25&&blocked(tx,tz);i++){tx+=(cam.position.x-tx)*0.15;tz+=(cam.position.z-tz)*0.15;}
     if(blocked(tx,tz)){flash('Too close to a wall to stand there.');return;}
-    if(live==='sensor'){L.pos.set(tx,EYE,tz);flash('Position corrected.');return;}if(live)return;
+    if(live==='sensor'){if(S)return;L.pos.set(tx,EYE,tz);flash('Position corrected.');return;}if(live)return;
     flyTo({mode:'fps',p0:cam.position.clone(),p1:new THREE.Vector3(tx,EYE,tz)});}
   else flyTo({mode:'orbit',t0:orb.target.clone(),t1:P,r0:orb.r,r1:Math.min(orb.r,4)});}
 // finger-friendly picking: nearest visible device within 34 px of the tap
@@ -601,13 +604,13 @@ function addOpening(type){if(!pendingOp)return;const D=OPEN[type];const id=ops()
 
 // ---------- 2D plan ----------
 const svg=$('plan');let draft=null,bgImg=null,bgW=10,drawing=false,hover=null;
-let frozenVB=null;function planVB(){if((drawing||editing)&&frozenVB)return frozenVB;const b=bounds();const pad=1.6;return [b.x0-pad,b.y0-pad,Math.max(b.w,6)+pad*2,Math.max(b.h,4)+pad*2];}
+let osel=null;
 function drawPlan(){
-  const [vx,vy,vw,vh]=planVB(); svg.setAttribute('viewBox',`${vx} ${vy} ${vw} ${vh}`); svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  const V=curPV(),{W:SW,H:SH}=svgSize(),vw=SW/V.s,vh=SH/V.s,vx=V.cx-vw/2,vy=V.cy-vh/2,RT=V.rot; svg.setAttribute('viewBox',`${vx} ${vy} ${vw} ${vh}`); svg.setAttribute('preserveAspectRatio','xMidYMid meet');
   const ink=tok('--plan-ink'),grid=tok('--grid'),acc=tok('--accent');let s='';
   if(bgImg)s+=`<image href="${bgImg}" x="0" y="0" width="${bgW}" opacity="0.45" preserveAspectRatio="xMinYMin meet"/>`;
-  const muted=tok('--muted'),fg=tok('--fg'),surf=tok('--surface'),bgc=tok('--view-bg'),B=bounds(),F='Inter,sans-serif',k=Math.max(vw/innerWidth,vh/innerHeight),fs=11*k;
-  s+=`<defs><pattern id="dots" width="0.5" height="0.5" patternUnits="userSpaceOnUse"><circle cx="0.25" cy="0.25" r="${1.2*k}" fill="${tok('--muted')}" opacity=".35"/></pattern></defs><rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="url(#dots)"/>`;
+  const muted=tok('--muted'),fg=tok('--fg'),surf=tok('--surface'),bgc=tok('--view-bg'),B=bounds(),F='Inter,sans-serif',k=1/V.s,fs=11*k;
+  s+=`<defs><pattern id="dots" width="0.5" height="0.5" patternUnits="userSpaceOnUse"><circle cx="0.25" cy="0.25" r="${1.2*k}" fill="${tok('--muted')}" opacity=".35"/></pattern></defs><rect x="${vx-vw}" y="${vy-vh}" width="${vw*3}" height="${vh*3}" fill="url(#dots)"/><g id="pvg" transform="rotate(${RT} ${V.cx} ${V.cy})">`;
   (plan.rooms||[]).forEach(r=>{if(r.pts.length<3)return;s+=`<polygon points="${r.pts.map(p=>p.join(',')).join(' ')}" fill="${surf}" opacity=".7"/>`;});
   plan.walls.forEach(([[ax,ay],[bx,by]])=>{s+=`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${ink}" stroke-width="${3.2*k}" stroke-linecap="round"/>`;});
   (plan.openings||[]).forEach(o=>{if(o.wall>=plan.walls.length)return;const g=wallGeo(o.wall),c=o.t*g.L,h=o.w/2;
@@ -623,32 +626,78 @@ function drawPlan(){
     if(!ed){s+=`<circle cx="${x}" cy="${y}" r="${7*k}" fill="${surf}" fill-opacity=".6" stroke="${ink}" stroke-width="${1.5*k}"/>`;return;}
     const ca=cornerAngle(x,y),act=wdrag&&wdrag.refs&&Math.abs(wdrag.start[0]-x)<2e-3&&Math.abs(wdrag.start[1]-y)<2e-3;
     if(ca){const ox=x+Math.cos(ca.bis)*30*k,oy=y+Math.sin(ca.bis)*30*k,t=`${Math.round(ca.a*10)/10}°`,bw=t.length*6.4+12,sq=Math.abs(ca.a-90)<0.05;
-      s+=`<g transform="translate(${ox} ${oy}) scale(${k})"><rect x="${-bw/2}" y="-10" width="${bw}" height="20" rx="10" fill="${act?fg:sq?surf:fg}" stroke="${fg}" stroke-width="1"/><text x="0" y="0.5" font-size="11" font-weight="600" font-family="${F}" fill="${act||!sq?surf:fg}" text-anchor="middle" dominant-baseline="middle">${t}</text></g>`;}
+      s+=`<g transform="translate(${ox} ${oy}) rotate(${-RT}) scale(${k})"><rect x="${-bw/2}" y="-10" width="${bw}" height="20" rx="10" fill="${act?fg:sq?surf:fg}" stroke="${fg}" stroke-width="1"/><text x="0" y="0.5" font-size="11" font-weight="600" font-family="${F}" fill="${act||!sq?surf:fg}" text-anchor="middle" dominant-baseline="middle">${t}</text></g>`;}
     s+=`<g class="hdl${act?' drag':''}" data-c="${x},${y}"><circle cx="${x}" cy="${y}" r="${22*k}" fill="transparent"/><circle cx="${x}" cy="${y}" r="${(act?11:9)*k}" fill="${act?fg:surf}" stroke="${fg}" stroke-width="${2.2*k}"/></g>`;}));
   // boxed dimensions outside each wall
   plan.walls.forEach((w,i)=>{const g=wallGeo(i);let nx=g.nx,ny=g.ny;if((g.mx-B.cx)*nx+(g.my-B.cy)*ny<0){nx=-nx;ny=-ny;}const o=22*k,t=4*k;
     const ax=g.ax+nx*o,ay=g.ay+ny*o,bx=g.bx+nx*o,by=g.by+ny*o;
     s+=`<g stroke="${muted}" stroke-width="${0.8*k}"><line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}"/><line x1="${ax-nx*t}" y1="${ay-ny*t}" x2="${ax+nx*t}" y2="${ay+ny*t}"/><line x1="${bx-nx*t}" y1="${by-ny*t}" x2="${bx+nx*t}" y2="${by+ny*t}"/></g>`;
-    let ang=Math.atan2(g.dy,g.dx)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;const txt=`${g.L.toFixed(2)} m`,bw=txt.length*6.6+10;
+    let ang=Math.atan2(g.dy,g.dx)*180/Math.PI+RT;ang=((ang%360)+540)%360-180;if(ang>90)ang-=180;if(ang<-90)ang+=180;ang-=RT;const txt=`${g.L.toFixed(2)} m`,bw=txt.length*6.6+10;
     s+=`<g transform="translate(${g.mx+nx*o} ${g.my+ny*o}) rotate(${ang}) scale(${k})"><rect x="${-bw/2}" y="-9.5" width="${bw}" height="19" fill="${surf}" stroke="${fg}" stroke-width="0.8"/><text x="0" y="0.5" font-size="11" font-family="${F}" fill="${fg}" text-anchor="middle" dominant-baseline="middle">${txt}</text></g>`;});
   // room names with area
   (plan.rooms||[]).forEach(r=>{if(r.pts.length<3)return;const cx=r.pts.reduce((t,p)=>t+p[0],0)/r.pts.length,cy=r.pts.reduce((t,p)=>t+p[1],0)/r.pts.length;
-    s+=`<g transform="translate(${cx} ${cy}) scale(${k})"><text x="0" y="-3" font-size="13" font-weight="500" font-family="${F}" fill="${fg}" text-anchor="middle">${esc(r.name)}</text><text x="0" y="12" font-size="11" font-family="${F}" fill="${muted}" text-anchor="middle">(S=${polyArea(r.pts).toFixed(2)} m²)</text></g>`;});
+    s+=`<g transform="translate(${cx} ${cy}) rotate(${-RT}) scale(${k})"><text x="0" y="-3" font-size="13" font-weight="500" font-family="${F}" fill="${fg}" text-anchor="middle">${esc(r.name)}</text><text x="0" y="12" font-size="11" font-family="${F}" fill="${muted}" text-anchor="middle">(S=${polyArea(r.pts).toFixed(2)} m²)</text></g>`;});
   devs.forEach(d=>{const{p}=devPos(d,0.08);const T=TYPES[d.type];const c=T.kind?KIND[T.kind].cols[0]:ink;
     s+=`<g><circle cx="${p.x}" cy="${p.z}" r="${4.5*k}" fill="${d.id===sel?acc:c}" stroke="${tok('--surface')}" stroke-width="0.025"/></g>`;});
   if(draft){s+=`<circle cx="${draft[0]}" cy="${draft[1]}" r="0.08" fill="${acc}"/>`;}
   if(draft&&hover)s+=`<line x1="${draft[0]}" y1="${draft[1]}" x2="${hover[0]}" y2="${hover[1]}" stroke="${acc}" stroke-width="0.05" stroke-dasharray="0.15 0.1"/><text x="${hover[0]+0.15}" y="${hover[1]-0.15}" font-size="0.22" fill="${acc}" font-family="Inter,sans-serif">${Math.hypot(hover[0]-draft[0],hover[1]-draft[1]).toFixed(2)} m</text>`;
-  svg.innerHTML=s;
+  if(editing)(plan.openings||[]).forEach(o=>{if(o.wall>=plan.walls.length)return;const g=wallGeo(o.wall),c=o.t*g.L,x=g.ax+g.ux*c,y=g.ay+g.uy*c,on=o.id===osel,lb=`${o.type==='door'?'D':'W'} ${o.w.toFixed(2)}`,bw=lb.length*6.6+14;
+    s+=`<g data-o="${o.id}" class="hdl"><line x1="${x-g.ux*o.w/2}" y1="${y-g.uy*o.w/2}" x2="${x+g.ux*o.w/2}" y2="${y+g.uy*o.w/2}" stroke="transparent" stroke-width="${26*k}"/><g transform="translate(${x} ${y}) rotate(${-RT}) scale(${k})"><rect x="${-bw/2}" y="-11" width="${bw}" height="22" rx="11" fill="${on?fg:surf}" stroke="${fg}" stroke-width="1.6"/><text x="0" y="0.5" font-size="11" font-weight="600" font-family="${F}" fill="${on?surf:fg}" text-anchor="middle" dominant-baseline="middle">${lb}</text></g></g>`;});
+  s+='</g>';svg.innerHTML=s;
 }
-function svgPt(x,y){const pt=svg.createSVGPoint();pt.x=x;pt.y=y;const q=pt.matrixTransform(svg.getScreenCTM().inverse());let X=Math.round(q.x*10)/10,Y=Math.round(q.y*10)/10;
+function svgPt(x,y){const q=s2w(x,y,curPV());let X=Math.round(q[0]*10)/10,Y=Math.round(q[1]*10)/10;
   if(draft){if(Math.abs(X-draft[0])<0.25)X=draft[0];if(Math.abs(Y-draft[1])<0.25)Y=draft[1];}return[X,Y];}
-let sDown=null;
-svg.addEventListener('pointerdown',e=>{e.preventDefault();sDown=[e.clientX,e.clientY];});
-svg.addEventListener('pointermove',e=>{if(!drawing||e.pointerType==='touch')return;hover=svgPt(e.clientX,e.clientY);drawPlan();});
-svg.addEventListener('pointerup',e=>{if(!sDown)return;const moved=Math.hypot(e.clientX-sDown[0],e.clientY-sDown[1]);sDown=null;if(moved>10)return;
-  if(!drawing){flash('Open the menu → Draw walls to edit the plan.');return;}
-  const p=svgPt(e.clientX,e.clientY);if(draft&&(p[0]!==draft[0]||p[1]!==draft[1])){plan.walls.push([draft,p]);save();}
-  draft=p;hover=null;drawPlan();setStatus();});
+// ---------- 2D view: one finger pans, two fingers zoom + rotate, double tap fits; inertia and snapping to 90° ----------
+let PV=null;
+function svgSize(){const r=svg.getBoundingClientRect();return{W:r.width||innerWidth,H:r.height||innerHeight,L:r.left,T:r.top};}
+function fitPV(){const b=bounds(),pad=1.2,{W,H}=svgSize(),top=78,bot=editing?250:200,ww=Math.max(b.w,4)+pad*2,hh=Math.max(b.h,3)+pad*2;
+  const s=Math.max(6,Math.min(W/ww,(H-top-bot)/hh));return{cx:b.cx,cy:b.cy+((bot-top)/2)/s,s,rot:0};}
+function curPV(){return PV||fitPV();}
+const rotV=(x,y,deg)=>{const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return[x*c-y*s,x*s+y*c];};
+function s2w(x,y,V){const{W,H,L,T}=svgSize(),[dx,dy]=rotV((x-L-W/2)/V.s,(y-T-H/2)/V.s,-V.rot);return[V.cx+dx,V.cy+dy];}
+function keepAt(V,wp,x,y){const{W,H,L,T}=svgSize(),[dx,dy]=rotV((x-L-W/2)/V.s,(y-T-H/2)/V.s,-V.rot);V.cx=wp[0]-dx;V.cy=wp[1]-dy;return V;}
+let pvAnim=null;
+function animPV(to,dur=360){const from={...curPV()};if(pvAnim)cancelAnimationFrame(pvAnim);let dr=to.rot-from.rot;dr=((dr%360)+540)%360-180;const t0=performance.now();
+  const st=now=>{const t=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-t,3);PV={cx:from.cx+(to.cx-from.cx)*e,cy:from.cy+(to.cy-from.cy)*e,s:from.s*Math.pow(to.s/from.s,e),rot:from.rot+dr*e};drawPlan();
+    pvAnim=t<1?requestAnimationFrame(st):null;if(t>=1&&to.fit)PV=null;};pvAnim=requestAnimationFrame(st);}
+const PG={ptrs:new Map(),mode:null,lastTap:null,inert:null,vel:[0,0],lt:0};
+function pgPair(){const[a,b]=[...PG.ptrs.values()];return{d:Math.hypot(b[0]-a[0],b[1]-a[1]),a:Math.atan2(b[1]-a[1],b[0]-a[0]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2]};}
+function pgStartPinch(){const V={...curPV()},p=pgPair();PG.mode='pinch';PG.V0=V;PG.p0=p;PG.wm=s2w(p.m[0],p.m[1],V);}
+svg.addEventListener('pointerdown',e=>{e.preventDefault();if(pvAnim){cancelAnimationFrame(pvAnim);pvAnim=null;}if(PG.inert){cancelAnimationFrame(PG.inert);PG.inert=null;}
+  PG.ptrs.set(e.pointerId,[e.clientX,e.clientY]);try{svg.setPointerCapture(e.pointerId);}catch(_){}
+  if(PG.ptrs.size===2){if(PG.mode==='corner'||PG.mode==='op'){save();build();}pgStartPinch();return;}
+  if(PG.ptrs.size>2)return;
+  PG.down=[e.clientX,e.clientY];PG.t0=performance.now();PG.mode='maybe';PG.target=null;
+  if(editing){const o=e.target.closest('[data-o]'),h=o?null:e.target.closest('.hdl'),w=e.target.closest('[data-w]');
+    if(h){const[x,y]=h.dataset.c.split(',').map(Number);wdrag={refs:cornerRefs(x,y),start:[x,y],moved:false};PG.mode='corner';drawPlan();return;}
+    if(o){PG.mode='op';PG.op=ops().find(q=>q.id===+o.dataset.o);PG.moved=false;return;}
+    PG.target=w?{w:+w.dataset.w}:null;}});
+svg.addEventListener('pointermove',e=>{if(!PG.ptrs.has(e.pointerId)){if(drawing&&e.pointerType!=='touch'){hover=svgPt(e.clientX,e.clientY);drawPlan();}return;}
+  e.preventDefault();PG.ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+  if(PG.mode==='pinch'&&PG.ptrs.size>=2){const p=pgPair(),V0=PG.V0;let rot=V0.rot+(p.a-PG.p0.a)*180/Math.PI;
+    const V={s:Math.max(4,Math.min(900,V0.s*p.d/Math.max(1,PG.p0.d))),rot,cx:0,cy:0};keepAt(V,PG.wm,p.m[0],p.m[1]);PV=V;drawPlan();return;}
+  if(PG.mode==='corner'){const p=snapCorner(s2w(e.clientX,e.clientY,curPV()),wdrag.start);wdrag.moved=true;moveCorner(wdrag.refs,p);wdrag.start=p;drawPlan();if(wsel!=null)renderWallSheet();return;}
+  if(PG.mode==='op'){const o=PG.op;if(!o)return;const g=wallGeo(o.wall),wp=s2w(e.clientX,e.clientY,curPV());let t=((wp[0]-g.ax)*g.ux+(wp[1]-g.ay)*g.uy)/g.L;
+    const half=(o.w/2+0.05)/g.L;t=Math.min(1-half,Math.max(half,t));if(!opsOn(o.wall).some(q=>q!==o&&Math.abs(q.t-t)*g.L<(q.w+o.w)/2)){o.t=+t.toFixed(4);PG.moved=true;drawPlan();}return;}
+  if(PG.mode==='maybe'&&Math.hypot(e.clientX-PG.down[0],e.clientY-PG.down[1])>8){PG.mode='pan';PG.V0={...curPV()};PG.wp=s2w(PG.down[0],PG.down[1],PG.V0);PG.vel=[0,0];PG.lt=performance.now();PG.lp=[e.clientX,e.clientY];}
+  if(PG.mode==='pan'){const V={...PG.V0};keepAt(V,PG.wp,e.clientX,e.clientY);PV=V;drawPlan();const now=performance.now(),dt=Math.max(1,now-PG.lt);
+    PG.vel=[(e.clientX-PG.lp[0])/dt*0.6+PG.vel[0]*0.4,(e.clientY-PG.lp[1])/dt*0.6+PG.vel[1]*0.4];PG.lt=now;PG.lp=[e.clientX,e.clientY];}});
+function pgEnd(e,cancel){if(!PG.ptrs.delete(e.pointerId))return;const mode=PG.mode;
+  if(mode==='pinch'){if(PG.ptrs.size===1){PG.mode='idle';}else if(!PG.ptrs.size){PG.mode=null;const V=curPV(),n=Math.round(V.rot/90)*90;if(Math.abs(V.rot-n)<7&&V.rot!==n)animPV({...V,rot:n},220);}return;}
+  if(PG.ptrs.size){return;}PG.mode=null;
+  if(mode==='corner'){const d=wdrag;wdrag=null;if(d&&d.moved){save();build();}drawPlan();return;}
+  if(mode==='op'){if(PG.moved){save();build();}osel=PG.op?PG.op.id:null;wsel=null;drawPlan();renderWallSheet();return;}
+  if(mode==='pan'){if(performance.now()-PG.lt<80){let v=PG.vel.slice();const step=()=>{v=[v[0]*0.92,v[1]*0.92];if(Math.hypot(v[0],v[1])<0.02){PG.inert=null;return;}
+      const V={...curPV()},[dx,dy]=rotV(v[0]*16/V.s,v[1]*16/V.s,-V.rot);V.cx-=dx;V.cy-=dy;PV=V;drawPlan();PG.inert=requestAnimationFrame(step);};PG.inert=requestAnimationFrame(step);}return;}
+  if(mode!=='maybe'||cancel)return;
+  const now=performance.now(),x=e.clientX,y=e.clientY;
+  if(PG.lastTap&&now-PG.lastTap.t<320&&Math.hypot(x-PG.lastTap.x,y-PG.lastTap.y)<30){PG.lastTap=null;animPV({...fitPV(),fit:true});return;}
+  PG.lastTap={t:now,x,y};
+  if(editing){const tg=PG.target;osel=null;if(tg){wsel=tg.w;const g=wallGeo(wsel),wp=s2w(x,y,curPV());PG.tapT=Math.min(.95,Math.max(.05,((wp[0]-g.ax)*g.ux+(wp[1]-g.ay)*g.uy)/g.L));}else wsel=null;drawPlan();renderWallSheet();return;}
+  if(drawing){const p=svgPt(x,y);if(draft&&(p[0]!==draft[0]||p[1]!==draft[1])){plan.walls.push([draft,p]);save();}draft=p;hover=null;drawPlan();setStatus();}}
+svg.addEventListener('pointerup',e=>pgEnd(e,false));svg.addEventListener('pointercancel',e=>pgEnd(e,true));
+svg.addEventListener('wheel',e=>{e.preventDefault();const V={...curPV()},wp=s2w(e.clientX,e.clientY,V);V.s=Math.max(4,Math.min(900,V.s*Math.exp(-e.deltaY*0.0015)));keepAt(V,wp,e.clientX,e.clientY);PV=V;drawPlan();},{passive:false});
+
 
 // ---------- Scan (simulated) ----------
 let scanPts=null,scanT=0;
@@ -782,7 +831,7 @@ function renderMenu(){const tab=menuTab||(['plan','devices','wiring'][step-1]);l
   if(tab==='plan'){
     h+=grp('',row('bLive','cube-scan','Scan room')+row('bDraw','vector-polyline','Draw walls')+`<label class="li" for="fImg">${ic('image-plus-outline')}<span>Import plan</span>${ic('chevron-right')}</label>`+row('bScan','play-circle-outline','Demo scan'));
     if(bgImg)h+=grp('',inRow('iBgW','arrow-expand-horizontal','Image width (m)',bgW,0.1,1,100));
-    h+=grp('Dimensions',inRow('iCeil','arrow-expand-vertical','Ceiling height',plan.height,0.05,2,6)+inRow('iThick','wall','Wall thickness',plan.thick,0.01,0.05,0.5)+inRow('iPh','cellphone','Phone height',hPhone.toFixed(2),0.05,0.5,2.2));
+    h+=grp('Dimensions',inRow('iCeil','arrow-expand-vertical','Ceiling height',plan.height,0.05,2,6)+inRow('iThick','wall','Wall thickness',plan.thick,0.01,0.05,0.5)+inRow('iPh','cellphone','Phone height',hPhone.toFixed(2),0.05,0.5,2.2)+inRow('iFov','camera','Camera angle (°)',lensFov.toFixed(1),0.5,40,110));
     h+=grp('',row('bReset','refresh','Reload sample')+row('bClear','delete-sweep-outline','Clear plan',null,'danger'));
     h+='<input id="fImg" type="file" accept="image/*" hidden>';}
   if(tab==='devices'){
@@ -806,11 +855,12 @@ function renderMenu(){const tab=menuTab||(['plan','devices','wiring'][step-1]);l
   const num=v=>parseFloat(String(v).replace(',','.'));
   on('bLive','click',()=>{openMenu(false);askSurvey();});
   on('bScan','click',()=>{openMenu(false);startScan();});
-  on('bDraw','click',()=>{openMenu(false);sel=null;tool=null;drawing=true;draft=null;const b=bounds(),W=Math.max(b.w+3,10),H=Math.max(b.h+3,10);frozenVB=[b.cx-W/2,b.cy-H/2,W,H];setView(false);setStatus();});
+  on('bDraw','click',()=>{openMenu(false);sel=null;tool=null;drawing=true;draft=null;PV=null;setView(false);setStatus();});
   on('fImg','change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{bgImg=r.result;renderMenu();drawPlan();};r.readAsDataURL(f);});
   on('iBgW','change',e=>{bgW=Math.max(1,num(e.target.value)||10);drawPlan();});
   on('iCeil','change',e=>{plan.height=Math.min(6,Math.max(2,num(e.target.value)||2.5));devs.forEach(d=>d.h=Math.min(d.h,plan.height-0.1));save();refresh();});
   on('iThick','change',e=>{plan.thick=Math.min(.5,Math.max(.05,num(e.target.value)||.15));save();refresh();});
+  on('iFov','change',e=>{const v=num(e.target.value);if(v>=40&&v<=110){lensFov=v;try{localStorage.setItem('arelec-fov',v)}catch(_){}}});
   on('iPh','change',e=>{hPhone=Math.min(2.2,Math.max(0.5,num(e.target.value)||1.4));try{localStorage.setItem('arelec-hphone',hPhone)}catch(_){}});
   on('bReset','click',()=>{fresh();sel=null;selOp=null;bgImg=null;drawing=false;save();resetCam();refresh();});
   on('bClear','click',()=>{plan.walls=[];plan.openings=[];plan.rooms=[];devs=[];sel=null;selOp=null;draft=null;save();refresh();drawPlan();});
@@ -916,7 +966,7 @@ async function startSensor(opts={}){
   try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission)await DeviceMotionEvent.requestPermission();}catch(_){why.push('motion');}
   try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
   catch(e){why.push('camera');}
-  live='sensor';L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
+  live='sensor';L.headLock=false;L.offS=L.offC=0;L.gAvg=null;L.geoAvg=null;L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
   setCam(true);const s=fpsStartPoint();L.pos.set(s.x,EYE,s.z);L.calYaw=s.yaw;L.yawOff=null;
   xray=true;scene.background=null;build();
   addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);addEventListener('devicemotion',onMotion,true);
@@ -934,7 +984,7 @@ function onOri(e){if(e.alpha==null)return;const now=performance.now(),r={a:e.alp
   const isAbs=e.type==='deviceorientationabsolute'||(e.absolute&&e.type==='deviceorientation'&&!L.relSeen);
   if(isAbs){if(!L.absolute&&L.yawSrc==='cal'&&S&&S.phase==='locate')L.yawOff=null;L.absolute=true;L.absO=r;
     // compass heading only nudges the gyro heading slowly (magnetic noise near cables is large)
-    if(L.relO&&now-L.relO.t<400){const d=wrapD(r.a-L.relO.a);L.absOff=L.absOff==null?d:L.absOff+wrapD(d-L.absOff)*0.02;}}
+    if(L.relO&&now-L.relO.t<400&&!L.headLock){const d=wrapD(r.a-L.relO.a)*Math.PI/180;L.offS=(L.offS||0)*0.995+Math.sin(d);L.offC=(L.offC||0)*0.995+Math.cos(d);L.absOff=Math.atan2(L.offS,L.offC)*180/Math.PI;}}
   else{if(L.absOff==null&&L.absO&&now-L.absO.t<400)L.absOff=wrapD(L.absO.a-r.a);L.relO=r;L.relSeen=true;}
   const rel=L.relO&&now-L.relO.t<400?L.relO:null;
   if(rel)L.ori={a:rel.a+(L.absolute&&L.absOff!=null?L.absOff:0),b:rel.b,g:rel.g,abs:L.absolute&&L.absOff!=null};
@@ -949,7 +999,17 @@ function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)ret
   L.accPrev=L.accLP;}
 function stepForward(){const y=new THREE.Euler().setFromQuaternion(cam.quaternion,'YXZ').y;const nx=L.pos.x-Math.sin(y)*L.stride,nz=L.pos.z-Math.cos(y)*L.stride;if(S){L.pos.x=nx;L.pos.z=nz;return;}
   if(!blocked(nx,L.pos.z))L.pos.x=nx;if(!blocked(L.pos.x,nz))L.pos.z=nz;}
-function onGeo(p){const c=p.coords;L.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy};
+function onGeo(p){const c=p.coords;geoIn(c.latitude,c.longitude,c.accuracy,'web');}
+// fixes are averaged (weight 1/acc²) while the phone is not walking; walking restarts the average
+function geoIn(lat,lon,acc,src){const now=performance.now();if(src==='web'&&L.nat&&now-L.nat.t<3000)return;L.geo={lat,lon,acc,src};
+  const walking=L.walkT&&L.walkT.length>=2&&now-L.lastStep<2500;let A=L.gAvg;
+  if(walking||!A)A=L.gAvg={W:0,la:0,lo:0,n:0,best:acc};
+  if(acc<=25){const w=1/(acc*acc);if(A.n>=30){A.W*=0.96;A.la*=0.96;A.lo*=0.96;}A.W+=w;A.la+=w*lat;A.lo+=w*lon;A.n++;A.best=Math.min(A.best,acc);}
+  L.geoAvg=A.n?{lat:A.la/A.W,lon:A.lo/A.W,acc:Math.max(A.best*0.5,1/Math.sqrt(A.W)),n:A.n}:null;
+  const g=L.geoAvg&&L.geoAvg.n>=2?L.geoAvg:L.geo;geoUse({latitude:g.lat,longitude:g.lon,accuracy:g.acc});}
+window.__nativeGnss=(lat,lon,acc,alt,used,total,dual)=>{L.nat={t:performance.now(),used,total,dual:!!dual};if(live)geoIn(lat,lon,acc,'gnss');};
+window.__nativeCam=(fov)=>{let man=null;try{man=localStorage.getItem('arelec-fov');}catch(_){}if(fov>30&&fov<120&&!man)lensFov=fov;L.natFov=fov;};
+function geoUse(c){
   if(S&&S.phase!=='locate'&&c.accuracy<30&&(!plan.geo||c.accuracy<plan.geo.acc)){plan.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:L.pos.x,z:L.pos.z};save();}
   recordGps(c);gpsNav(c);if(S&&S.gate)gateUI(gateState());}
 const _z=new THREE.Vector3(0,0,1),_qt=new THREE.Quaternion(),_e=new THREE.Euler(),_q0=new THREE.Quaternion(),_q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5));
@@ -966,6 +1026,8 @@ function tickLive(dt,frame){
     const ang=cam.quaternion.angleTo(_qt);
     if(!L.qInit||ang>0.6){cam.quaternion.copy(_qt);L.qInit=true;}
     else if(ang>0.0035)cam.quaternion.slerp(_qt,Math.min(1,dt*(4+ang*90)));
+    if(vid.videoWidth){const vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),f=(Math.max(vw,vh)/2)/Math.tan(lensFov*Math.PI/360),fv=2*Math.atan(innerHeight/(2*sc*f))*180/Math.PI;
+      if(Math.abs(cam.fov-fv)>0.02){cam.fov=fv;cam.updateProjectionMatrix();}}
     L.pos.y=S?hPhone:EYE; // in survey/locate the virtual camera sits at the real phone height so overlays match the image
     cam.position.lerp(L.pos,Math.min(1,dt*6));if(S)svTick();}
   if(live&&(L.hudT+=dt)>0.25){L.hudT=0;hud();}}
@@ -978,14 +1040,14 @@ let hudLast='';function hud(){const h=$('liveHud');const setH=v=>{if(v!==hudLast
   setH(dot(recording?'rec':L.stream?'on':'off','camera-outline',recording?'Recording video':L.stream?'Camera on':'No camera')
    +dot(L.ori?(L.ori.abs?'on':'weak'):'off','compass-outline',L.ori?(L.ori.abs?'Compass':'Gyroscope, no compass'):'No gyroscope')
    +dot(L.accSeen?'on':'off','shoe-print',`${L.steps} steps`)
-   +dot(!g||g.err?'off':g.acc<=8?'on':'weak','crosshairs-gps',!g?'Waiting for GPS':g.err?'GPS off':`GPS ±${Math.round(g.acc)} m`)
+   +(()=>{const a=L.geoAvg||g,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null;return dot(!a||a.err?'off':a.acc<=GPS_OK?'on':'weak','crosshairs-gps',!a?'Waiting for GPS':a.err?'GPS off':`GPS ±${a.acc.toFixed(1)} m${n?` · ${n.used} satellites${n.dual?' · dual-frequency':''}`:''}`);})()
    +dot(plan.geo?'on':'off','map-marker-radius',plan.geo?`Site ${plan.geo.lat.toFixed(5)}, ${plan.geo.lon.toFixed(5)}`:'Site location not saved yet'));}
 function liveUI(){window.__liveMode=live;renderer.setPixelRatio(PR());size();document.body.classList.toggle('surveying',!!live);const b=$('scanBtn');b.classList.toggle('on',!!live);b.innerHTML=ic(live?'stop':'cube-scan');b.setAttribute('aria-label',live?'Stop live camera':'Start live camera scan');
   $('nextBtn').hidden=!!live||step>=3;['viewBtn','camBtn','menuBtn','stepTag'].forEach(id=>$(id).hidden=!!live);hud();setStatus();if(typeof svUI==='function')svUI();}
 $('scanBtn').addEventListener('click',()=>{if(S){svPrimary();return;}if(live){stopLive();return;}Promise.resolve(askSurvey()).catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();else stopLive();});});
 // in sensor mode a one-finger drag corrects the heading (compass drift)
 canvas.addEventListener('pointerdown',()=>{L.dragAcc=0;L.dragOn=false;});
-canvas.addEventListener('pointermove',e=>{if(live!=='sensor'||ptrs.size!==1||!gMoved||!g0)return;const dx=e.clientX-g0[0],dy=e.clientY-g0[1];
+canvas.addEventListener('pointermove',e=>{if(live!=='sensor'||S||ptrs.size!==1||!gMoved||!g0)return;const dx=e.clientX-g0[0],dy=e.clientY-g0[1];
   if(!L.dragOn){if(Math.abs(dx)>28&&Math.abs(dx)>2*Math.abs(dy))L.dragOn=true;else return;}
   L.dragYaw+=(e.movementX||0)*0.0025;});
 
@@ -1039,7 +1101,7 @@ function askSurvey(){ // called from the round button (a user tap, so permission
   $('status').innerHTML=`<button class="btn primary" id="svNew">${ic('plus')}New plan</button><button class="btn" id="svAdd">${ic('vector-polyline')}Add rooms</button><button class="btn" id="svX" aria-label="Cancel">${ic('close')}</button>`;
   $('status').classList.add('live');$('status').hidden=false;
   $('svNew').onclick=()=>startSurvey(true);$('svAdd').onclick=()=>startSurvey(false);$('svX').onclick=()=>setStatus();}
-async function startSurvey(fresh){
+async function startSurvey(fresh){L.lockPos=false;
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
   if(fresh){const nm=plan.name;plan.walls=[];plan.wallTex={};plan.openings=[];plan.rooms=[];plan.geo=null;plan.geoFrame=null;plan.gpsTrack=[];plan.cornerGps=[];plan.height=2.5;plan.date=Date.now();plan.name=nm;devs=[];save();}
   S={phase:fresh?'height':'corners',low:null,chain:[],chainWall0:plan.walls.length,rec:null,fresh,assist:true};
@@ -1048,7 +1110,7 @@ async function startSurvey(fresh){
   aim.visible=true;svRender();svUI();openGate();}
 async function startLocate(){
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
-  S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
+  L.lockPos=true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
   await startSensor({survey:true});aim.visible=true;svUI();openGate();}
 function enterLocate(){const keep=S?S.assist:true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:keep,needFix:false,align:null};
   clear(svGroup);prevLine.visible=false;setAimLabel('');xray=true;build();svUI();}
@@ -1080,18 +1142,21 @@ function applyFix(g){if(!plan.geoFrame||!S)return;const[x,z]=geoToPlan(g.lat,g.l
   if(plan.geoFrame.method!=='none'&&L.ori&&L.ori.abs){L.yawOff=plan.geoFrame.theta;L.dragYaw=0;L.yawSrc='abs';L.qInit=false;}
   flash(`GPS ±${Math.round(g.acc)} m`);}
 // ---- GPS gate: the screen stays grey until GPS (precise) and compass are on ----
-const GPS_OK=15;
-function gateState(){const g=L.geo;const gps=!g?'wait':g.err?'off':g.acc<=GPS_OK?'ok':'weak';const cmp=!L.ori?'wait':L.ori.abs?'ok':'weak';return{gps,cmp,acc:g&&!g.err?g.acc:null};}
-function openGate(){if(!S)return;S.gate={t0:performance.now(),okT:0,ui:0};$('startOv').hidden=true;$('gpsOv').hidden=false;
+const GPS_OK=10;
+const GPS_N=5;
+function gateState(){const g=L.geo,a=L.geoAvg;const gps=!g?'wait':g.err&&!a?'off':a&&a.acc<=GPS_OK&&a.n>=GPS_N?'ok':'weak';const cmp=!L.ori?'wait':L.ori.abs?'ok':'weak';return{gps,cmp,acc:a?a.acc:g&&!g.err?g.acc:null,n:a?a.n:0};}
+function openGate(){if(!S)return;L.headLock=false;S.gate={t0:performance.now(),okT:0,ui:0};$('startOv').hidden=true;$('gpsOv').hidden=false;
   gateUI(gateState());}
 function gateUI(st){const T={off:'Turn on GPS',wait:'Waiting for GPS',weak:'GPS not precise'};
   $('gpsT').textContent=st.gps!=='ok'?T[st.gps]:st.cmp!=='ok'?'Calibrate compass':'GPS ready';
-  const g=$('gcGps');g.className=st.gps==='wait'?'off':st.gps;g.innerHTML=ic('crosshairs-gps')+(st.acc!=null?`±${Math.round(st.acc)} m`:st.gps==='off'?'Off':'…');
+  const nat=L.nat&&performance.now()-L.nat.t<3000?L.nat:null;
+  const g=$('gcGps');g.className=st.gps==='wait'?'off':st.gps;g.innerHTML=ic('crosshairs-gps')+(st.acc!=null?`±${st.acc<10?st.acc.toFixed(1):Math.round(st.acc)} m`+(st.n<GPS_N?` · ${st.n}/${GPS_N}`:''):st.gps==='off'?'Off':'…')+(nat?` · ${nat.used} sat${nat.dual?' · L5':''}`:'');
   const c=$('gcCmp');c.className=st.cmp==='wait'?'off':st.cmp;c.innerHTML=ic('compass-outline')+(st.cmp==='ok'?'On':st.cmp==='weak'?'Off':'…');}
 function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=gateState();gateUI(st);
   if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
 function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
-  if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geo);
+  L.headLock=true; // from here on the compass no longer turns the walls; only the gyroscope does
+  if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
     if(S.phase==='locate'){S.needFix=false;S.alignMode=true;flash('Aim at a corner');}}
   if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
@@ -1307,7 +1372,7 @@ function odTick(){const w=wallTarget();if(!w||w.dist>7)return;const fr=odSample(
 function odDetect(i,A,g){const{cols,rows}=A,N=cols*rows,C=OD.CELL,H=plan.height;const M=new Float32Array(N).fill(NaN);let vals=[];
   for(let j=0;j<N;j++)if(A.n[j]>=3){M[j]=A.sum[j]/A.n[j];vals.push(M[j]);}
   if(vals.length<150)return;vals.sort((a,b)=>a-b);const med=vals[vals.length>>1];const mad=vals.map(v=>Math.abs(v-med)).sort((a,b)=>a-b)[vals.length>>1];
-  const thr=Math.max(20,mad*2.5);const B=new Uint8Array(N);for(let j=0;j<N;j++)B[j]=!isNaN(M[j])&&Math.abs(M[j]-med)>thr?1:0;
+  const thr=Math.max(16,mad*2.5);const B=new Uint8Array(N);for(let j=0;j<N;j++)B[j]=!isNaN(M[j])&&Math.abs(M[j]-med)>thr?1:0;
   // 3×3 majority filter
   const B2=new Uint8Array(N);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){let s=0,t=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const rr=r+dr,cc=c+dc;if(rr<0||cc<0||rr>=rows||cc>=cols)continue;t++;s+=B[rr*cols+cc];}B2[r*cols+c]=s*2>t?1:0;}
   const lab=new Int32Array(N).fill(-1),found=[];
@@ -1360,7 +1425,7 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','lock-outline','Lock position',false,!!L.lockPos],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
@@ -1368,7 +1433,7 @@ function svUI(){window.__survey=!!S;
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
-  on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position locked':'Position free');});
+  on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position held':'Following your steps');});
   on('svAuto','click',()=>{S.autoOp=S.autoOp===false;if(!S.autoOp)clear(OD.grp);svUI();done();flash(S.autoOp?'Auto doors & windows on':'Auto doors & windows off');});
   on('svUndoOp','click',()=>{const id=S.autoOps.pop();plan.openings=ops().filter(o=>o.id!==id);Object.values(OD.cand).forEach(l=>l.forEach(q=>{if(q.added)q.hits=-99;}));save();build();svUI();done();});
   on('svAssist','click',()=>{S.assist=!S.assist;svUI();done();flash(S.assist?'Line assist on':'Line assist off');});
@@ -1450,11 +1515,11 @@ function cornerRefs(x,y){const out=[],add=a=>{if(Math.abs(a[0]-x)<2e-3&&Math.abs
 function wallsAt(x,y){const r=[];plan.walls.forEach((w,i)=>w.forEach((p,e)=>{if(Math.abs(p[0]-x)<2e-3&&Math.abs(p[1]-y)<2e-3)r.push({i,e});}));return r;}
 function cornerAngle(x,y){const ws=wallsAt(x,y);if(ws.length<2)return null;const v=ws.slice(0,2).map(({i,e})=>{const q=plan.walls[i][1-e];return Math.atan2(q[1]-y,q[0]-x);});
   let a=Math.abs(v[0]-v[1])*180/Math.PI;if(a>180)a=360-a;return{a,bis:Math.atan2(Math.sin(v[0])+Math.sin(v[1]),Math.cos(v[0])+Math.cos(v[1]))};}
-function toggleEdit(on){editing=on==null?!editing:on;document.body.classList.toggle('editing',editing);$('editBtn').setAttribute('aria-pressed',editing);wsel=null;$('wallSheet').hidden=true;
-  if(editing){if(typeof S!=='undefined'&&S){svg.removeAttribute('hidden');$('svPop').hidden=true;}else{editPrev3d=view3d;setView(false);}const b=bounds(),pad=1.8;frozenVB=[b.x0-pad,b.y0-pad,Math.max(b.w,5)+pad*2,Math.max(b.h,4)+pad*2+2.4];drawPlan();flash('Drag a point · tap a wall');}
-  else{frozenVB=null;flashMsg=null;setStatus();if(typeof S!=='undefined'&&S)svg.setAttribute('hidden','');else setView(editPrev3d);save();build();}
+function toggleEdit(on){editing=on==null?!editing:on;document.body.classList.toggle('editing',editing);$('editBtn').setAttribute('aria-pressed',editing);wsel=null;osel=null;$('wallSheet').hidden=true;
+  if(editing){if(typeof S!=='undefined'&&S){svg.removeAttribute('hidden');$('svPop').hidden=true;}else{editPrev3d=view3d;setView(false);}PV=null;PV=fitPV();osel=null;drawPlan();flash('Drag a point · tap a wall · pinch to zoom');}
+  else{osel=null;flashMsg=null;setStatus();if(typeof S!=='undefined'&&S)svg.setAttribute('hidden','');else setView(editPrev3d);save();build();}
   navRefresh();}
-function svgRaw(x,y){const pt=svg.createSVGPoint();pt.x=x;pt.y=y;const q=pt.matrixTransform(svg.getScreenCTM().inverse());return[q.x,q.y];}
+function svgRaw(x,y){return s2w(x,y,curPV());}
 function snapCorner(p,start){const lines=[];const D=4*Math.PI/180;
   wallsAt(start[0],start[1]).forEach(({i,e})=>{const Q=plan.walls[i][1-e];const nb=wallsAt(Q[0],Q[1]).find(o=>o.i!==i);if(!nb)return;
     const R=plan.walls[nb.i][1-nb.e],ra=Math.atan2(R[1]-Q[1],R[0]-Q[0]),a=Math.atan2(p[1]-Q[1],p[0]-Q[0]);
@@ -1465,15 +1530,6 @@ function snapCorner(p,start){const lines=[];const D=4*Math.PI/180;
 function moveCorner(refs,p){refs.forEach(a=>{a[0]=p[0];a[1]=p[1];});}
 function animCorner(refs,to,done){const from=refs[0].slice(),t0=performance.now();const st=now=>{const t=Math.min(1,(now-t0)/260),e=1-Math.pow(1-t,3);
   moveCorner(refs,[from[0]+(to[0]-from[0])*e,from[1]+(to[1]-from[1])*e]);drawPlan();if(t<1)requestAnimationFrame(st);else{moveCorner(refs,to);drawPlan();build();save();if(done)done();}};requestAnimationFrame(st);}
-svg.addEventListener('pointerdown',e=>{if(!editing)return;e.stopImmediatePropagation();e.preventDefault();const h=e.target.closest('.hdl');
-  if(h){const[x,y]=h.dataset.c.split(',').map(Number);wdrag={refs:cornerRefs(x,y),start:[x,y],id:e.pointerId,moved:false};svg.setPointerCapture(e.pointerId);drawPlan();return;}
-  const w=e.target.closest('[data-w]');wdrag={tap:w?+w.dataset.w:-1,x:e.clientX,y:e.clientY,id:e.pointerId};},true);
-svg.addEventListener('pointermove',e=>{if(!editing||!wdrag||!wdrag.refs||e.pointerId!==wdrag.id)return;e.stopImmediatePropagation();
-  const p=snapCorner(svgRaw(e.clientX,e.clientY),wdrag.start);wdrag.moved=true;moveCorner(wdrag.refs,p);wdrag.start=p;drawPlan();if(wsel!=null)renderWallSheet();},true);
-svg.addEventListener('pointerup',e=>{if(!editing||!wdrag)return;e.stopImmediatePropagation();const d=wdrag;wdrag=null;
-  if(d.refs){if(d.moved){save();build();}drawPlan();return;}
-  if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<10){wsel=d.tap>=0?d.tap:null;drawPlan();renderWallSheet();}},true);
-svg.addEventListener('pointercancel',()=>{wdrag=null;},true);
 function wallInfo(i){const[A,B]=plan.walls[i],L=Math.hypot(B[0]-A[0],B[1]-A[1]);const prev=wallsAt(A[0],A[1]).find(o=>o.i!==i);
   if(prev){const P=plan.walls[prev.i][1-prev.e],a1=Math.atan2(P[1]-A[1],P[0]-A[0]),a2=Math.atan2(B[1]-A[1],B[0]-A[0]);let d=a2-a1;d=Math.atan2(Math.sin(d),Math.cos(d));return{L,ang:Math.abs(d)*180/Math.PI,sgn:d>=0?1:-1,ref:a1,rel:true};}
   return{L,ang:((Math.atan2(B[1]-A[1],B[0]-A[0])*180/Math.PI)+360)%360,sgn:1,ref:0,rel:false};}
@@ -1481,16 +1537,30 @@ function setWall(i,L,ang){const[A,B]=plan.walls[i],w=wallInfo(i);L=Math.max(0.2,
   const to=[+(A[0]+Math.cos(a)*L).toFixed(3),+(A[1]+Math.sin(a)*L).toFixed(3)];animCorner(cornerRefs(B[0],B[1]),to,renderWallSheet);}
 function delWall(i){plan.walls.splice(i,1);plan.openings=(plan.openings||[]).filter(o=>o.wall!==i).map(o=>(o.wall>i&&o.wall--,o));devs=devs.filter(d=>d.wall!==i);devs.forEach(d=>{if(d.wall>i)d.wall--;});
   if(typeof S!=='undefined'&&S&&S.chainWall0>i)S.chainWall0--;wsel=null;$('wallSheet').hidden=true;save();build();drawPlan();navRefresh();}
-function renderWallSheet(){const el=$('wallSheet');if(wsel==null||!plan.walls[wsel]){el.hidden=true;return;}const w=wallInfo(wsel);
+function addOp2D(type){if(wsel==null)return;const D=OPEN[type],g=wallGeo(wsel);const o={id:ops().reduce((m,q)=>Math.max(m,q.id),0)+1,type,wall:wsel,t:PG.tapT||0.5,w:D.w,h:Math.min(D.h,plan.height-D.sill-0.05),sill:D.sill};fitOpening(o);
+  const free=t=>!opsOn(wsel).some(q=>Math.abs(q.t-t)*g.L<(q.w+o.w)/2+0.02);
+  if(!free(o.t)){const half=(o.w/2+0.05)/g.L;let best=null;for(let t=half;t<=1-half;t+=0.01)if(free(t)&&(best==null||Math.abs(t-o.t)<Math.abs(best-o.t)))best=t;if(best==null){flash('No room on this wall');return;}o.t=best;}
+  ops().push(o);osel=o.id;wsel=null;save();build();drawPlan();renderWallSheet();flash(`${D.label} added`);}
+function renderOpSheet(){const el=$('wallSheet'),o=ops().find(q=>q.id===osel);if(!o){el.hidden=true;return;}const num=v=>parseFloat(String(v).replace(',','.'));
+  const fld=(id,l,v)=>`<label>${l}<span class="stp"><button data-st="${id}:-1" aria-label="Less">−</button><input id="${id}" type="number" inputmode="decimal" step="0.01" value="${v.toFixed(2)}"><button data-st="${id}:1" aria-label="More">+</button></span></label>`;
+  el.innerHTML=`<div class="whd"><div class="seg" role="group" aria-label="Type"><button id="opD" aria-pressed="${o.type==='door'}">${ic('door')}Door</button><button id="opW" aria-pressed="${o.type==='window'}">${ic('window-closed-variant')}Window</button></div><button class="icon" id="opDel" aria-label="Delete">${ic('trash-can-outline')}</button></div>
+   <div class="wf">${fld('opWd','Width (m)',o.w)}${fld('opH','Height (m)',o.h)}${o.type==='window'?fld('opS','Sill (m)',o.sill):''}</div>`;el.hidden=false;
+  const apply=()=>{const g=wallGeo(o.wall);o.w=Math.max(0.3,Math.min(g.L-0.1,o.w));o.sill=o.type==='door'?0:Math.max(0,Math.min(plan.height-0.3,o.sill));o.h=Math.max(0.3,Math.min(plan.height-o.sill-0.02,o.h));fitOpening(o);save();build();drawPlan();renderOpSheet();};
+  $('opD').onclick=()=>{o.type='door';o.sill=0;o.h=Math.min(OPEN.door.h,plan.height-0.05);apply();};$('opW').onclick=()=>{o.type='window';o.sill=OPEN.window.sill;o.h=OPEN.window.h;apply();};
+  $('opDel').onclick=()=>{plan.openings=ops().filter(q=>q!==o);osel=null;save();build();drawPlan();el.hidden=true;};
+  const key={opWd:'w',opH:'h',opS:'sill'};Object.keys(key).forEach(id=>{const i=$(id);if(i)i.onchange=e=>{const v=num(e.target.value);if(v>=0){o[key[id]]=v;apply();}};});
+  el.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{const[id,d]=b.dataset.st.split(':');o[key[id]]=+(o[key[id]]+d*0.05).toFixed(2);apply();});}
+function renderWallSheet(){const el=$('wallSheet');if(osel!=null){renderOpSheet();return;}if(wsel==null||!plan.walls[wsel]){el.hidden=true;return;}const w=wallInfo(wsel);
   const f=(document.activeElement&&el.contains(document.activeElement))?document.activeElement.id:null;
   el.innerHTML=`<div class="whd"><b>Wall ${wsel+1}</b><button class="icon" id="wsDel" aria-label="Delete wall">${ic('trash-can-outline')}</button></div>
    <div class="wf"><label>Length (m)<span class="stp"><button id="wsLm" aria-label="Shorter">−</button><input id="wsL" type="number" inputmode="decimal" step="0.01" value="${w.L.toFixed(2)}"><button id="wsLp" aria-label="Longer">+</button></span></label>
-   <label>${w.rel?'Angle (°)':'Direction (°)'}<span class="stp"><button id="wsAm" aria-label="Less">−</button><input id="wsA" type="number" inputmode="decimal" step="1" value="${w.ang.toFixed(1)}"><button id="wsAp" aria-label="More">+</button></span></label></div>`;
+   <label>${w.rel?'Angle (°)':'Direction (°)'}<span class="stp"><button id="wsAm" aria-label="Less">−</button><input id="wsA" type="number" inputmode="decimal" step="1" value="${w.ang.toFixed(1)}"><button id="wsAp" aria-label="More">+</button></span></label></div>
+   <div class="row wadd"><button class="btn" id="wsDoor">${ic('door')}Add door</button><button class="btn" id="wsWin">${ic('window-closed-variant')}Add window</button></div>`;
   el.hidden=false;const num=v=>parseFloat(String(v).replace(',','.'));
   $('wsL').onchange=e=>{const v=num(e.target.value);if(v>0)setWall(wsel,v,wallInfo(wsel).ang);};$('wsA').onchange=e=>{const v=num(e.target.value);if(!isNaN(v))setWall(wsel,wallInfo(wsel).L,v);};
   $('wsLm').onclick=()=>{const x=wallInfo(wsel);setWall(wsel,x.L-0.05,x.ang);};$('wsLp').onclick=()=>{const x=wallInfo(wsel);setWall(wsel,x.L+0.05,x.ang);};
   $('wsAm').onclick=()=>{const x=wallInfo(wsel);setWall(wsel,x.L,x.ang-1);};$('wsAp').onclick=()=>{const x=wallInfo(wsel);setWall(wsel,x.L,x.ang+1);};
-  $('wsDel').onclick=()=>delWall(wsel);if(f&&$(f))$(f).focus();}
+  $('wsDel').onclick=()=>delWall(wsel);$('wsDoor').onclick=()=>addOp2D('door');$('wsWin').onclick=()=>addOp2D('window');if(f&&$(f))$(f).focus();}
 $('editBtn').innerHTML=ic('wall-edit');$('editBtn').onclick=()=>toggleEdit();
 
 paintIcons();size();setCam(true);themeScene();refresh();goHome();renderer.setAnimationLoop(loop);
