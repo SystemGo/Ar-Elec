@@ -260,6 +260,19 @@ body.editing #lineCv{display:none}
 #vlBar.ok i b{background:var(--ok)}#vlBar.ok{color:#0c5132}
 #vlBar em{font-style:normal;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
 #vlBar.learn{width:fit-content;padding:6px 12px;gap:6px}#vlBar.learn .ic{width:16px;height:16px}
+#spotLayer{position:fixed;inset:0;z-index:6;pointer-events:none}
+.spot,#spotGhost,.spPulse{position:fixed;left:0;top:0;width:60px;height:60px;border-radius:50%;background:center/cover no-repeat;
+  -webkit-mask:radial-gradient(circle,#000 45%,rgba(0,0,0,.55) 62%,transparent 71%);mask:radial-gradient(circle,#000 45%,rgba(0,0,0,.55) 62%,transparent 71%);transition:opacity .25s}
+.spot{pointer-events:auto;touch-action:none;cursor:grab;will-change:transform}
+.spot i,#spotGhost i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px rgba(17,17,19,.8)}
+.spot.ok i{background:var(--ok)}.spot.auto i{background:#9be2b8}
+#spotGhost{z-index:45;width:76px;height:76px;pointer-events:none;opacity:.9}
+#spotGhost::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:40px;margin-left:-1px;background:rgba(255,255,255,.85)}
+.spPulse{z-index:44;width:70px;height:70px;margin:-35px 0 0 -35px;animation:spIn .7s var(--ease) forwards;pointer-events:none}
+@keyframes spIn{0%{transform:scale(1.6);opacity:0}30%{opacity:1}100%{transform:scale(.6);opacity:0}}
+#spotTray{left:12px;right:12px;bottom:calc(var(--navH) + 92px);border-radius:999px;padding:6px;display:flex;gap:6px;overflow-x:auto;width:fit-content;max-width:calc(100vw - 24px);background:rgba(255,255,255,.92)}
+#spotTray .st{width:44px;height:44px;flex:none;border-radius:50%;border:0;padding:0;background:center/cover no-repeat;box-shadow:inset 0 0 0 2px #fff,0 0 0 1px var(--line);cursor:grab;touch-action:none}
+#spotTray .st.ok{box-shadow:inset 0 0 0 2px #fff,0 0 0 2.5px var(--ok)}#spotTray .st.auto{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px #9be2b8}
 /* ---- wall editor ---- */
 #plan .hdl{cursor:grab;touch-action:none}
 #plan .hdl.drag{cursor:grabbing}
@@ -309,6 +322,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
+<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><i></i></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -581,7 +595,7 @@ function pickDev(x,y){const r=canvas.getBoundingClientRect();let best=null,bd=34
     const dir=p.clone().sub(cam.position),L=dir.length();const rc=new THREE.Raycaster(cam.position,dir.normalize(),0.01,L-0.03);
     if(!xray&&rc.intersectObjects(walls).length)return;bd=dd;best=d.id;});
   return best;}
-function singleTap(x,y){castAt(x,y);
+function singleTap(x,y){if(typeof S!=='undefined'&&S&&!S.gate&&S.phase!=='locate'&&live){addSpot(x,y);return;}castAt(x,y);
   if(!tool&&!moveMode){const id=pickDev(x,y);if(id){sel=id;selOp=null;propsMin=false;refresh();return;}
     const ho=ray.intersectObjects(gOpen.children,true).find(h=>h.object.userData.opening!=null);if(ho){selOp=ho.object.userData.opening;sel=null;propsMin=false;refresh();return;}}
   const hw=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
@@ -833,13 +847,12 @@ let menuTab=null;
 const row=(id,icn,title,val,cls)=>`<button class="li ${cls||''}" ${id?`id="${id}"`:''}>${icn?ic(icn):''}<span>${title}</span>${val!=null?`<em>${val}</em>`:''}${id?ic('chevron-right'):''}</button>`;
 const inRow=(id,icn,title,val,step,min,max,type)=>`<label class="li">${icn?ic(icn):''}<span>${title}</span><input id="${id}" type="${type||'number'}" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${val}"></label>`;
 const grp=(title,body)=>`<div class="grp">${title?`<h4>${title}</h4>`:''}<div class="gl">${body}</div></div>`;
-function renderMenu(){const tab=menuTab||(['plan','devices','wiring'][step-1]);let h='';
-  h+=`<div class="tabs" role="tablist">${[['plan','Plan'],['devices','Devices'],['wiring','Wiring'],['info','Info']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}</div>`;
+function renderMenu(){const tab='plan';let h='';
   if(tab==='plan'){
-    h+=grp('',row('bLive','cube-scan','Scan room')+row('bDraw','vector-polyline','Draw walls')+`<label class="li" for="fImg">${ic('image-plus-outline')}<span>Import plan</span>${ic('chevron-right')}</label>`+row('bScan','play-circle-outline','Demo scan'));
+    h+=grp('',row('bLive','cube-scan','Scan room')+row('bDraw','vector-polyline','Draw walls')+`<label class="li" for="fImg">${ic('image-plus-outline')}<span>Import plan</span>${ic('chevron-right')}</label>`);
     if(bgImg)h+=grp('',inRow('iBgW','arrow-expand-horizontal','Image width (m)',bgW,0.1,1,100));
     h+=grp('Dimensions',inRow('iCeil','arrow-expand-vertical','Ceiling height',plan.height,0.05,2,6)+inRow('iThick','wall','Wall thickness',plan.thick,0.01,0.05,0.5)+inRow('iPh','cellphone','Phone height',hPhone.toFixed(2),0.05,0.5,2.2)+inRow('iFov','camera','Camera angle (°)',lensFov.toFixed(1),0.5,40,110));
-    h+=grp('',row('bReset','refresh','Reload sample')+row('bClear','delete-sweep-outline','Clear plan',null,'danger'));
+    h+=grp('',row('bClear','delete-sweep-outline','Clear plan',null,'danger'));
     h+='<input id="fImg" type="file" accept="image/*" hidden>';}
   if(tab==='devices'){
     h+=grp('',Object.entries(TYPES).map(([k,T])=>`<button class="li" data-tool="${k}"><i class="sw" style="background:${T.kind?KIND[T.kind].cols[0]:'#6b7470'}">${ic(T.ic)}</i><span>${T.label}</span><em>${devs.filter(d=>d.type===k).length}</em>${ic('plus')}</button>`).join(''));}
@@ -926,7 +939,7 @@ let buildQ=0;function requestBuild(){if(!buildQ)buildQ=requestAnimationFrame(()=
 document.addEventListener('visibilitychange',()=>{if(live==='xr')return;renderer.setAnimationLoop(document.hidden?null:loop);if(!document.hidden){last=performance.now();needsRender=true;}});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeScene);}catch(_){}
 new MutationObserver(themeScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
+window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
 // ---------- Live camera navigation ----------
 // Two tracking engines, picked automatically:
 //  1. WebXR "immersive-ar" (Chrome Android + ARCore, HTTPS): the camera itself tracks position and rotation (visual-inertial odometry).
@@ -1035,7 +1048,7 @@ function tickLive(dt,frame){
     else if(ang>0.0035)cam.quaternion.slerp(_qt,Math.min(1,dt*(4+ang*90)));
     if(vid.videoWidth){const vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),f=(Math.max(vw,vh)/2)/Math.tan(lensFov*Math.PI/360),fv=2*Math.atan(innerHeight/(2*sc*f))*180/Math.PI;
       if(Math.abs(cam.fov-fv)>0.02){cam.fov=fv;cam.updateProjectionMatrix();}}
-    L.pos.y=S?hPhone:EYE; // in survey/locate the virtual camera sits at the real phone height so overlays match the image
+    L.pos.y=S?(S.h||hPhone):EYE;if(S&&typeof spLayout==='function')spLayout(); // in survey/locate the virtual camera sits at the real phone height so overlays match the image
     cam.position.lerp(L.pos,Math.min(1,dt*6));if(S)svTick();}
   if(live&&(L.hudT+=dt)>0.25){L.hudT=0;hud();}}
 function fpsStartPoint(){const save=[cam.position.clone(),yaw,pitch];fpsStart();const r={x:cam.position.x,z:cam.position.z,yaw};cam.position.copy(save[0]);yaw=save[1];pitch=save[2];applyLook();return r;}
@@ -1054,7 +1067,8 @@ function liveUI(){window.__liveMode=live;renderer.setPixelRatio(PR());size();doc
 $('scanBtn').addEventListener('click',()=>{if(S){svPrimary();return;}if(live){stopLive();return;}Promise.resolve(askSurvey()).catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();else stopLive();});});
 // in sensor mode a one-finger drag corrects the heading (compass drift)
 canvas.addEventListener('pointerdown',()=>{L.dragAcc=0;L.dragOn=false;});
-canvas.addEventListener('pointermove',e=>{if(live!=='sensor'||S||ptrs.size!==1||!gMoved||!g0)return;const dx=e.clientX-g0[0],dy=e.clientY-g0[1];
+canvas.addEventListener('pointermove',e=>{if(live==='sensor'&&S&&S.floorMode&&ptrs.size===1&&gMoved){S.h=Math.max(0.6,Math.min(2.2,(S.h||hPhone)-(e.movementY||0)*0.003));$('svRead').textContent=`Floor · phone at ${S.h.toFixed(2)} m`;return;}
+  if(live!=='sensor'||S||ptrs.size!==1||!gMoved||!g0)return;const dx=e.clientX-g0[0],dy=e.clientY-g0[1];
   if(!L.dragOn){if(Math.abs(dx)>28&&Math.abs(dx)>2*Math.abs(dy))L.dragOn=true;else return;}
   L.dragYaw+=(e.movementX||0)*0.0025;});
 
@@ -1126,7 +1140,7 @@ function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();vlSa
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
-  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
+  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
   goHome();if(n)flash('Saved');}
 
@@ -1164,10 +1178,10 @@ function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=g
   if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
 function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
   L.headLock=true; // from here on the compass no longer turns the walls; only the gyroscope does
-  if(S.phase==='locate')S.vl={votes:[],conf:0,located:false,recent:[]};
+  if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;}
   if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
-    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length){S.alignMode=true;flash('Aim at a corner');}else flash('Turn slowly around you');}}
+    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length&&!spots().length){S.alignMode=true;flash('Aim at a corner');}else flash(spots().length?'Drag a photo onto its real place':'Turn slowly around you');}}
   if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
 $('gpsSkip').addEventListener('click',()=>passGate(false));
 $('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
@@ -1315,7 +1329,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${g.L.toFixed(2)} m`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}try{vlTick(now);}catch(err){console.warn(err);}
+function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}try{vlTick(now);spAuto(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.phase==='corners'&&S.autoOp!==false&&L.stream&&!editing&&now-OD.t>320){OD.t=now;try{odTick();}catch(err){console.warn(err);}}
@@ -1481,8 +1495,92 @@ function vlEvaluate(V){let best=null;for(const v of V.votes){const cl=V.votes.fi
     V.located=true;V.recent=[];S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
 function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
   if(S.phase!=='locate'){el.hidden=!L.headLock;el.className='float learn';el.innerHTML=`${ic('camera')}<span>${VL.frames.length} views</span>`;return;}
-  const V=S.vl;if(!V||!VL.frames.length){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,(V.lastScore||.5)/.6))*100):Math.round(V.conf*100);
+  const V=S.vl;if(!V||(!VL.frames.length&&!spots().length)){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0)*100);
   el.hidden=false;el.className='float'+(V.located?' ok':'');el.innerHTML=`<span>${V.located?'Pinned':'Identifying'}</span><i><b style="width:${V.located?100:p}%"></b></i><em>${p}%</em>`;}
+
+// ---------- spots: photos the user taps while scanning, anchored to a 3D point (floor or wall) ----------
+// In AR Viewer they float where the model thinks they are; drag one onto the real place (or let the app find it)
+// and the model's direction, position and floor height are solved from those matches.
+const SP={FW:160,cv:document.createElement('canvas'),last:0,drag:null};SP.g=SP.cv.getContext('2d',{willReadFrequently:true});
+const spots=()=>plan.spots||(plan.spots=[]);
+function spGray(){const vw=vid.videoWidth,vh=vid.videoHeight;if(!vw||vid.hidden)return null;const W=SP.FW,H=Math.round(W*innerHeight/innerWidth);
+  if(SP.cv.width!==W||SP.cv.height!==H){SP.cv.width=W;SP.cv.height=H;}const sc=Math.max(innerWidth/vw,innerHeight/vh),cw=innerWidth/sc,ch=innerHeight/sc;
+  SP.g.drawImage(vid,(vw-cw)/2,(vh-ch)/2,cw,ch,0,0,W,H);const d=SP.g.getImageData(0,0,W,H).data,Y=new Float32Array(W*H);for(let i=0,j=0;i<Y.length;i++,j+=4)Y[i]=d[j]*.3+d[j+1]*.59+d[j+2]*.11;return{Y,W,H,k:W/innerWidth};}
+function spPoint(x,y){castAt(x,y);const hits=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh));let p=null,kind='floor';
+  const o=ray.ray.origin,d=ray.ray.direction;if(d.y<-0.02){const t=-o.y/d.y;p=o.clone().addScaledVector(d,t);}
+  if(hits[0]&&(!p||hits[0].distance<o.distanceTo(p))){p=hits[0].point.clone();kind='wall';}return p&&o.distanceTo(p)<12?{p,kind,dist:o.distanceTo(p)}:null;}
+function addSpot(x,y){const hit=spPoint(x,y);if(!hit){flash('Aim at the floor or a wall');return;}const G=spGray();if(!G){flash('Camera not ready');return;}
+  const T=24,cx=Math.round(x*G.k),cy=Math.round(y*G.k);if(cx<T/2||cy<T/2||cx>G.W-T/2||cy>G.H-T/2){flash('Too close to the edge');return;}
+  const tpl=[];for(let j=0;j<T;j++)for(let i=0;i<T;i++)tpl.push(Math.round(G.Y[(cy-T/2+j)*G.W+cx-T/2+i]));
+  let m=0;tpl.forEach(v=>m+=v);m/=tpl.length;let sd=0;tpl.forEach(v=>sd+=(v-m)*(v-m));if(Math.sqrt(sd/tpl.length)<4){flash('Pick a spot with more detail');return;}
+  // round photo for display
+  const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d'),vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),R=60/sc;
+  const vx=(vw-innerWidth/sc)/2+x/sc,vy=(vh-innerHeight/sc)/2+y/sc;g.drawImage(vid,vx-R,vy-R,2*R,2*R,0,0,96,96);
+  const s={id:spots().reduce((a,q)=>Math.max(a,q.id),0)+1,p:[+hit.p.x.toFixed(3),+hit.p.y.toFixed(3),+hit.p.z.toFixed(3)],kind:hit.kind,dist:+hit.dist.toFixed(2),img:c.toDataURL('image/jpeg',0.72),tpl,T,t:Date.now()};
+  spots().push(s);save();spPulse(x,y,s);flash(`Spot ${s.id} saved`);spRender();}
+function spPulse(x,y,s){const e=document.createElement('div');e.className='spPulse';e.style.left=x+'px';e.style.top=y+'px';e.style.backgroundImage=`url(${s.img})`;document.body.appendChild(e);setTimeout(()=>e.remove(),700);}
+// ---- floating markers + tray ----
+const _sv=new THREE.Vector3();
+function spProject(s){_sv.set(s.p[0],s.p[1],s.p[2]).project(cam);if(_sv.z>1)return null;return[(_sv.x+1)/2*innerWidth,(1-_sv.y)/2*innerHeight];}
+function spRender(){const lay=$('spotLayer'),tray=$('spotTray');const on=!!(S&&!S.gate&&live&&spots().length&&!editing);lay.hidden=!on;
+  tray.hidden=!(on&&S.phase==='locate');if(!on)return;
+  const list=spots();if(lay.childElementCount!==list.length){lay.innerHTML=list.map(s=>`<div class="spot" data-sp="${s.id}" style="background-image:url(${s.img})"><i></i></div>`).join('');
+    lay.querySelectorAll('.spot').forEach(el=>el.addEventListener('pointerdown',e=>{if(!S||S.phase!=='locate')return;e.preventDefault();e.stopPropagation();spStartDrag(+el.dataset.sp,e);}));}
+  if(S.phase==='locate'){const sig=list.map(s=>s.id+':'+spState(s.id)).join(',');if(tray.dataset.sig!==sig){tray.dataset.sig=sig;
+    tray.innerHTML=list.map(s=>`<button class="st ${spState(s.id)}" data-sp="${s.id}" aria-label="Spot ${s.id}" style="background-image:url(${s.img})"></button>`).join('');
+    tray.querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();spStartDrag(+b.dataset.sp,e);}));}}}
+function spState(id){const o=S&&S.obs&&S.obs.find(q=>q.id===id);return !o?'':o.user?'ok':'auto';}
+function spLayout(){const lay=$('spotLayer');if(lay.hidden)return;lay.querySelectorAll('.spot').forEach(el=>{const s=spots().find(q=>q.id===+el.dataset.sp);if(!s)return;
+  if(SP.drag&&SP.drag.id===s.id){el.style.opacity=0;return;}const p=spProject(s);
+  if(!p||p[0]<-60||p[1]<-60||p[0]>innerWidth+60||p[1]>innerHeight+60){el.style.opacity=0;el.style.pointerEvents='none';return;}
+  const st=spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-30}px,${p[1]-30}px)`;});}
+function spStartDrag(id,e){const s=spots().find(q=>q.id===id);if(!s)return;const gh=$('spotGhost');gh.style.backgroundImage=`url(${s.img})`;gh.hidden=false;
+  SP.drag={id,pid:e.pointerId};const mv=ev=>{if(ev.pointerId!==SP.drag.pid)return;gh.style.transform=`translate(${ev.clientX-38}px,${ev.clientY-38-46}px)`;};
+  const up=ev=>{if(ev.pointerId!==SP.drag.pid)return;removeEventListener('pointermove',mv,true);removeEventListener('pointerup',up,true);removeEventListener('pointercancel',up,true);gh.hidden=true;
+    const x=ev.clientX,y=ev.clientY-46;SP.drag=null;if(ev.type==='pointerup'&&y>60&&y<innerHeight-120)spObserve(id,x,y,true);};
+  addEventListener('pointermove',mv,true);addEventListener('pointerup',up,true);addEventListener('pointercancel',up,true);mv(e);}
+// an observation = the ray (with the current heading correction removed) through the screen point where the spot really is
+function spObserve(id,x,y,user){castAt(x,y);const d=ray.ray.direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0),-(L.dragYaw||0));
+  S.obs=(S.obs||[]).filter(o=>o.id!==id||(o.user&&!user));if(!user&&S.obs.some(o=>o.id===id))return;S.obs.push({id,d:[d.x,d.y,d.z],user,t:performance.now()});
+  spSolve();spRender();if(user)flash(`Spot ${id} placed`);}
+// ---- solve heading D, position x,z and floor height h from the observations (Gauss-Newton with priors) ----
+function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===o.id)})).filter(o=>o.s);if(!obs.length)return;
+  if(!obs.some(o=>o.user)&&obs.length<2&&!(S.vl&&S.vl.located))return; // one automatic match alone is not trusted
+  const g=L.geoAvg,vl=S.vl&&S.vl.located,sp=vl||S.spotFix?1.0:Math.max(1.5,Math.min(10,g?g.acc:6)),hh=S.h||hPhone;
+  const one=new Set(obs.map(o=>o.id)).size<2,q0=[L.dragYaw||0,L.pos.x,L.pos.z,hh],sg=[1.5,one?0.03:sp,one?0.03:sp,0.3],up=new THREE.Vector3(0,1,0); // one spot: turn + height only
+  const res=q=>{const r=[];obs.forEach(o=>{const d=new THREE.Vector3(...o.d).applyAxisAngle(up,q[0]),v=new THREE.Vector3(o.s.p[0]-q[1],o.s.p[1]-q[3],o.s.p[2]-q[2]);
+      const az=(a)=>Math.atan2(-a.x,-a.z),el=a=>Math.atan2(a.y,Math.hypot(a.x,a.z)),w=o.user?1/0.03:1/0.05;let da=az(v)-az(d);da=Math.atan2(Math.sin(da),Math.cos(da));
+      r.push(da*Math.cos(el(d))*w,(el(v)-el(d))*w);});q.forEach((x,i)=>r.push((x-q0[i])/sg[i]));return r;};
+  let q=q0.slice();
+  for(let it=0;it<12;it++){const r0=res(q),J=q.map((_,j)=>{const qq=q.slice();qq[j]+=1e-4;return res(qq).map((v,i)=>(v-r0[i])/1e-4);});
+    const A=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],b=[0,0,0,0];for(let i=0;i<r0.length;i++)for(let a=0;a<4;a++){b[a]-=J[a][i]*r0[i];for(let c=0;c<4;c++)A[a][c]+=J[a][i]*J[c][i];}
+    const dq=solve4(A,b);if(!dq)break;q=q.map((x,i)=>x+dq[i]);if(Math.hypot(...dq)<1e-5)break;}
+  const r=res(q).slice(0,obs.length*2),rms=Math.sqrt(r.reduce((t,v)=>t+v*v,0)/r.length);
+  // an automatic match that disagrees with the others is dropped
+  const bad=obs.findIndex((o,i)=>!o.user&&Math.hypot(r[2*i],r[2*i+1])>2.5);if(bad>=0){S.obs=S.obs.filter(o=>!(o.id===obs[bad].id&&!o.user));(S.rejected||(S.rejected=new Set())).add(obs[bad].id);return spSolve();}
+  if(rms>3.5||!q.every(Number.isFinite))return; // inconsistent — wait for more spots
+  L.dragYaw=q[0];L.pos.x=q[1];L.pos.z=q[2];S.h=Math.max(0.6,Math.min(2.2,q[3]));
+  const nUser=obs.filter(o=>o.user).length,nAuto=obs.length-nUser;S.spotConf=Math.min(1,nUser*0.5+nAuto*0.25);
+  if(nUser>=2||(nUser>=1&&(vl||nAuto>=2))){S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.alignMode=false;S.needFix=false;}
+  if(typeof vlUI==='function')vlUI();svUI();}
+function solve4(A,b){const n=4,M=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let k=i+1;k<n;k++)if(Math.abs(M[k][i])>Math.abs(M[p][i]))p=k;if(Math.abs(M[p][i])<1e-12)return null;[M[i],M[p]]=[M[p],M[i]];
+  for(let k=0;k<n;k++){if(k===i)continue;const f=M[k][i]/M[i][i];for(let c=i;c<=n;c++)M[k][c]-=f*M[i][c];}}return M.map((r,i)=>r[n]/r[i]);}
+// ---- automatic search: look for each spot's photo around where it should be (zero-mean NCC) ----
+function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||now-SP.last<450)return;SP.last=now;const list=spots();if(!list.length)return;let G=null;
+  if(!((S.obs||[]).some(o=>o.user)||(S.vl&&S.vl.located)))return; // automatic search starts once the model is roughly in place
+  for(const s of list){if((S.obs||[]).some(o=>o.id===s.id&&o.user))continue;const p=spProject(s);if(!p||p[0]<0||p[1]<0||p[0]>innerWidth||p[1]>innerHeight)continue;
+    G=G||spGray();if(!G)return;const dist=cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])),scl=Math.max(0.55,Math.min(1.8,(s.dist||dist)/dist));
+    const T=s.T,Ts=Math.max(10,Math.round(T*scl)),tp=new Float32Array(Ts*Ts);for(let j=0;j<Ts;j++)for(let i=0;i<Ts;i++)tp[j*Ts+i]=s.tpl[Math.min(T-1,(j*T/Ts)|0)*T+Math.min(T-1,(i*T/Ts)|0)];
+    let tm=0;tp.forEach(v=>tm+=v);tm/=tp.length;let ts=0;for(let i=0;i<tp.length;i++){tp[i]-=tm;ts+=tp[i]*tp[i];}if(ts<1)continue;
+    const cx=Math.round(p[0]*G.k),cy=Math.round(p[1]*G.k),R=Math.round(G.W*(S.spotFix||(S.vl&&S.vl.located)?0.2:0.45));const sc=[];
+    const ncc=(x,y)=>{const x0=x-(Ts>>1),y0=y-(Ts>>1);if(x0<0||y0<0||x0+Ts>G.W||y0+Ts>G.H)return -1;let m=0;
+      for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++)m+=G.Y[row+i];}m/=Ts*Ts;let num=0,den=0;
+      for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++){const v=G.Y[row+i]-m;num+=v*tp[j*Ts+i];den+=v*v;}}return den>1?num/Math.sqrt(den*ts):-1;};
+    let best=-1,bx=0,by=0,second=-1;
+    for(let y=cy-R;y<=cy+R;y+=2)for(let x=cx-R;x<=cx+R;x+=2){const c=ncc(x,y);sc.push([c,x,y]);if(c>best){best=c;bx=x;by=y;}}
+    sc.forEach(([c,x,y])=>{if(Math.hypot(x-bx,y-by)>Ts*0.6&&c>second)second=c;});
+    const x0=bx,y0=by;for(let y=y0-1;y<=y0+1;y++)for(let x=x0-1;x<=x0+1;x++){const c=ncc(x,y);if(c>best){best=c;bx=x;by=y;}}
+if(best>0.88&&best-second>0.15&&!(S.rejected&&S.rejected.has(s.id)))spObserve(s.id,bx/G.k,by/G.k,false);}}
 
 // AR view: the device goes on the wall in the middle of the screen, at its standard height
 function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
@@ -1500,18 +1598,20 @@ const devAim=new THREE.Group();(()=>{const disc=new THREE.Mesh(new THREE.CircleG
 function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():null;if(!w){devAim.visible=false;return null;}
   const g=wallGeo(w.wall),h=TYPES[S.devType].h,off=plan.thick/2+0.02,x=g.ax+g.dx*w.t+g.nx*w.side*off,z=g.ay+g.dy*w.t+g.ny*w.side*off;
   devAim.position.set(x,h,z);devAim.lookAt(x+g.nx*w.side,h,z+g.ny*w.side);devAim.visible=true;return w;}
-function svUI(){window.__survey=!!S;
+function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svAssist','magnet','Line assist',false,S.assist]]
-    :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+    :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
   on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
+  on('svFloor','click',()=>{S.floorMode=!S.floorMode;done();svUI();flash(S.floorMode?'Drag up or down to sit the walls on the floor':'');});
   on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position held':'Following your steps');});
+  on('svUndoSpot','click',()=>{spots().pop();save();$('spotLayer').innerHTML='';spRender();svUI();done();});
   on('svAuto','click',()=>{S.autoOp=S.autoOp===false;if(!S.autoOp)clear(OD.grp);svUI();done();flash(S.autoOp?'Auto doors & windows on':'Auto doors & windows off');});
   on('svUndoOp','click',()=>{const id=S.autoOps.pop();plan.openings=ops().filter(o=>o.id!==id);Object.values(OD.cand).forEach(l=>l.forEach(q=>{if(q.added)q.hits=-99;}));save();build();svUI();done();});
   on('svAssist','click',()=>{S.assist=!S.assist;svUI();done();flash(S.assist?'Line assist on':'Line assist off');});
