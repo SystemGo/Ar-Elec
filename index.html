@@ -288,6 +288,10 @@ body.devbar #svRead{bottom:calc(140px + var(--sb))}
 #pjList .li span small{display:block;font-size:13px;color:var(--muted)}
 #pjList .cur{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
 #pjList .nocur{width:8px;flex:none}
+#pjList .th{width:52px;height:52px;flex:none;border-radius:10px;background:rgba(110,108,240,.10);display:grid;place-items:center;color:#6e6cf0}
+#pjList i.th svg{width:24px;height:24px;opacity:.6}
+#pjList svg.th .wl line{stroke:#5b59e0;stroke-width:2.2;stroke-linecap:round}
+#pjList svg.th .rm polygon{fill:rgba(110,108,240,.16);stroke:none}
 .pjEmpty{padding:18px 14px;color:var(--muted);font-size:15px}
 #pjSheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}
 .pjs{width:100%;background:var(--bg);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--sb));display:flex;flex-direction:column;gap:6px}
@@ -394,6 +398,7 @@ const ICONS={"menu":"<path fill=\"currentColor\" d=\"M3 6h18v2H3zm0 5h18v2H3zm0 
 Object.assign(ICONS,{"door":"<path fill=\"currentColor\" d=\"M8 3c-1.11 0-2 .89-2 2v16h12V5c0-1.11-.89-2-2-2zm0 2h8v14H8zm5 6v2h2v-2z\"/>","window-closed-variant":"<path fill=\"currentColor\" d=\"M21 20V2H3v18H1v3h22v-3M19 4v7h-6V4M5 4h6v7H5m0 9v-7h6v7m2 0v-7h6v7Z\"/>"});
 Object.assign(ICONS,{"pencil-outline":"<path fill=\"currentColor\" d=\"m14.06 9l.94.94L5.92 19H5v-.92zm3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z\"/>","chevron-right":"<path fill=\"currentColor\" d=\"M8.59 16.58L13.17 12L8.59 7.41L10 6l6 6l-6 6z\"/>"});
 Object.assign(ICONS,{"information-outline":"<path fill=\"currentColor\" d=\"M11 9h2V7h-2m1 13c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8m0-18A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m-1 15h2v-6h-2z\"/>"});
+Object.assign(ICONS,{"lock-outline": "<path fill=\"currentColor\" d=\"M12 17a2 2 0 0 1-2-2c0-1.11.89-2 2-2a2 2 0 0 1 2 2a2 2 0 0 1-2 2m6 3V10H6v10zm0-12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10c0-1.11.89-2 2-2h1V6a5 5 0 0 1 5-5a5 5 0 0 1 5 5v2zm-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3\"/>", "angle-right": "<path fill=\"currentColor\" d=\"M5 4h2v7h6v6h7v2H5zm2 13h4v-4H7z\"/>"});
 Object.assign(ICONS,{"home-outline":"<path fill=\"currentColor\" d=\"m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3\"/>"});
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
 function paintIcons(root=document){root.querySelectorAll('[data-ic]').forEach(el=>{if(el.dataset.icDone===el.dataset.ic)return;el.insertAdjacentHTML('afterbegin',ic(el.dataset.ic));el.dataset.icDone=el.dataset.ic;});}
@@ -755,9 +760,17 @@ function goHome(){document.body.classList.add('home');sel=null;selOp=null;tool=n
   renderHome();}
 function projMeta(p){const pl=p.plan,b=pl.walls.length;let area=0;if(pl.rooms&&pl.rooms.length)area=pl.rooms.reduce((t,r)=>t+polyArea(r.pts),0);
   return `${new Date(pl.date||p.id).toLocaleDateString()} · ${b?`${area?area.toFixed(1)+' m² · ':''}${pl.walls.length} walls`:'empty'} · ${(p.devs||[]).length} devices`;}
+function thumb(pl){let ws=pl.walls||[];if(!ws.length)return `<i class="th">${ic('floor-plan')}</i>`;
+  // turn the miniature so the main walls are horizontal/vertical
+  const w0=ws[0],t=-Math.atan2(w0[1][1]-w0[0][1],w0[1][0]-w0[0][0]),c=Math.cos(t),sn=Math.sin(t),rt=p=>[p[0]*c-p[1]*sn,p[0]*sn+p[1]*c];
+  ws=ws.map(w=>w.map(rt));pl={rooms:(pl.rooms||[]).map(r=>({pts:r.pts.map(rt)}))};
+  let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;ws.forEach(w=>w.forEach(p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);z0=Math.min(z0,p[1]);z1=Math.max(z1,p[1]);}));
+  const S_=48,sc=(S_-10)/Math.max(x1-x0,z1-z0,0.5),ox=(S_-(x1-x0)*sc)/2,oz=(S_-(z1-z0)*sc)/2,X=v=>(ox+(v-x0)*sc).toFixed(1),Z=v=>(oz+(v-z0)*sc).toFixed(1);
+  const rooms=(pl.rooms||[]).map(r=>`<polygon points="${r.pts.map(p=>X(p[0])+','+Z(p[1])).join(' ')}"/>`).join('');
+  return `<svg class="th" viewBox="0 0 ${S_} ${S_}" aria-hidden="true"><g class="rm">${rooms}</g><g class="wl">${ws.map(w=>`<line x1="${X(w[0][0])}" y1="${Z(w[0][1])}" x2="${X(w[1][0])}" y2="${Z(w[1][1])}"/>`).join('')}</g></svg>`;}
 function renderHome(){const cur=projects.find(q=>q.id===curId);
   $('hmAR').disabled=!(cur&&cur.plan.walls.length);
-  $('pjList').innerHTML=projects.length?projects.map(p=>`<button class="li" data-pj="${p.id}">${p.id===curId?'<i class="cur"></i>':'<i class="nocur"></i>'}<span><b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small></span>${ic('chevron-right')}</button>`).join('')
+  $('pjList').innerHTML=projects.length?projects.map(p=>`<button class="li" data-pj="${p.id}">${p.id===curId?'<i class="cur"></i>':'<i class="nocur"></i>'}${thumb(p.plan)}<span><b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small></span>${ic('chevron-right')}</button>`).join('')
     :'<div class="pjEmpty">No projects</div>';
   $('pjList').querySelectorAll('[data-pj]').forEach(x=>x.onclick=()=>openPjSheet(+x.dataset.pj));}
 function openPjSheet(id){if(id!==curId){saveNow();loadProject(id);refresh();renderHome();}const p=projects.find(q=>q.id===id);
@@ -880,7 +893,7 @@ window.__ar={refresh:()=>refresh(),get renderer(){return renderer},wallPt(i,t,v)
 Object.assign(ICONS,{"crosshairs-gps":"<path fill=\"currentColor\" d=\"M12 8a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m-8.95 5H1v-2h2.05C3.5 6.83 6.83 3.5 11 3.05V1h2v2.05c4.17.45 7.5 3.78 7.95 7.95H23v2h-2.05c-.45 4.17-3.78 7.5-7.95 7.95V23h-2v-2.05C6.83 20.5 3.5 17.17 3.05 13M12 5a7 7 0 0 0-7 7a7 7 0 0 0 7 7a7 7 0 0 0 7-7a7 7 0 0 0-7-7\"/>","compass-outline":"<path fill=\"currentColor\" d=\"m7 17l3.2-6.8L17 7l-3.2 6.8zm5-5.9a.9.9 0 0 0-.9.9a.9.9 0 0 0 .9.9a.9.9 0 0 0 .9-.9a.9.9 0 0 0-.9-.9M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2m0 2a8 8 0 0 0-8 8a8 8 0 0 0 8 8a8 8 0 0 0 8-8a8 8 0 0 0-8-8\"/>","shoe-print":"<path fill=\"currentColor\" d=\"M10.74 11.72c.47 1.23.42 2.51-.99 3.02c-2.9 1.07-3.55-1.74-3.59-1.88zm-5.03-.81l4.32-1.07c-.19-1.05.1-2.1.1-3.34c0-1.68-1.33-4.97-3.45-4.44c-2.42.6-2.77 3.29-2.68 4.59c.12 1.3 1.64 4.08 1.71 4.26m12.14 8.94c-.03.15-.69 2.95-3.59 1.89c-1.4-.52-1.46-1.8-.99-3.03zm2.15-6.2c.1-1.3-.24-4-2.67-4.6c-2.11-.55-3.44 2.76-3.44 4.45c0 1.23.28 2.28.11 3.33l4.3 1.07c.08-.18 1.59-2.96 1.7-4.25\"/>","camera-outline":"<path fill=\"currentColor\" d=\"M20 4h-3.17L15 2H9L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 14H4V6h4.05l1.83-2h4.24l1.83 2H20zM12 7a5 5 0 0 0-5 5a5 5 0 0 0 5 5a5 5 0 0 0 5-5a5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3\"/>","axis-arrow":"<path fill=\"currentColor\" d=\"m12 2l4 4h-3v7.85l6.53 3.76L21 15.03l1.5 5.47l-5.5 1.46l1.53-2.61L12 15.58l-6.53 3.77L7 21.96L1.5 20.5L3 15.03l1.47 2.58L11 13.85V6H8z\"/>","anchor":"<path fill=\"currentColor\" d=\"M12 2a3 3 0 0 0-3 3a3 3 0 0 0 2 2.83V9H8v2h3v8.92c-.74-.13-1.5-.34-2.21-.65c-.74-.32-1.39-.71-1.97-1.18s-1.04-.98-1.38-1.54L7 15l-4-3v3c0 .97.27 1.88.82 2.72A8.2 8.2 0 0 0 6 19.95c.87.64 1.84 1.14 2.88 1.5c1.05.36 2.09.55 3.12.55s2.07-.2 3.12-.56c1.04-.36 2.01-.86 2.88-1.49c.92-.64 1.63-1.38 2.18-2.23c.55-.84.82-1.75.82-2.72v-3l-4 3l1.56 1.55c-.34.56-.8 1.07-1.38 1.54s-1.23.86-1.97 1.18c-.71.31-1.47.52-2.21.65V11h3V9h-3V7.82A3 3 0 0 0 15 5a3 3 0 0 0-3-3m0 2a1 1 0 0 1 1 1a1 1 0 0 1-1 1a1 1 0 0 1-1-1a1 1 0 0 1 1-1\"/>","stop":"<path fill=\"currentColor\" d=\"M18 18H6V6h12z\"/>","video-3d":"<path fill=\"currentColor\" d=\"M5 7h4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5v-2h4v-2H6v-2h3V9H5zm8 0h3a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-3zm3 8a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-1v6z\"/>","cellphone-arrow-down":"<path fill=\"currentColor\" d=\"M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2m0 18H7V5h10zm-1-6h-3V8h-2v5H8l4 4z\"/>"});
 let live=null; // null | 'xr' | 'sensor'
 const L={stream:null,xr:null,hitSrc:null,reticle:null,anchored:false,
-  ori:null,absolute:false,yawOff:0,dragYaw:0,steps:0,lastStep:0,accLP:9.8,accPrev:9.8,rising:false,
+  ori:null,absolute:false,relO:null,absO:null,absOff:null,relSeen:false,walkT:[],lockPos:false,yawOff:0,dragYaw:0,steps:0,lastStep:0,accLP:9.8,accPrev:9.8,rising:false,
   geoId:null,geo:null,geoOrigin:null,geoLocal:null,planNorth:0,pos:new THREE.Vector3(),stride:0.65,hudT:0};
 const vid=$('camVid');
 
@@ -919,7 +932,7 @@ async function startSensor(opts={}){
   try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission)await DeviceMotionEvent.requestPermission();}catch(_){why.push('motion');}
   try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
   catch(e){why.push('camera');}
-  live='sensor';L.ori=null;L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
+  live='sensor';L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
   setCam(true);const s=fpsStartPoint();L.pos.set(s.x,EYE,s.z);L.calYaw=s.yaw;L.yawOff=null;
   xray=true;scene.background=null;build();
   addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);addEventListener('devicemotion',onMotion,true);
@@ -932,20 +945,30 @@ function stopLive(){
   if(L.geoId!=null)navigator.geolocation.clearWatch(L.geoId);L.geoId=null;
   if(L.stream){L.stream.getTracks().forEach(t=>t.stop());L.stream=null;}vid.srcObject=null;vid.hidden=true;
   live=null;liveUI();themeScene();resetCam();}
-function onOri(e){if(e.alpha==null)return;if(e.type==='deviceorientationabsolute'){if(!L.absolute&&L.yawSrc==='cal'&&S&&S.phase==='locate')L.yawOff=null;L.absolute=true;}else if(L.absolute&&!e.absolute)return;
-  L.ori={a:e.alpha,b:e.beta||0,g:e.gamma||0,abs:L.absolute||e.absolute,head:e.webkitCompassHeading};}
+const wrapD=d=>((d+540)%360)-180;
+function onOri(e){if(e.alpha==null)return;const now=performance.now(),r={a:e.alpha,b:e.beta||0,g:e.gamma||0,t:now};
+  const isAbs=e.type==='deviceorientationabsolute'||(e.absolute&&e.type==='deviceorientation'&&!L.relSeen);
+  if(isAbs){if(!L.absolute&&L.yawSrc==='cal'&&S&&S.phase==='locate')L.yawOff=null;L.absolute=true;L.absO=r;
+    // compass heading only nudges the gyro heading slowly (magnetic noise near cables is large)
+    if(L.relO&&now-L.relO.t<400){const d=wrapD(r.a-L.relO.a);L.absOff=L.absOff==null?d:L.absOff+wrapD(d-L.absOff)*0.02;}}
+  else{if(L.absOff==null&&L.absO&&now-L.absO.t<400)L.absOff=wrapD(L.absO.a-r.a);L.relO=r;L.relSeen=true;}
+  const rel=L.relO&&now-L.relO.t<400?L.relO:null;
+  if(rel)L.ori={a:rel.a+(L.absolute&&L.absOff!=null?L.absOff:0),b:rel.b,g:rel.g,abs:L.absolute&&L.absOff!=null};
+  else if(L.absO)L.ori={a:L.absO.a,b:L.absO.b,g:L.absO.g,abs:true};}
 // step detector: peak in low-passed acceleration magnitude
 function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;L.accSeen=true;const m=Math.hypot(a.x,a.y,a.z);
   L.accLP+=(m-L.accLP)*0.25;const now=performance.now();
-  if(L.accLP>L.accPrev&&L.accLP>10.6)L.rising=true;
-  if(L.rising&&L.accLP<L.accPrev&&now-L.lastStep>320){L.rising=false;L.lastStep=now;L.steps++;stepForward();}
+  if(L.accLP>L.accPrev&&L.accLP>11.2)L.rising=true;
+  if(L.rising&&L.accLP<L.accPrev&&now-L.lastStep>330){L.rising=false;L.lastStep=now;
+    L.walkT=L.walkT.filter(t=>now-t<1400);L.walkT.push(now);
+    if(L.walkT.length>=2&&!L.lockPos){const n=L.walkT.length===2?2:1;for(let i=0;i<n;i++){L.steps++;stepForward();}}}
   L.accPrev=L.accLP;}
 function stepForward(){const y=new THREE.Euler().setFromQuaternion(cam.quaternion,'YXZ').y;const nx=L.pos.x-Math.sin(y)*L.stride,nz=L.pos.z-Math.cos(y)*L.stride;if(S){L.pos.x=nx;L.pos.z=nz;return;}
   if(!blocked(nx,L.pos.z))L.pos.x=nx;if(!blocked(L.pos.x,nz))L.pos.z=nz;}
 function onGeo(p){const c=p.coords;L.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy};
   if(S&&S.phase!=='locate'&&c.accuracy<30&&(!plan.geo||c.accuracy<plan.geo.acc)){plan.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:L.pos.x,z:L.pos.z};save();}
   recordGps(c);gpsNav(c);}
-const _z=new THREE.Vector3(0,0,1),_e=new THREE.Euler(),_q0=new THREE.Quaternion(),_q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5));
+const _z=new THREE.Vector3(0,0,1),_qt=new THREE.Quaternion(),_e=new THREE.Euler(),_q0=new THREE.Quaternion(),_q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5));
 function screenAngle(){return ((screen.orientation&&screen.orientation.angle)||window.orientation||0)*Math.PI/180;}
 function tickLive(dt,frame){
   if(live==='xr'&&frame&&L.hitSrc&&L.reticle){const ref=renderer.xr.getReferenceSpace();const hits=frame.getHitTestResults(L.hitSrc);
@@ -955,7 +978,10 @@ function tickLive(dt,frame){
     if(L.yawOff==null){ // first reading: make the current phone heading equal the plan's start direction
       L.yawSrc='cal';_e.set(o.b*D,o.a*D,-o.g*D,'YXZ');const q=new THREE.Quaternion().setFromEuler(_e).multiply(_q1);const y=new THREE.Euler().setFromQuaternion(q,'YXZ').y;
       L.yawOff=L.calYaw-y;L.planNorth=-(L.yawOff);}
-    _e.set(o.b*D,o.a*D+L.yawOff+L.dragYaw,-o.g*D,'YXZ');cam.quaternion.setFromEuler(_e).multiply(_q1).multiply(_q0.setFromAxisAngle(_z,-screenAngle()));
+    _e.set(o.b*D,o.a*D+L.yawOff+L.dragYaw,-o.g*D,'YXZ');_qt.setFromEuler(_e).multiply(_q1).multiply(_q0.setFromAxisAngle(_z,-screenAngle()));
+    const ang=cam.quaternion.angleTo(_qt);
+    if(!L.qInit||ang>0.6){cam.quaternion.copy(_qt);L.qInit=true;}
+    else if(ang>0.0035)cam.quaternion.slerp(_qt,Math.min(1,dt*(4+ang*90)));
     L.pos.y=S?hPhone:EYE; // in survey/locate the virtual camera sits at the real phone height so overlays match the image
     cam.position.lerp(L.pos,Math.min(1,dt*6));if(S)svTick();}
   if(live&&(L.hudT+=dt)>0.25){L.hudT=0;hud();}}
@@ -974,7 +1000,10 @@ function liveUI(){window.__liveMode=live;renderer.setPixelRatio(PR());size();doc
   $('nextBtn').hidden=!!live||step>=3;['viewBtn','camBtn','menuBtn','stepTag'].forEach(id=>$(id).hidden=!!live);hud();setStatus();if(typeof svUI==='function')svUI();}
 $('scanBtn').addEventListener('click',()=>{if(S){svPrimary();return;}if(live){stopLive();return;}Promise.resolve(askSurvey()).catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();else stopLive();});});
 // in sensor mode a one-finger drag corrects the heading (compass drift)
-canvas.addEventListener('pointermove',e=>{if(live==='sensor'&&ptrs.size===1&&gMoved)L.dragYaw+=(e.movementX||0)*0.004;});
+canvas.addEventListener('pointerdown',()=>{L.dragAcc=0;L.dragOn=false;});
+canvas.addEventListener('pointermove',e=>{if(live!=='sensor'||ptrs.size!==1||!gMoved||!g0)return;const dx=e.clientX-g0[0],dy=e.clientY-g0[1];
+  if(!L.dragOn){if(Math.abs(dx)>28&&Math.abs(dx)>2*Math.abs(dy))L.dragOn=true;else return;}
+  L.dragYaw+=(e.movementX||0)*0.0025;});
 
 // ---------- Survey: measure height & corners with the camera, keep photos/videos ----------
 // Measuring without depth sensor: the phone is held at a known height h above the floor.
@@ -1072,9 +1101,9 @@ function applyFix(g){if(!plan.geoFrame||!S)return;const[x,z]=geoToPlan(g.lat,g.l
 function recordGps(c){if(!S||S.phase==='locate'||c.accuracy>25)return;const T=plan.gpsTrack||(plan.gpsTrack=[]);const last=T[T.length-1];const now=Date.now();
   if(!last||Math.hypot(last.x-L.pos.x,last.z-L.pos.z)>1||now-last.t>8000){T.push({lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),t:now});if(T.length>300)T.shift();}}
 function gpsNav(c){const f=plan.geoFrame;if(!f)return;
-  if(S&&S.phase==='locate'){if(S.needFix&&c.accuracy<=30){applyFix({lat:c.latitude,lon:c.longitude,acc:c.accuracy});return;}if(S.align||c.accuracy>10)return;}
-  else if(S||c.accuracy>10)return;
-  const[x,z]=geoToPlan(c.latitude,c.longitude);const p=clampInside(x,z);const w=0.15*(1-c.accuracy/12);L.pos.x+=(p[0]-L.pos.x)*w;L.pos.z+=(p[1]-L.pos.z)*w;}
+  if(S&&S.phase==='locate'){if(S.needFix&&c.accuracy<=30)applyFix({lat:c.latitude,lon:c.longitude,acc:c.accuracy});return;}
+  else if(S||c.accuracy>6||L.lockPos)return;
+  const[x,z]=geoToPlan(c.latitude,c.longitude);const p=clampInside(x,z);if(Math.hypot(p[0]-L.pos.x,p[1]-L.pos.z)<c.accuracy*0.6)return;const w=0.06;L.pos.x+=(p[0]-L.pos.x)*w;L.pos.z+=(p[1]-L.pos.z)*w;}
 
 // ---- camera line & corner detection (edges + Hough, on a small crop around the screen centre) ----
 const LD={N:96,t:0,res:null,cv:document.createElement('canvas')};LD.cv.width=LD.cv.height=LD.N;
@@ -1118,8 +1147,8 @@ function aimPoint(){let sx=innerWidth/2,sy=innerHeight/2,snap=null;const r=S&&S.
 function planAxis(){const w=plan.walls[S.chainWall0]||plan.walls[0];return w?Math.atan2(w[1][1]-w[0][1],w[1][0]-w[0][0]):null;}
 function cornerCandidate(){const ap=aimPoint();if(!ap)return null;let p=[ap.x,ap.z],tags=ap.snap?[ap.snap]:[];
   if(S.chain.length>=3&&Math.hypot(p[0]-S.chain[0][0],p[1]-S.chain[0][1])<0.35){p=S.chain[0].slice();tags=['close room'];}
-  else if(S.assist&&S.chain.length){const q=S.chain[S.chain.length-1],dx=p[0]-q[0],dz=p[1]-q[1],L0=Math.hypot(dx,dz),ax=planAxis();
-    if(ax!=null&&L0>0.2){const st=Math.PI/2,rel=Math.atan2(dz,dx)-ax,k=Math.round(rel/st);if(Math.abs(rel-k*st)<0.13){const na=ax+k*st;p=[q[0]+L0*Math.cos(na),q[1]+L0*Math.sin(na)];tags.push('straight');}}}
+  else if(S.square!==false&&S.chain.length){const q=S.chain[S.chain.length-1],dx=p[0]-q[0],dz=p[1]-q[1],L0=Math.hypot(dx,dz),ax=planAxis();
+    if(ax!=null&&L0>0.2){const st=Math.PI/2,rel=Math.atan2(dz,dx)-ax,k=Math.round(rel/st);if(Math.abs(rel-k*st)<SQ_TOL){const na=ax+k*st;p=[q[0]+L0*Math.cos(na),q[1]+L0*Math.sin(na)];tags.push('straight');}}}
   return{p,tags,d:ap.d};}
 
 // ---- actions ----
@@ -1137,7 +1166,19 @@ function addCorner(){if(S.modify&&S.chain.length){S.modify=false;undoCorner();}e
   S.chain.push(p);if(L.geo&&!L.geo.err)(plan.cornerGps||(plan.cornerGps=[])).push({p,lat:L.geo.lat,lon:L.geo.lon,acc:L.geo.acc});
   save();build();svRender();svUI();}
 function undoCorner(){if(!S.chain.length)return;S.chain.pop();if(plan.walls.length>S.chainWall0)plan.walls.pop();save();build();svRender();svUI();}
-function closeRoom(){if(S.chain.length<3){flash('3 corners needed');return;}plan.walls.push([S.chain[S.chain.length-1],S.chain[0]]);
+const SQ_TOL=0.38; // ≈22°: walls closer than this to the main axis are made exactly 0/90°
+// make a closed room exactly rectangular-angled: each near-axis wall gets a constant x' or z' in the axis frame
+function squareRoom(pts,ax){const n=pts.length;if(n<3||ax==null)return;const c=Math.cos(ax),s=Math.sin(ax);
+  const loc=pts.map(p=>[p[0]*c+p[1]*s,-p[0]*s+p[1]*c]);const px=[...Array(n).keys()],pz=[...Array(n).keys()];
+  const f=(a,i)=>a[i]===i?i:(a[i]=f(a,a[i]));const un=(a,i,j)=>{a[f(a,i)]=f(a,j);};
+  for(let i=0;i<n;i++){const j=(i+1)%n,dx=loc[j][0]-loc[i][0],dz=loc[j][1]-loc[i][1],an=Math.atan2(dz,dx),k=Math.round(an/(Math.PI/2));
+    if(Math.abs(an-k*Math.PI/2)>SQ_TOL)continue;if(k%2===0)un(pz,i,j);else un(px,i,j);}
+  const avg=(a,d)=>{const m={};loc.forEach((q,i)=>{const r=f(a,i);(m[r]||(m[r]=[0,0]))[0]+=q[d];m[r][1]++;});return i=>m[f(a,i)][0]/m[f(a,i)][1];};
+  const ax_=avg(px,0),az_=avg(pz,1);
+  pts.forEach((p,i)=>{const X=ax_(i),Z=az_(i);p[0]=+(X*c-Z*s).toFixed(3);p[1]=+(X*s+Z*c).toFixed(3);});}
+function closeRoom(){if(S.chain.length<3){flash('3 corners needed');return;}
+  if(S.square!==false){const w0=plan.walls[0];squareRoom(S.chain,w0?Math.atan2(w0[1][1]-w0[0][1],w0[1][0]-w0[0][0]):null);}
+  plan.walls.push([S.chain[S.chain.length-1],S.chain[0]]);
   S.closed=(S.closed||0)+1;S.lastClosed=S.chain.slice();(plan.rooms||(plan.rooms=[])).push({name:`Room ${plan.rooms.length+1}`,pts:S.chain.slice()});S.chain=[];S.chainWall0=plan.walls.length;save();build();svRender();svUI();
   flash('Room closed.');}
 // rotate a plan vector by a heading change δ (same sense as camera yaw)
@@ -1270,7 +1311,7 @@ function svUI(){const b=$('scanBtn');window.__survey=!!S;
     db.innerHTML=opts.map(k=>`<button data-dt="${k}" aria-pressed="${S.devType===k}">${ic(TYPES[k].ic)}<span>${k==='panel'?'Panel':TYPES[k].label.replace(' 2P+T','').replace('Light switch','Switch').replace('Wall light','Light')}</span></button>`).join('');
     db.querySelectorAll('[data-dt]').forEach(x=>x.onclick=()=>{S.devType=x.dataset.dt;svUI();});
     if(svPhase()==='place')p=[TYPES[S.devType].ic,'Place '+TYPES[S.devType].label];b.innerHTML=ic(p[0]);b.setAttribute('aria-label',p[1]);}
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','lock-outline','Lock position',false,!!L.lockPos],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;$('svMenuBtn').setAttribute('aria-expanded','false');};
@@ -1278,6 +1319,7 @@ function svUI(){const b=$('scanBtn');window.__survey=!!S;
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
+  on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position locked':'Position free');});
   on('svAssist','click',()=>{S.assist=!S.assist;svUI();done();flash(S.assist?'Line assist on':'Line assist off');});
   on('svGps','click',()=>{done();if(L.geo&&!L.geo.err){S.align=null;applyFix(L.geo);}else{S.needFix=true;flash('Waiting for GPS…');}});}
 $('svMenuBtn').innerHTML=ic('menu');$('svMenuBtn').addEventListener('click',e=>{e.stopPropagation();const o=$('svPop').hidden;$('svPop').hidden=!o;$('svMenuBtn').setAttribute('aria-expanded',o);});
