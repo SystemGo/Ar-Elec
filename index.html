@@ -154,7 +154,7 @@ body{font-feature-settings:"tnum" 1;letter-spacing:-.005em}
 .float{border:0;box-shadow:0 2px 12px rgba(0,0,0,.10)}
 #menuBtn,.tb{width:44px;height:44px;border-radius:50%}
 #stepTag{height:44px;border-radius:999px;padding:0 16px;font-weight:600;font-size:14px;left:calc(64px + var(--sl))}
-#stepTag #stepIc,#stepTag b{display:none}
+#stepTag b{display:none}
 .pop{border-radius:16px;padding:8px;top:calc(64px + var(--st))}
 .pop h3{display:none}
 .pop button{border-radius:10px;font-weight:500}
@@ -255,6 +255,43 @@ body.surveying #sheet{display:none}
 #startOv svg{width:150px;height:auto;animation:sweep 2.4s ease-in-out infinite}
 @keyframes sweep{0%,100%{transform:translateX(-14px)}50%{transform:translateX(14px)}}
 @media (prefers-reduced-motion:reduce){#startOv svg{animation:none}}
+/* ---- start screen + AR device bar ---- */
+#home{position:fixed;inset:0;z-index:9;background:var(--bg);display:grid;place-items:center;padding:24px 16px calc(24px + var(--sb))}
+body:not(.home) #home{display:none}
+body.home #stepTag,body.home .tr,body.home #scanBtn,body.home #nextBtn,body.home #sheet,body.home #props,body.home #c3d,body.home #plan{display:none!important}
+.hm{width:min(420px,100%);display:flex;flex-direction:column;gap:18px;align-items:stretch;text-align:center}
+.hm h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;color:var(--fg)}
+.hm .stats{background:var(--surface);border-radius:16px;padding:14px 8px}
+.hmGo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{aspect-ratio:1;border:0;border-radius:22px;background:var(--surface);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:600 17px var(--f-display);cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.tile .ic{width:44px;height:44px;color:var(--accent)}
+.tile.primary{background:var(--accent);color:var(--accent-ink)}.tile.primary .ic{color:var(--accent-ink)}
+.tile:disabled{opacity:.4}
+.hmPlan{align-self:center;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--accent);font:600 15px var(--f-display);padding:10px 16px;cursor:pointer}
+.hmPlan .ic{width:20px;height:20px}
+#devBar{left:0;right:0;margin-inline:auto;width:fit-content;bottom:calc(88px + var(--sb));border-radius:999px;padding:4px;display:flex;gap:2px}
+#devBar button{display:flex;align-items:center;gap:6px;border:0;background:transparent;border-radius:999px;padding:9px 14px;font:600 13px var(--f-display);color:var(--fg);cursor:pointer}
+#devBar button .ic{width:18px;height:18px}
+#devBar button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+body.devbar #svRead{bottom:calc(140px + var(--sb))}
+#stepTag .ic{display:block!important;width:18px;height:18px;color:var(--accent)}
+/* ---- projects page ---- */
+#home{place-items:start center;overflow-y:auto;padding-top:calc(72px + var(--st))}
+.hm{gap:14px;text-align:left}
+.hm h1{font-size:22px;margin:10px 4px 0}
+.hmGo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hmGo .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 10px;border-radius:14px;font:600 15px var(--f-display)}
+.hmGo .btn .ic{width:20px;height:20px}
+.hmGo .btn:disabled{opacity:.45}
+#pjList .li{min-height:62px}
+#pjList .li span b{display:block;font-weight:600}
+#pjList .li span small{display:block;font-size:13px;color:var(--muted)}
+#pjList .cur{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+#pjList .nocur{width:8px;flex:none}
+.pjEmpty{padding:18px 14px;color:var(--muted);font-size:15px}
+#pjSheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}
+.pjs{width:100%;background:var(--bg);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--sb));display:flex;flex-direction:column;gap:6px}
+.pjs h2{margin:0 4px}.pjs .note{margin:0 4px 8px;font-size:13px}
 </style>
 </head>
 <body>
@@ -297,6 +334,11 @@ body.surveying #sheet{display:none}
 <div id="viewer" hidden role="dialog" aria-label="Photo or video"></div>
 
 <section class="float" id="sheet" aria-label="Project"><div class="shh"><b id="pjName">Project</b><button class="icon" id="pjInfo" aria-label="Project info" data-ic="information-outline"></button></div><div class="stats" id="pjStats"></div></section>
+<section id="home" aria-label="Projects"><div class="hm">
+  <div class="hmGo"><button class="btn primary" id="hmNew"></button><button class="btn primary" id="hmAR"></button></div>
+  <h1>Projects</h1><div class="gl" id="pjList"></div></div></section>
+<div id="pjSheet" hidden><div class="pjs" role="dialog" aria-label="Project"><h2 id="pjsName"></h2><p class="note" id="pjsMeta"></p><div class="gl" id="pjsActs"></div></div></div>
+<div class="float" id="devBar" hidden role="group" aria-label="Device"></div>
 <div id="scrim"></div>
 <aside id="drawer" aria-label="Menu" aria-hidden="true">
   <div class="dh"><div class="brand" id="brandName">Project</div><button class="icon" id="menuClose" aria-label="Close menu" data-ic="close"></button></div>
@@ -330,9 +372,19 @@ const SAMPLE_DEV=[
 ];
 let plan, devs=[], uid=1, step=1, sel=null, tool=null, moveMode=false, xray=false, view3d=true;
 function fresh(){plan=JSON.parse(JSON.stringify(SAMPLE));plan.openings=[{id:1,type:'door',wall:3,t:0.55,w:0.9,h:2.04,sill:0},{id:2,type:'window',wall:1,t:0.5,w:1.2,h:1.25,sill:0.9}];plan.rooms=[{name:'Living',pts:[[0,0],[4,0],[4,5],[0,5]]},{name:'Kitchen',pts:[[4,0],[7,0],[7,5],[4,5]]}];plan.name='Project';plan.date=Date.now();devs=SAMPLE_DEV.map(([type,wall,t,h,side])=>({id:uid++,type,wall,t,h,side}));}
-try{const s=JSON.parse(localStorage.getItem('arelec-v1')||'null');if(s&&s.plan&&s.devs){plan=s.plan;devs=s.devs;uid=Math.max(0,...devs.map(d=>d.id))+1;}else fresh();}catch(e){fresh();}
+function emptyPlan(){plan={height:2.5,thick:0.15,walls:[],openings:[],rooms:[],name:'Project',date:Date.now()};devs=[];}
+// projects: [{id,name,date,plan,devs}] kept in localStorage; one of them is open at a time
+let projects=[],curId=null;
+try{projects=JSON.parse(localStorage.getItem('arelec-projects')||'[]')||[];curId=JSON.parse(localStorage.getItem('arelec-cur')||'null');}catch(e){projects=[];}
+try{const old=JSON.parse(localStorage.getItem('arelec-v2')||'null');if(old&&old.plan&&old.plan.walls&&old.plan.walls.length&&!projects.length){const id=Date.now();projects.push({id,plan:old.plan,devs:old.devs||[]});curId=id;}}catch(e){}
+function loadProject(id){const p=projects.find(q=>q.id===id);if(!p){emptyPlan();curId=null;return;}plan=p.plan;devs=p.devs||[];curId=id;uid=Math.max(0,...devs.map(d=>d.id))+1;}
+loadProject(curId);
 // saving is debounced: sliders and sensors can call save() many times per second
-let saveT=null;const saveNow=()=>{saveT=null;try{localStorage.setItem('arelec-v1',JSON.stringify({plan,devs}))}catch(e){}};
+let saveT=null;const saveNow=()=>{saveT=null;
+  if(curId==null){if(!plan.walls.length&&!devs.length)return;curId=Date.now();if(!plan.name||plan.name==='Project')plan.name=`Project ${projects.length+1}`;projects.unshift({id:curId,plan,devs});}
+  const p=projects.find(q=>q.id===curId);if(p){p.plan=plan;p.devs=devs;}
+  try{localStorage.setItem('arelec-projects',JSON.stringify(projects));localStorage.setItem('arelec-cur',JSON.stringify(curId));}catch(e){}
+  if(document.body.classList.contains('home'))renderHome();};
 const save=()=>{if(!saveT)saveT=setTimeout(saveNow,300);};
 addEventListener('pagehide',()=>{if(saveT){clearTimeout(saveT);saveNow();}});
 let needsRender=true;const kick=()=>{needsRender=true;};
@@ -342,6 +394,7 @@ const ICONS={"menu":"<path fill=\"currentColor\" d=\"M3 6h18v2H3zm0 5h18v2H3zm0 
 Object.assign(ICONS,{"door":"<path fill=\"currentColor\" d=\"M8 3c-1.11 0-2 .89-2 2v16h12V5c0-1.11-.89-2-2-2zm0 2h8v14H8zm5 6v2h2v-2z\"/>","window-closed-variant":"<path fill=\"currentColor\" d=\"M21 20V2H3v18H1v3h22v-3M19 4v7h-6V4M5 4h6v7H5m0 9v-7h6v7m2 0v-7h6v7Z\"/>"});
 Object.assign(ICONS,{"pencil-outline":"<path fill=\"currentColor\" d=\"m14.06 9l.94.94L5.92 19H5v-.92zm3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z\"/>","chevron-right":"<path fill=\"currentColor\" d=\"M8.59 16.58L13.17 12L8.59 7.41L10 6l6 6l-6 6z\"/>"});
 Object.assign(ICONS,{"information-outline":"<path fill=\"currentColor\" d=\"M11 9h2V7h-2m1 13c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8m0-18A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m-1 15h2v-6h-2z\"/>"});
+Object.assign(ICONS,{"home-outline":"<path fill=\"currentColor\" d=\"m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3\"/>"});
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
 function paintIcons(root=document){root.querySelectorAll('[data-ic]').forEach(el=>{if(el.dataset.icDone===el.dataset.ic)return;el.insertAdjacentHTML('afterbegin',ic(el.dataset.ic));el.dataset.icDone=el.dataset.ic;});}
 const OPEN={door:{label:'Door',w:0.90,h:2.04,sill:0},window:{label:'Window',w:1.20,h:1.25,sill:0.90}};
@@ -696,7 +749,27 @@ function metrics(){const rooms=plan.rooms&&plan.rooms.length?plan.rooms:null,b=b
   return{area,per,vol:area*plan.height,h:plan.height,walls:per*plan.height-dA-wA,dA,wA,rooms:rooms?rooms.length:(plan.walls.length?1:0),
     doors:os.filter(o=>o.type==='door').length,windows:os.filter(o=>o.type==='window').length};}
 const f2=v=>v.toFixed(2);
-function renderSheet(){const m=metrics();if(!plan.name)plan.name='Project';
+function goHome(){document.body.classList.add('home');sel=null;selOp=null;tool=null;moveMode=false;drawing=false;
+  // a project left empty (scan cancelled) is dropped
+  if(curId!=null&&!plan.walls.length&&!devs.length){projects=projects.filter(q=>q.id!==curId);curId=null;saveNow();}
+  renderHome();}
+function projMeta(p){const pl=p.plan,b=pl.walls.length;let area=0;if(pl.rooms&&pl.rooms.length)area=pl.rooms.reduce((t,r)=>t+polyArea(r.pts),0);
+  return `${new Date(pl.date||p.id).toLocaleDateString()} · ${b?`${area?area.toFixed(1)+' m² · ':''}${pl.walls.length} walls`:'empty'} · ${(p.devs||[]).length} devices`;}
+function renderHome(){const cur=projects.find(q=>q.id===curId);
+  $('hmAR').disabled=!(cur&&cur.plan.walls.length);
+  $('pjList').innerHTML=projects.length?projects.map(p=>`<button class="li" data-pj="${p.id}">${p.id===curId?'<i class="cur"></i>':'<i class="nocur"></i>'}<span><b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small></span>${ic('chevron-right')}</button>`).join('')
+    :'<div class="pjEmpty">No projects</div>';
+  $('pjList').querySelectorAll('[data-pj]').forEach(x=>x.onclick=()=>openPjSheet(+x.dataset.pj));}
+function openPjSheet(id){if(id!==curId){saveNow();loadProject(id);refresh();renderHome();}const p=projects.find(q=>q.id===id);
+  $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p);const has=p.plan.walls.length>0;
+  $('pjsActs').innerHTML=(has?row('paAR','video-3d','AR view'):'')+row('paScan','cube-scan',has?'Scan more rooms':'Scan')+(has?row('paPlan','floor-plan','Plan'):'')+row('paDel','trash-can-outline','Delete',null,'danger');
+  $('pjSheet').hidden=false;const close=()=>{$('pjSheet').hidden=true;};
+  on('paAR','click',()=>{close();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
+  on('paScan','click',()=>{close();startSurvey(!has);});
+  on('paPlan','click',()=>{close();document.body.classList.remove('home');sel=null;setView(true);setCam(false);refresh();});
+  on('paDel','click',()=>{close();projects=projects.filter(q=>q.id!==id);if(curId===id){curId=null;emptyPlan();}saveNow();try{localStorage.setItem('arelec-projects',JSON.stringify(projects));}catch(e){}refresh();renderHome();});}
+function newProject(){saveNow();curId=Date.now();emptyPlan();plan.name=`Project ${projects.length+1}`;projects.unshift({id:curId,plan,devs});saveNow();startSurvey(true);}
+function renderSheet(){if(document.body.classList.contains('home'))renderHome();const m=metrics();if(!plan.name)plan.name='Project';
   $('pjName').textContent=plan.name;
   $('pjStats').innerHTML=[['Volume',`${f2(m.vol)} m³`],['Perimeter',`${f2(m.per)} m`],['Rooms',m.rooms],['Doors',m.doors],['Windows',m.windows]]
     .map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');}
@@ -744,7 +817,7 @@ function renderMenu(){const tab=menuTab||(['plan','devices','wiring'][step-1]);l
   on('bReset','click',()=>{fresh();sel=null;selOp=null;bgImg=null;drawing=false;save();resetCam();refresh();});
   on('bClear','click',()=>{plan.walls=[];plan.openings=[];plan.rooms=[];devs=[];sel=null;selOp=null;draft=null;save();refresh();drawPlan();});
   $('stepBody').querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{tool=b.dataset.tool;moveMode=false;sel=null;openMenu(false);setView(true);refresh();}));
-  on('iName','change',e=>{plan.name=e.target.value.trim()||'Project';save();renderSheet();$('brandName').textContent=plan.name;});
+  on('iName','change',e=>{plan.name=e.target.value.trim()||'Project';saveNow();renderSheet();$('brandName').textContent=plan.name;});
   on('iNotes','change',e=>{plan.notes=e.target.value;save();});
   on('bAR','click',()=>{openMenu(false);startLive().catch(e=>{flash('Camera failed: '+(e&&e.message||e));stopLive();});});
   on('fPhoto','change',async e=>{const f=e.target.files[0];if(!f)return;await mPut({type:'photo',blob:f,t:Date.now(),wall:null,gps:L.geo&&!L.geo.err?L.geo:null});renderGallery();});
@@ -754,12 +827,12 @@ function setView(is3d){view3d=is3d;syncTop();svg.toggleAttribute('hidden',is3d);
   if(!is3d)drawPlan();renderProps();setStatus();}
 function go(n){step=Math.max(1,Math.min(3,n));tool=null;moveMode=false;if(step>1&&drawing){drawing=false;draft=null;}if(step>1)setView(true);
   if(step===3){xray=true;}refresh();}
-function build(){buildWalls();if(typeof live!=='undefined'&&live)buildMini();needsRender=true;buildDevs();lastRoute=step>=3?routeCircuits():(clear(gWires),null);if(!view3d)drawPlan();}
+function build(){buildWalls();if(typeof live!=='undefined'&&live)buildMini();needsRender=true;buildDevs();lastRoute=devs.some(d=>d.type==='panel')?routeCircuits():(clear(gWires),null);if(!view3d)drawPlan();}
 function refresh(){build();renderSheet();
-  $('stepIc').innerHTML=ic(STEP_IC[step]);$('stepNum').textContent=step;syncTop();$('stepName').textContent=STEP_NAMES[step];$('xray').setAttribute('aria-pressed',xray);
+  $('stepIc').innerHTML=ic('home-outline');$('stepNum').textContent=step;syncTop();$('stepName').textContent=STEP_NAMES[step];$('xray').setAttribute('aria-pressed',xray);
   $('nextBtn').hidden=step>=3;$('nextLbl').textContent=step<3?STEP_NAMES[step+1]:'';
   renderProps();setStatus();if($('drawer').classList.contains('on'))renderMenu();}
-$('nextBtn').addEventListener('click',()=>go(step+1));$('stepTag').addEventListener('click',()=>openMenu(true));
+$('nextBtn').addEventListener('click',()=>go(step+1));$('stepTag').addEventListener('click',()=>goHome());
 function pop(id,open){['viewPop','camPop'].forEach(p=>{const o=p===id&&open;$(p).hidden=!o;$(p==='viewPop'?'viewBtn':'camBtn').setAttribute('aria-expanded',o);});}
 function syncTop(){$('viewBtn').innerHTML=ic(view3d?'cube-outline':'floor-plan');$('camBtn').innerHTML=ic(fps?'walk':'rotate-orbit');
   $('v2d').setAttribute('aria-pressed',!view3d);$('v3d').setAttribute('aria-pressed',view3d);$('xray').setAttribute('aria-pressed',xray);
@@ -952,20 +1025,20 @@ Object.assign(ICONS,{"target":"<path fill=\"currentColor\" d=\"M11 2v2.07A8 8 0 
 function askSurvey(){ // called from the round button (a user tap, so permissions can be requested afterwards)
   if(S)return finishSurvey();
   if(!plan.walls.length)return startSurvey(true);
-  $('status').innerHTML=`<button class="btn primary" id="svLoc">${ic('map-marker-account')}Locate me</button><button class="btn" id="svNew">${ic('plus')}New plan</button><button class="btn" id="svAdd">${ic('vector-polyline')}Add rooms</button><button class="btn" id="svX" aria-label="Cancel">${ic('close')}</button>`;
+  $('status').innerHTML=`<button class="btn primary" id="svNew">${ic('plus')}New plan</button><button class="btn" id="svAdd">${ic('vector-polyline')}Add rooms</button><button class="btn" id="svX" aria-label="Cancel">${ic('close')}</button>`;
   $('status').classList.add('live');$('status').hidden=false;
-  $('svLoc').onclick=()=>startLocate();$('svNew').onclick=()=>startSurvey(true);$('svAdd').onclick=()=>startSurvey(false);$('svX').onclick=()=>setStatus();}
+  $('svNew').onclick=()=>startSurvey(true);$('svAdd').onclick=()=>startSurvey(false);$('svX').onclick=()=>setStatus();}
 async function startSurvey(fresh){
-  sel=null;tool=null;moveMode=false;drawing=false;setView(true);
-  if(fresh){plan.walls=[];plan.wallTex={};plan.openings=[];plan.rooms=[];plan.geo=null;plan.geoFrame=null;plan.gpsTrack=[];plan.cornerGps=[];plan.height=2.5;plan.date=Date.now();devs=[];save();}
+  document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
+  if(fresh){const nm=plan.name;plan.walls=[];plan.wallTex={};plan.openings=[];plan.rooms=[];plan.geo=null;plan.geoFrame=null;plan.gpsTrack=[];plan.cornerGps=[];plan.height=2.5;plan.date=Date.now();plan.name=nm;devs=[];save();}
   S={phase:fresh?'height':'corners',low:null,chain:[],chainWall0:plan.walls.length,rec:null,fresh,assist:true};
   await startSensor({survey:true,fresh});
   if(fresh){L.pos.set(0,EYE,0);L.calYaw=0;L.yawOff=null;}
   aim.visible=true;svRender();svUI();S.intro={t:performance.now(),a:null};$('startOv').hidden=false;
   flash(fresh?'Mark the floor line':'Mark a corner');}
 async function startLocate(){
-  sel=null;tool=null;moveMode=false;drawing=false;setView(true);
-  S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null};
+  document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
+  S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:true,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
   await startSensor({survey:true});aim.visible=true;svUI();S.intro={t:performance.now(),a:null};$('startOv').hidden=false;
   if(L.geo&&!L.geo.err&&L.geo.acc<=30)applyFix(L.geo);
   flash(plan.geoFrame?'Locating…':'Align on a corner');}
@@ -974,11 +1047,10 @@ function enterLocate(){const keep=S?S.assist:true;S={phase:'locate',chain:[],cha
 function finishSurvey(){if(!S)return;
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
-    if(plan.walls.length&&live==='sensor'){enterLocate();const f=plan.geoFrame;
-      flash('Plan saved');return;}}
+  }
   $('startOv').hidden=true;const n=plan.walls.length;S=null;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
-  if(n){go(2);flash(`Plan saved: ${n} walls, ceiling ${plan.height.toFixed(2)} m.`);}}
+  goHome();if(n)flash('Saved');}
 
 // ---- GPS ⇄ plan ----
 // plan.geoFrame maps GPS to plan metres: origin (lat0,lon0) ↔ (x0,z0), theta = plan yaw of true north.
@@ -1134,7 +1206,9 @@ function svTick(){if(!S)return;const now=performance.now();
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.assist&&L.stream&&now-LD.t>140){LD.t=now;LD.res=detectLines();drawLines(LD.res);}else if(!S.assist&&LD.res){LD.res=null;drawLines(null);}
   const a=aimInfo();const lbl=(lblN=(lblN+1)%6)===0;let read='';prevLine.visible=false;
-  if(S.phase==='locate'){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
+  if(S.phase==='locate'&&!S.alignMode){const w=devAimTick();aim.visible=false;highlightWall(w?w.wall:-1);
+    read=w?`${TYPES[S.devType].label} · ${TYPES[S.devType].h.toFixed(2)} m · ${w.dist.toFixed(1)} m`:'Aim at a wall';}
+  else if(S.phase==='locate'){devAim.visible=false;castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
     highlightWall(h?h.object.userData.wall:-1);const ap=aimPoint();
     if(ap){aim.visible=true;aim.position.set(ap.x,0,ap.z);aimLine.scale.y=0.01;aimTop.visible=false;setAim(ap.snap?GREEN:ORANGE);}else aim.visible=false;
     const g=L.geo;read=(h?`Wall ${h.object.userData.wall+1} · ${h.distance.toFixed(1)} m away`:'Look at a wall')+(S.align?' · locked':g&&!g.err?` · GPS ±${Math.round(g.acc)} m`:'');}
@@ -1168,19 +1242,41 @@ function drawMini(go){if(!go||!S)return;const dpr=Math.min(2,devicePixelRatio||1
   if(aim.visible){const a=T(aim.position.x,aim.position.z);g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.arc(a[0],a[1],4,0,7);g.stroke();}
   const me=T(L.pos.x,L.pos.z),yw=new THREE.Euler().setFromQuaternion(cam.quaternion,'YXZ').y,fx=-Math.sin(yw),fz=-Math.cos(yw);
   g.fillStyle='#7d7aff';g.beginPath();g.moveTo(me[0]+fx*7,me[1]+fz*7);g.lineTo(me[0]-fz*4-fx*3,me[1]+fx*4-fz*3);g.lineTo(me[0]+fz*4-fx*3,me[1]-fx*4-fz*3);g.closePath();g.fill();}
-const PH={low:['arrow-collapse-down','Set low point'],high:['arrow-collapse-up','Set high point'],corner:['plus','Add corner'],align:['target','Align on this corner']};
-function svPhase(){return S.phase==='locate'?'align':S.phase==='height'?(S.low?'high':'low'):'corner';}
-function svPrimary(){const p=svPhase();if(p==='low')setLow();else if(p==='high')setHigh();else if(p==='align')alignCorner();else addCorner();}
+const PH={low:['arrow-collapse-down','Set low point'],high:['arrow-collapse-up','Set high point'],corner:['plus','Add corner'],align:['target','Align on this corner'],place:['plus','Place device']};
+function svPhase(){return S.phase==='locate'?(S.alignMode?'align':'place'):S.phase==='height'?(S.low?'high':'low'):'corner';}
+function svPrimary(){const p=svPhase();if(p==='low')setLow();else if(p==='high')setHigh();else if(p==='align'){alignCorner();S.alignMode=false;svUI();}else if(p==='place')placeDevice();else addCorner();}
+// AR view: the device goes on the wall in the middle of the screen, at its standard height
+function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
+  const i=h.object.userData.wall,g=wallGeo(i),P=h.point;let t=((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L;t=Math.min(0.98,Math.max(0.02,t));
+  const side=((cam.position.x-g.mx)*g.nx+(cam.position.z-g.my)*g.ny)>=0?1:-1;return{wall:i,t,side,dist:h.distance};}
+function placeDevice(){const w=wallTarget();if(!w){flash('Aim at a wall');return;}const type=S.devType;
+  if(type==='panel'){const old=devs.find(d=>d.type==='panel');if(old)Object.assign(old,{wall:w.wall,t:w.t,side:w.side});else{const d={id:uid++,type,wall:w.wall,t:w.t,h:TYPES.panel.h,side:w.side};devs.push(d);S.placed.push(d.id);}
+    S.devType='socket';flash('Panel placed');}
+  else{const d={id:uid++,type,wall:w.wall,t:w.t,h:TYPES[type].h,side:w.side};devs.push(d);S.placed.push(d.id);flash(`${TYPES[type].label} · ${d.h.toFixed(2)} m`);}
+  save();build();svUI();}
+const devAim=new THREE.Group();(()=>{const disc=new THREE.Mesh(new THREE.CircleGeometry(0.07,32),new THREE.MeshBasicMaterial({color:0x6e6cf0,transparent:true,opacity:.6,depthTest:false,side:THREE.DoubleSide}));
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.07,0.082,32),new THREE.MeshBasicMaterial({color:0xffffff,depthTest:false,transparent:true,side:THREE.DoubleSide}));
+  const dot=new THREE.Mesh(new THREE.CircleGeometry(0.012,16),new THREE.MeshBasicMaterial({color:0xffffff,depthTest:false,transparent:true,side:THREE.DoubleSide}));
+  [disc,ring,dot].forEach(m=>{m.renderOrder=12;devAim.add(m);});devAim.visible=false;world.add(devAim);})();
+function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():null;if(!w){devAim.visible=false;return null;}
+  const g=wallGeo(w.wall),h=TYPES[S.devType].h,off=plan.thick/2+0.02,x=g.ax+g.dx*w.t+g.nx*w.side*off,z=g.ay+g.dy*w.t+g.ny*w.side*off;
+  devAim.position.set(x,h,z);devAim.lookAt(x+g.nx*w.side,h,z+g.ny*w.side);devAim.visible=true;return w;}
 function svUI(){const b=$('scanBtn');window.__survey=!!S;
   const show=!!S;['doneBtn','svMenuBtn','svRead'].forEach(id=>$(id).hidden=!show);$('miniMap').hidden=true;if(!show){$('svPop').hidden=true;$('svMenuBtn').setAttribute('aria-expanded','false');}
-  if(!S){b.classList.remove('cap');return;}
-  const p=S.modify&&svPhase()==='corner'?['pencil-outline','Move the last corner here']:PH[svPhase()];b.classList.remove('on');b.classList.add('cap');b.innerHTML=ic(p[0]);b.setAttribute('aria-label',p[1]);
-  const loc=S.phase==='locate';
-  const items=loc?[['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svAssist','magnet','Line assist',false,S.assist]]
+  if(!S){b.classList.remove('cap');$('devBar').hidden=true;document.body.classList.remove('devbar');if(typeof devAim!=='undefined')devAim.visible=false;return;}
+  let p=S.modify&&svPhase()==='corner'?['pencil-outline','Move the last corner here']:PH[svPhase()];b.classList.remove('on');b.classList.add('cap');b.innerHTML=ic(p[0]);b.setAttribute('aria-label',p[1]);
+  const loc=S.phase==='locate';const db=$('devBar');db.hidden=!loc||S.alignMode;document.body.classList.toggle('devbar',!db.hidden);
+  if(loc){const opts=devs.some(d=>d.type==='panel')?['socket','switch','light']:['panel'];if(!opts.includes(S.devType))S.devType=opts[0];
+    db.innerHTML=opts.map(k=>`<button data-dt="${k}" aria-pressed="${S.devType===k}">${ic(TYPES[k].ic)}<span>${k==='panel'?'Panel':TYPES[k].label.replace(' 2P+T','').replace('Light switch','Switch').replace('Wall light','Light')}</span></button>`).join('');
+    db.querySelectorAll('[data-dt]').forEach(x=>x.onclick=()=>{S.devType=x.dataset.dt;svUI();});
+    if(svPhase()==='place')p=[TYPES[S.devType].ic,'Place '+TYPES[S.devType].label];b.innerHTML=ic(p[0]);b.setAttribute('aria-label',p[1]);}
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;$('svMenuBtn').setAttribute('aria-expanded','false');};
-  on('svUndo','click',()=>{S.modify=false;undoCorner();done();});on('svClose','click',()=>{closeRoom();done();});
+  on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
+  on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
+  on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
   on('svAssist','click',()=>{S.assist=!S.assist;svUI();done();flash(S.assist?'Line assist on':'Line assist off');});
   on('svGps','click',()=>{done();if(L.geo&&!L.geo.err){S.align=null;applyFix(L.geo);}else{S.needFix=true;flash('Waiting for GPS…');}});}
@@ -1201,7 +1297,9 @@ function openViewer(m){const v=$('viewer');const url=URL.createObjectURL(m.blob)
   $('vDel').onclick=async()=>{await mDel(m.id);if(plan.wallTex)for(const k in plan.wallTex)if(plan.wallTex[k]===m.id)delete plan.wallTex[k];delete texCache[m.id];save();build();v.hidden=true;v.innerHTML='';renderGallery();};}
 
 $('nextBtn').insertAdjacentHTML('beforeend',ic('arrow-right'));
-paintIcons();size();setCam(true);themeScene();refresh();renderer.setAnimationLoop(loop);
+$('hmNew').innerHTML=ic('plus')+'<span>New project</span>';$('hmAR').innerHTML=ic('video-3d')+'<span>AR view</span>';
+$('hmNew').onclick=()=>newProject();$('pjSheet').addEventListener('click',e=>{if(e.target.id==='pjSheet')$('pjSheet').hidden=true;});$('hmAR').onclick=()=>{startLocate().catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();});};
+paintIcons();size();setCam(true);themeScene();refresh();goHome();renderer.setAnimationLoop(loop);
 })();
 </script>
 </body>
