@@ -273,6 +273,17 @@ body.editing #lineCv{display:none}
 #spotTray{left:12px;right:12px;bottom:calc(var(--navH) + 92px);border-radius:999px;padding:6px;display:flex;gap:6px;overflow-x:auto;width:fit-content;max-width:calc(100vw - 24px);background:rgba(255,255,255,.92)}
 #spotTray .st{width:44px;height:44px;flex:none;border-radius:50%;border:0;padding:0;background:center/cover no-repeat;box-shadow:inset 0 0 0 2px #fff,0 0 0 1px var(--line);cursor:grab;touch-action:none}
 #spotTray .st.ok{box-shadow:inset 0 0 0 2px #fff,0 0 0 2.5px var(--ok)}#spotTray .st.auto{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px #9be2b8}
+.spot.prop{animation:spProp 1.1s ease-in-out infinite}
+.spot.prop i{background:#fff;box-shadow:0 0 0 2px var(--ok),0 0 0 6px rgba(31,164,90,.35)}
+@keyframes spProp{50%{filter:brightness(1.15)}}
+#spConfirm{left:0;right:0;margin-inline:auto;width:fit-content;bottom:calc(var(--navH) + 150px);border-radius:999px;padding:6px 6px 6px 6px;display:flex;align-items:center;gap:10px;animation:popUp .35s var(--ease)}
+#spConfirm i{width:42px;height:42px;border-radius:50%;background:center/cover;flex:none;-webkit-mask:radial-gradient(circle,#000 50%,transparent 71%);mask:radial-gradient(circle,#000 50%,transparent 71%)}
+#spConfirm span{font:500 13px/1.25 var(--f-display);padding-right:4px}#spConfirm span b{font-size:15px}
+#spConfirm button{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;transition:transform .2s var(--spring)}
+#spConfirm button:active{transform:scale(.88)}#spConfirm button .ic{width:22px;height:22px}
+#spConfirm .no{background:var(--surface-2)}#spConfirm .yes{background:var(--ok);color:#fff}
+#spSuggest{left:12px;right:12px;bottom:calc(var(--navH) + 150px);border-radius:18px;padding:10px 10px 10px 14px;display:flex;align-items:center;gap:10px;animation:popUp .35s var(--ease);font:500 13.5px var(--f-display)}
+#spSuggest span{flex:1}#spSuggest .btn{padding:9px 12px;font-size:13px;white-space:nowrap}
 /* ---- wall editor ---- */
 #plan .hdl{cursor:grab;touch-action:none}
 #plan .hdl.drag{cursor:grabbing}
@@ -322,7 +333,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><i></i></div>
+<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><i></i></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1145,7 +1156,7 @@ function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();vlSa
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
-  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
+  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;$('spConfirm').hidden=true;$('spSuggest').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
   goHome();if(n)flash('Saved');}
 
@@ -1183,7 +1194,7 @@ function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=g
   if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
 function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
   L.headLock=true; // from here on the compass no longer turns the walls; only the gyroscope does
-  if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;}
+  if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();vlUI();}
   if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
     if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length&&!spots().length){S.alignMode=true;flash('Aim at a corner');}else flash(spots().length?'Drag a photo onto its real place':'Turn slowly around you');}}
@@ -1334,7 +1345,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${g.L.toFixed(2)} m`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}try{vlTick(now);spAuto(now);}catch(err){console.warn(err);}
+function svTick(){if(!S)return;const now=performance.now();if(S.gate){gateTick(now);return;}try{vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.phase==='corners'&&S.autoOp!==false&&L.stream&&!editing&&now-OD.t>320){OD.t=now;try{odTick();}catch(err){console.warn(err);}}
@@ -1500,7 +1511,7 @@ function vlEvaluate(V){let best=null;for(const v of V.votes){const cl=V.votes.fi
     V.located=true;V.recent=[];S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
 function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
   if(S.phase!=='locate'){el.hidden=!L.headLock;el.className='float learn';el.innerHTML=`${ic('camera')}<span>${VL.frames.length} views</span>`;return;}
-  const V=S.vl;if(!V||(!VL.frames.length&&!spots().length)){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0)*100);
+  const V=S.vl;if(!V){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0)*100);
   el.hidden=false;el.className='float'+(V.located?' ok':'');el.innerHTML=`<span>${V.located?'Pinned':'Identifying'}</span><i><b style="width:${V.located?100:p}%"></b></i><em>${p}%</em>`;}
 
 // ---------- spots: photos the user taps while scanning, anchored to a 3D point (floor or wall) ----------
@@ -1534,23 +1545,42 @@ function spRender(){const lay=$('spotLayer'),tray=$('spotTray');const on=!!(S&&!
   if(S.phase==='locate'){const sig=list.map(s=>s.id+':'+spState(s.id)).join(',');if(tray.dataset.sig!==sig){tray.dataset.sig=sig;
     tray.innerHTML=list.map(s=>`<button class="st ${spState(s.id)}" data-sp="${s.id}" aria-label="Spot ${s.id}" style="background-image:url(${s.img})"></button>`).join('');
     tray.querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();spStartDrag(+b.dataset.sp,e);}));}}}
-function spState(id){const o=S&&S.obs&&S.obs.find(q=>q.id===id);return !o?'':o.user?'ok':'auto';}
+function spState(id){const o=S&&S.obs&&S.obs.find(q=>q.id===id);return !o?'':'ok';}
 function spLayout(){const lay=$('spotLayer');if(lay.hidden)return;lay.querySelectorAll('.spot').forEach(el=>{const s=spots().find(q=>q.id===+el.dataset.sp);if(!s)return;
-  if(SP.drag&&SP.drag.id===s.id){el.style.opacity=0;return;}const p=spProject(s);
+  if(SP.drag&&SP.drag.id===s.id){el.style.opacity=0;return;}const pr=S.prop&&S.prop.id===s.id,p=pr?spDirScreen(S.prop.d):spProject(s);
   if(!p||p[0]<-60||p[1]<-60||p[0]>innerWidth+60||p[1]>innerHeight+60){el.style.opacity=0;el.style.pointerEvents='none';return;}
-  const st=spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-30}px,${p[1]-30}px)`;});}
+  const st=pr?'prop':spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-30}px,${p[1]-30}px)`;});}
 function spStartDrag(id,e){const s=spots().find(q=>q.id===id);if(!s)return;const gh=$('spotGhost');gh.style.backgroundImage=`url(${s.img})`;gh.hidden=false;
   SP.drag={id,pid:e.pointerId};const mv=ev=>{if(ev.pointerId!==SP.drag.pid)return;gh.style.transform=`translate(${ev.clientX-38}px,${ev.clientY-38-46}px)`;};
   const up=ev=>{if(ev.pointerId!==SP.drag.pid)return;removeEventListener('pointermove',mv,true);removeEventListener('pointerup',up,true);removeEventListener('pointercancel',up,true);gh.hidden=true;
     const x=ev.clientX,y=ev.clientY-46;SP.drag=null;if(ev.type==='pointerup'&&y>60&&y<innerHeight-120)spObserve(id,x,y,true);};
   addEventListener('pointermove',mv,true);addEventListener('pointerup',up,true);addEventListener('pointercancel',up,true);mv(e);}
 // an observation = the ray (with the current heading correction removed) through the screen point where the spot really is
-function spObserve(id,x,y,user){castAt(x,y);const d=ray.ray.direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0),-(L.dragYaw||0));
-  S.obs=(S.obs||[]).filter(o=>o.id!==id||(o.user&&!user));if(!user&&S.obs.some(o=>o.id===id))return;S.obs.push({id,d:[d.x,d.y,d.z],user,t:performance.now()});
-  spSolve();spRender();if(user)flash(`Spot ${id} placed`);}
+function spDir(x,y){castAt(x,y);const d=ray.ray.direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0),-(L.dragYaw||0));return[d.x,d.y,d.z];}
+function spObserve(id,x,y,user){spObserveDir(id,spDir(x,y),user);}
+function spObserveDir(id,d,user){if(S.prop&&S.prop.id===id)spPropClose();
+  S.obs=(S.obs||[]).filter(o=>o.id!==id);S.obs.push({id,d,user:true,t:performance.now()});if(S.rejected)S.rejected.delete(id);
+  spSolve();spRender();flash(`Spot ${id} placed`);}
+// screen position of a stored direction (sensor frame) with the current heading
+const _pd=new THREE.Vector3();
+function spDirScreen(d){_pd.set(d[0],d[1],d[2]).applyAxisAngle(new THREE.Vector3(0,1,0),L.dragYaw||0).multiplyScalar(4).add(cam.position).project(cam);if(_pd.z>1)return null;return[(_pd.x+1)/2*innerWidth,(1-_pd.y)/2*innerHeight];}
+// ---- automatic proposal: the photo snaps where the app found it; the user accepts or refuses ----
+function spPropose(id,x,y,score){if(S.prop)return;const s=spots().find(q=>q.id===id);if(!s)return;S.prop={id,d:spDir(x,y),score,t:performance.now()};
+  const el=$('spConfirm');el.innerHTML=`<i style="background-image:url(${s.img})"></i><span>Spot ${id} found<br><b>${Math.round(score*100)}%</b></span><button class="no" id="spNo" aria-label="Wrong place">${ic('close')}</button><button class="yes" id="spYes" aria-label="Correct">${ic('check')}</button>`;
+  el.hidden=false;$('spYes').onclick=()=>{const p=S.prop;if(p)spObserveDir(p.id,p.d,true);};
+  $('spNo').onclick=()=>{const p=S.prop;if(!p)return;(S.rejected||(S.rejected=new Map())).set(p.id,performance.now());spPropClose();flash('Refused · drag it yourself');};}
+function spPropClose(){S.prop=null;$('spConfirm').hidden=true;}
+// ---- re-place photos (Tools) ----
+function spRespot(){S.respot=true;S.obs=[];S.spotFix=false;S.spotConf=0;if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}spPropClose();S.rejected=new Map();S.sugOff=performance.now();$("spSuggest").hidden=true;spRender();vlUI();svUI();flash("Drag each photo onto its real place");}
+function spSuggestTick(now){const el=$('spSuggest');if(!S||S.phase!=='locate'||S.gate||!spots().length||S.prop||SP.drag){if(!el.hidden&&(!S||S.phase!=='locate'))el.hidden=true;return;}
+  if(S.sugOff&&now-S.sugOff<30000)return;const V=S.vl;let why=null;
+  if(!S.spotFix&&!(V&&V.located)&&now-(S.t0||(S.t0=now))>9000&&!(S.obs||[]).length)why='Place the photos to pin the model';
+  else if((S.spotFix||(V&&V.located))&&VL.frames.length&&V&&V.lastScore<0.3){S.lowT=S.lowT||now;if(now-S.lowT>6000)why='The model may have moved';}else S.lowT=0;
+  if(why&&el.hidden){el.innerHTML=`<span>${why}</span><button class="btn primary" id="sgGo">${ic('camera')}Re-place photos</button><button class="icon" id="sgX" aria-label="Dismiss">${ic('close')}</button>`;el.hidden=false;
+    $('sgGo').onclick=()=>spRespot();$('sgX').onclick=()=>{el.hidden=true;S.sugOff=performance.now();};}
+  else if(!why&&!el.hidden)el.hidden=true;}
 // ---- solve heading D, position x,z and floor height h from the observations (Gauss-Newton with priors) ----
 function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===o.id)})).filter(o=>o.s);if(!obs.length)return;
-  if(!obs.some(o=>o.user)&&obs.length<2&&!(S.vl&&S.vl.located))return; // one automatic match alone is not trusted
   const g=L.geoAvg,vl=S.vl&&S.vl.located,sp=vl||S.spotFix?1.0:Math.max(1.5,Math.min(10,g?g.acc:6)),hh=S.h||hPhone;
   const one=new Set(obs.map(o=>o.id)).size<2,q0=[L.dragYaw||0,L.pos.x,L.pos.z,hh],sg=[1.5,one?0.03:sp,one?0.03:sp,0.3],up=new THREE.Vector3(0,1,0); // one spot: turn + height only
   const res=q=>{const r=[];obs.forEach(o=>{const d=new THREE.Vector3(...o.d).applyAxisAngle(up,q[0]),v=new THREE.Vector3(o.s.p[0]-q[1],o.s.p[1]-q[3],o.s.p[2]-q[2]);
@@ -1562,18 +1592,18 @@ function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===
     const dq=solve4(A,b);if(!dq)break;q=q.map((x,i)=>x+dq[i]);if(Math.hypot(...dq)<1e-5)break;}
   const r=res(q).slice(0,obs.length*2),rms=Math.sqrt(r.reduce((t,v)=>t+v*v,0)/r.length);
   // an automatic match that disagrees with the others is dropped
-  const bad=obs.findIndex((o,i)=>!o.user&&Math.hypot(r[2*i],r[2*i+1])>2.5);if(bad>=0){S.obs=S.obs.filter(o=>!(o.id===obs[bad].id&&!o.user));(S.rejected||(S.rejected=new Set())).add(obs[bad].id);return spSolve();}
-  if(rms>3.5||!q.every(Number.isFinite))return; // inconsistent — wait for more spots
+  if(rms>3.5&&obs.length>=3){let wi=0,wv=0;obs.forEach((o,i)=>{const v=Math.hypot(r[2*i],r[2*i+1]);if(v>wv){wv=v;wi=i;}});const id=obs[wi].id;S.obs=S.obs.filter(o=>o.id!==id);flash(`Spot ${id} doesn't fit · place it again`);spRender();return spSolve();}
+  if(rms>3.5||!q.every(Number.isFinite)){flash('Photos disagree · check their places');return;}
   L.dragYaw=q[0];L.pos.x=q[1];L.pos.z=q[2];S.h=Math.max(0.6,Math.min(2.2,q[3]));
   const nUser=obs.filter(o=>o.user).length,nAuto=obs.length-nUser;S.spotConf=Math.min(1,nUser*0.5+nAuto*0.25);
-  if(nUser>=2||(nUser>=1&&(vl||nAuto>=2))){S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.alignMode=false;S.needFix=false;}
+  if(nUser>=2||(nUser>=1&&vl)){if(!S.spotFix&&S.respot)flash('Model pinned');S.spotFix=true;S.respot=false;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.alignMode=false;S.needFix=false;}
   if(typeof vlUI==='function')vlUI();svUI();}
 function solve4(A,b){const n=4,M=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let k=i+1;k<n;k++)if(Math.abs(M[k][i])>Math.abs(M[p][i]))p=k;if(Math.abs(M[p][i])<1e-12)return null;[M[i],M[p]]=[M[p],M[i]];
   for(let k=0;k<n;k++){if(k===i)continue;const f=M[k][i]/M[i][i];for(let c=i;c<=n;c++)M[k][c]-=f*M[i][c];}}return M.map((r,i)=>r[n]/r[i]);}
 // ---- automatic search: look for each spot's photo around where it should be (zero-mean NCC) ----
 function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||now-SP.last<450)return;SP.last=now;const list=spots();if(!list.length)return;let G=null;
-  if(!((S.obs||[]).some(o=>o.user)||(S.vl&&S.vl.located)))return; // automatic search starts once the model is roughly in place
-  for(const s of list){if((S.obs||[]).some(o=>o.id===s.id&&o.user))continue;const p=spProject(s);if(!p||p[0]<0||p[1]<0||p[0]>innerWidth||p[1]>innerHeight)continue;
+  if(S.prop)return;
+  for(const s of list){if((S.obs||[]).some(o=>o.id===s.id))continue;const rj=S.rejected&&S.rejected.get(s.id);if(rj&&now-rj<20000)continue;const p=spProject(s);if(!p||p[0]<0||p[1]<0||p[0]>innerWidth||p[1]>innerHeight)continue;
     G=G||spGray();if(!G)return;const dist=cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])),scl=Math.max(0.55,Math.min(1.8,(s.dist||dist)/dist));
     const T=s.T,Ts=Math.max(10,Math.round(T*scl)),tp=new Float32Array(Ts*Ts);for(let j=0;j<Ts;j++)for(let i=0;i<Ts;i++)tp[j*Ts+i]=s.tpl[Math.min(T-1,(j*T/Ts)|0)*T+Math.min(T-1,(i*T/Ts)|0)];
     let tm=0;tp.forEach(v=>tm+=v);tm/=tp.length;let ts=0;for(let i=0;i<tp.length;i++){tp[i]-=tm;ts+=tp[i]*tp[i];}if(ts<1)continue;
@@ -1585,7 +1615,7 @@ function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||now-SP.last<450
     for(let y=cy-R;y<=cy+R;y+=2)for(let x=cx-R;x<=cx+R;x+=2){const c=ncc(x,y);sc.push([c,x,y]);if(c>best){best=c;bx=x;by=y;}}
     sc.forEach(([c,x,y])=>{if(Math.hypot(x-bx,y-by)>Ts*0.6&&c>second)second=c;});
     const x0=bx,y0=by;for(let y=y0-1;y<=y0+1;y++)for(let x=x0-1;x<=x0+1;x++){const c=ncc(x,y);if(c>best){best=c;bx=x;by=y;}}
-if(best>0.88&&best-second>0.15&&!(S.rejected&&S.rejected.has(s.id)))spObserve(s.id,bx/G.k,by/G.k,false);}}
+if(best>0.8&&best-second>0.08){spPropose(s.id,bx/G.k,by/G.k,best);return;}}}
 
 // AR view: the device goes on the wall in the middle of the screen, at its standard height
 function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
@@ -1606,7 +1636,7 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
@@ -1614,6 +1644,7 @@ function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
+  on('svRespot','click',()=>{done();spRespot();});
   on('svFloor','click',()=>{S.floorMode=!S.floorMode;done();svUI();flash(S.floorMode?'Drag up or down to sit the walls on the floor':'');});
   on('svLock','click',()=>{L.lockPos=!L.lockPos;svUI();done();flash(L.lockPos?'Position held':'Following your steps');});
   on('svUndoSpot','click',()=>{spots().pop();save();$('spotLayer').innerHTML='';spRender();svUI();done();});
