@@ -755,8 +755,8 @@ function circuits(){
     let pool=devs.filter(d=>TYPES[d.type].kind===k); if(!pool.length)return;
     // greedy nearest-neighbour chains capped at the per-circuit maximum
     const cap=k==='light'?Infinity:KIND[k].max; let idx=0;
-    while(pool.length){const chain=[];let cur=panel?devPos(panel).p:devPos(pool[0]).p;let lights=0;
-      while(pool.length){pool.sort((a,b)=>devPos(a).p.distanceTo(cur)-devPos(b).p.distanceTo(cur));const nx=pool[0];
+    while(pool.length){const chain=[];let cur=panel?devPos(panel).p:devPos(pool[0]).p,curD=panel||null;let lights=0;
+      while(pool.length){if(k!=='light'&&curD){const dd=new Map(pool.map(d=>[d,wallRoute(curD,d).len]));pool.sort((a,b)=>dd.get(a)-dd.get(b));}else pool.sort((a,b)=>devPos(a).p.distanceTo(cur)-devPos(b).p.distanceTo(cur));const nx=pool[0];curD=nx;
         const pts=k==='light'?(nx.type==='light'?1:0):1; const used=k==='light'?lights:chain.length;
         if(used+pts>(k==='light'?KIND.light.max:cap))break; chain.push(nx);pool.shift();cur=devPos(nx).p;if(nx.type==='light')lights++;}
       if(!chain.length){chain.push(pool.shift());}
@@ -765,11 +765,40 @@ function circuits(){
   out.forEach((c,i)=>c.lane=i);
   return {panel,list:out};
 }
+
+// cable path between two wall devices following the walls (through corners), at the lower device height
+function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+lane*0.012,ga=wallGeo(a.wall),gb=wallGeo(b.wall);
+  const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
+  const pa=devPos(a,extra).p,pb=devPos(b,extra).p,V=(x,z,y)=>new THREE.Vector3(x,y,z);
+  const onW=(g,u,s,yy)=>V(g.ax+g.ux*u+g.nx*s*off,g.ay+g.uy*u+g.ny*s*off,yy);
+  if(a.wall===b.wall){const pts=[pa.clone(),onW(ga,ua,sa,h),onW(gb,ub,sb,h),pb.clone()];return{pts,len:Math.abs(ua-ub)+Math.abs(a.h-h)+Math.abs(b.h-h)+(sa!==sb?T:0)};}
+  // graph: wall ends (merged when they touch) + both devices
+  const nodes=[],key=p=>{let k=nodes.findIndex(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<0.05);if(k<0){nodes.push(p);k=nodes.length-1;}return k;};
+  const E=[];plan.walls.forEach((w,i)=>{const g=wallGeo(i),i0=key(w[0]),i1=key(w[1]);E.push([i0,i1,g.L,i]);});
+  const A=nodes.length,B=A+1;const ea=[key(plan.walls[a.wall][0]),key(plan.walls[a.wall][1])],eb=[key(plan.walls[b.wall][0]),key(plan.walls[b.wall][1])];
+  E.push([A,ea[0],ua,a.wall],[A,ea[1],ga.L-ua,a.wall],[B,eb[0],ub,b.wall],[B,eb[1],gb.L-ub,b.wall]);
+  const N=nodes.length+2,dist=new Array(N).fill(1e9),prv=new Array(N).fill(-1),pw=new Array(N).fill(-1),done=new Array(N).fill(false);dist[A]=0;
+  for(;;){let u=-1;for(let i=0;i<N;i++)if(!done[i]&&dist[i]<1e9&&(u<0||dist[i]<dist[u]))u=i;if(u<0||u===B)break;done[u]=true;
+    E.forEach(([x,y,w,wi])=>{const v=x===u?y:y===u?x:-1;if(v<0||done[v])return;if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prv[v]=u;pw[v]=wi;}});}
+  if(dist[B]>=1e9){const pts=[pa.clone(),V(pa.x,h,pa.z),V(pb.x,h,pb.z),pb.clone()];return{pts,len:pa.distanceTo(pb)};}
+  const seq=[];for(let v=B;v!==-1;v=prv[v])seq.unshift(v);
+  // offset each corner into the room: average of the normals of the two walls it joins, on the device side
+  const bc=bounds(),inN0=wi=>{const g=wallGeo(wi);const sgn=((bc.cx-(g.ax+g.bx)/2)*g.nx+(bc.cy-(g.ay+g.by)/2)*g.ny)>=0?1:-1;return[g.nx*sgn,g.ny*sgn];};
+  const na=inN0(a.wall),flip=(ga.nx*sa*na[0]+ga.ny*sa*na[1])<0?-1:1,inN=wi=>{const n=inN0(wi);return[n[0]*flip,n[1]*flip];}; // device on the outer face: follow the outside
+  const pts=[pa.clone(),onW(ga,ua,sa,h)];
+  for(let k=1;k<seq.length-1;k++){const n=nodes[seq[k]],w1=pw[seq[k]],w2=pw[seq[k+1]],n1=inN(w1),n2=inN(w2);let nx=n1[0]+n2[0],nz=n1[1]+n2[1];const l=Math.hypot(nx,nz)||1;
+    const cs=Math.max(0.5,(n1[0]*n2[0]+n1[1]*n2[1]+1)/2);nx/=l;nz/=l;const o=off/Math.sqrt(cs);pts.push(V(n[0]+nx*o,n[1]+nz*o,h));}
+  const nb=inN0(b.wall),fb=(gb.nx*sb*nb[0]+gb.ny*sb*nb[1])<0?-1:1;if(fb!==flip)pts.push(onW(gb,ub,-sb,h)); // other face: run on this side, then through the wall
+  pts.push(onW(gb,ub,sb,h),pb.clone());
+  return{pts,len:dist[B]+Math.abs(a.h-h)+Math.abs(b.h-h)+(fb!==flip?plan.thick:0)};}
 function routeCircuits(){
   clear(gWires); const {panel,list}=circuits(); if(!panel){return {panel,list};}
   list.forEach(c=>{const y=plan.height-0.1-c.lane*0.045;let pts=[];let prev=devPos(panel,0.02).p;let len=0;
-    c.devs.forEach(d=>{const q=devPos(d,0.02).p;const seg=[prev.clone(),new THREE.Vector3(prev.x,y,prev.z),new THREE.Vector3(q.x,y,q.z),q.clone()];
-      for(let i=0;i<3;i++)len+=seg[i].distanceTo(seg[i+1]);pts.push(...seg);prev=q;});
+    const chain=c.kind!=='light';let prevD=null;
+    c.devs.forEach(d=>{const q=devPos(d,0.02).p;let seg;
+      if(chain&&prevD){seg=wallRoute(prevD,d,0.02,c.lane).pts;} // socket → next socket, along the walls, one cable each
+      else seg=[prev.clone(),new THREE.Vector3(prev.x,y,prev.z),new THREE.Vector3(q.x,y,q.z),q.clone()];
+      for(let i=0;i<seg.length-1;i++)len+=seg[i].distanceTo(seg[i+1]);pts.push(...seg);prev=q;prevD=d;});
     c.length=len*1.1; // +10 % slack for drops & boxes
     const path=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)if(pts[i].distanceTo(pts[i+1])>1e-4)path.add(new THREE.LineCurve3(pts[i],pts[i+1]));
     const tube=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*6),0.011,6,false),new THREE.MeshLambertMaterial({color:c.color,emissive:new THREE.Color(c.color).multiplyScalar(0.25)}));
@@ -1218,7 +1247,7 @@ let buildQ=0;function requestBuild(){if(!buildQ)buildQ=requestAnimationFrame(()=
 document.addEventListener('visibilitychange',()=>{if(live==='xr')return;renderer.setAnimationLoop(document.hidden?null:loop);if(!document.hidden){last=performance.now();needsRender=true;}});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeScene);}catch(_){}
 new MutationObserver(themeScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-window.__ar={refresh:()=>refresh(),get floor(){return floorMesh},get world(){return world},get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},get LT(){return LT},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
+window.__ar={get route(){return lastRoute},get devList(){return devs},wallRoute:(a,b)=>wallRoute(a,b),refresh:()=>refresh(),get floor(){return floorMesh},get world(){return world},get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},get LT(){return LT},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
 // ---------- Live camera navigation ----------
 // Two tracking engines, picked automatically:
 //  1. WebXR "immersive-ar" (Chrome Android + ARCore, HTTPS): the camera itself tracks position and rotation (visual-inertial odometry).
