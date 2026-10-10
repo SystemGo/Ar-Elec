@@ -415,7 +415,7 @@ body.surveying #status{top:calc(106px + var(--st))}
 #scanHud[hidden]{display:none}
 #scanHud button{border:0;background:transparent;color:var(--fg);cursor:pointer;font:inherit}
 #hudRoom{display:flex;flex-direction:column;align-items:flex-start;padding:3px 10px;border-radius:14px;background:var(--surface-2)!important;max-width:42vw}
-#hudRoom small{font-size:10.5px;color:var(--muted);font-weight:500}#hudRoom b{display:flex;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#hudRoom .ic{width:14px;height:14px;flex:none}
+#hudRoom small{font-size:10.5px;color:var(--muted);font-weight:500;white-space:nowrap}#hudRoom b{display:flex;align-items:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#hudRoom .ic{width:14px;height:14px;flex:none}
 #scanHud .hs{display:flex;align-items:center;gap:4px;padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums}#scanHud .hs .ic{width:15px;height:15px;color:var(--muted)}
 #hudHelp{width:32px;height:32px;display:grid;place-items:center}#hudHelp .ic{width:19px;height:19px}
 body.surveying #vlBar{top:calc(62px + var(--st))}
@@ -501,16 +501,22 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 #arAsk{left:12px;right:12px;bottom:calc(var(--navH) + 84px);border-radius:18px;padding:12px 12px 12px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--glass);animation:popUp .35s var(--ease);font:500 13.5px var(--f-display);z-index:13}
 #arAsk[hidden]{display:none}#arAsk>span{flex:1;min-width:150px}#arAsk small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
 #arAsk>.btn{min-width:64px;justify-content:center}#arAsk .akOpts{display:flex;gap:8px;width:100%}#arAsk .akOpts .btn{flex:1;justify-content:center}#arAsk .btn .ic{width:17px;height:17px}
-#arDock{position:fixed;z-index:12;top:calc(10px + var(--st));right:calc(10px + var(--sr));width:52px;max-height:46px;border-radius:23px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;transition:width .3s var(--ease),max-height .4s var(--ease),border-radius .3s;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-#arDock[hidden]{display:none}#arDock.open{width:min(236px,calc(100vw - 20px));max-height:420px;border-radius:20px}
-#arDock .dkTop{display:flex;align-items:center;gap:6px;width:100%;height:46px;padding:0 13px;border:0;background:transparent;color:var(--fg);cursor:pointer;position:relative}
-#arDock .dkTop .ic{width:22px;height:22px;flex:none}#arDock .dkTop .dot{position:absolute;top:9px;left:31px;width:8px;height:8px;margin:0}
-#arDock:not(.open):has(.dkPct){width:96px}.dkPct{font:700 13px var(--f-display);font-variant-numeric:tabular-nums}.dkPct.ok{color:var(--ok)}
-#arDock .dkList{padding:0 8px 8px;opacity:0;transition:opacity .25s}#arDock.open .dkList{opacity:1}
+#arDock{position:fixed;z-index:12;top:calc(10px + var(--st));right:calc(10px + var(--sr));width:46px;border-radius:23px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;transition:width .3s var(--ease),border-radius .3s;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .3s var(--ease)}
+#arDock[hidden]{display:none}#arDock.open{width:min(236px,calc(100vw - 20px));border-radius:20px}
+#arDock .dkTop{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;padding:0;border:0;background:transparent;color:var(--fg);cursor:pointer}
+#arDock.open .dkTop{justify-content:flex-start;padding:0 12px}#arDock .dkTop .ic{width:22px;height:22px;flex:none}.dkTitle{font:600 14px var(--f-display)}
+.dkPct{display:block;text-align:center;font:700 11.5px var(--f-display);font-variant-numeric:tabular-nums;margin:-6px 0 4px}.dkPct.ok{color:var(--ok)}
+.dkMini{display:flex;flex-direction:column;align-items:center;gap:6px;padding:2px 0 9px;cursor:pointer}
+.dkMini .mi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted)}.dkMini .mi .ic{width:16px;height:16px}
+.dkMini .mi.ok{background:rgba(31,164,90,.16);color:var(--ok)}.dkMini .mi.weak{background:rgba(201,138,18,.18);color:var(--warn)}.dkMini .mi.off{background:rgba(229,56,59,.14);color:var(--bad)}
+#arDock .dkList{padding:0 8px 8px;animation:fadeIn .25s var(--ease)}
 .dkRow{display:flex;align-items:center;gap:9px;padding:7px 6px;border-top:1px solid var(--line)}.dkRow .ic{width:18px;height:18px;flex:none;color:var(--muted)}
 .dkRow span{flex:1;min-width:0}.dkRow small{display:block;font-size:11px;color:var(--muted)}.dkRow b{display:block;font:600 13px var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dkRow .dot,#arDock .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted)}#arDock .dot.ok{background:var(--ok)}#arDock .dot.weak{background:var(--warn)}#arDock .dot.off{background:var(--bad)}
+#arDock .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted)}#arDock .dot.ok{background:var(--ok)}#arDock .dot.weak{background:var(--warn)}#arDock .dot.off{background:var(--bad)}
 .dkBar{display:block;height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.dkBar i{display:block;height:100%;background:var(--fg);border-radius:3px;transition:width .5s var(--ease)}.dkBar i.ok{background:var(--ok)}
+#svBack{position:fixed;z-index:12;top:calc(10px + var(--st));left:calc(10px + var(--sl));width:44px;height:44px;border-radius:50%;border:0;background:var(--glass);color:var(--fg);box-shadow:var(--sh);display:grid;place-items:center;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#svBack[hidden]{display:none}#svBack .ic{width:22px;height:22px}
+body.arloc #scanHud{left:62px;right:62px;max-width:calc(100vw - 124px)}
 body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 </style>
 </head>
@@ -544,7 +550,7 @@ body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1592,21 +1598,23 @@ function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=tr
 const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
   const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
-function dockTick(force){const el=$('arDock');const act=!!(S&&S.phase==='locate'&&!S.gate&&live);document.body.classList.toggle('arloc',act);
-  if(!act){if(!el.hidden)el.hidden=true;return;}
-  const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=dockPct();
-  const rows=[['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true],
-    ['cam',L.stream?'ok':'off','camera-outline','Camera',L.stream?'On':'Off'],
+function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);document.body.classList.toggle('arloc',act);$('svBack').hidden=!act;
+  if(!act){if(!el.hidden)el.hidden=true;return;}const loc=S.phase==='locate';
+  const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=loc?dockPct():{p:0,ok:false};
+  const rows=[loc?['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true]:null,
+    ['cam',L.stream?'ok':'off','camera-outline','Camera',(S.rec&&S.rec.state==='recording')?'Recording':L.stream?'On':'Off'],
     ['cmp',L.ori?(L.ori.abs?'ok':'weak'):'off','compass-outline','Compass',L.ori?(L.ori.abs?'On':'Gyroscope only'):'Off'],
     ['gps',!g||g.err?'off':g.acc<=GPS_OK?'ok':'weak','crosshairs-gps','GPS',!g?'Waiting':g.err?'Off':`±${fmtL(g.acc,1)}${n?` · ${n.used} sat.`:''}`],
     ['stp',L.accSeen?'ok':'off','shoe-print','Steps',L.lockPos?'Position held':`${L.steps||0}`],
     ['site',plan.geo?'ok':'off','map-marker-radius','Site',plan.geo?'Saved':'Not saved'],
-    ['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']];
-  const worst=rows.slice(1,4).some(r=>r[1]==='off')?'off':rows.slice(1,4).some(r=>r[1]==='weak')?'weak':'ok';
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]+r[4]),S.imgMode]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
-  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Status">${ic(DK.open?'close':'menu')}${S.imgMode||ok?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}<i class="dot ${worst}"></i></button>
-    <div class="dkList">${rows.map(([k,st,i,t,v,bar])=>`<div class="dkRow"><i class="dot ${st}"></i>${ic(i)}<span><small>${t}</small><b>${v}</b>${bar?`<em class="dkBar"><i style="width:${Math.min(100,p)}%" class="${ok?'ok':''}"></i></em>`:''}</span></div>`).join('')}</div>`;
-  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
+    loc?['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']:null].filter(Boolean);
+  const showPct=loc&&(S.imgMode||ok);
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]+r[4]),showPct]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}${DK.open?'<b class="dkTitle">Status</b>':''}</button>
+    ${DK.open?'':`${showPct?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}<div class="dkMini">${rows.filter(r=>r[0]!=='vl'&&r[0]!=='mode').map(([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}">${ic(i)}</i>`).join('')}</div>`}
+    ${DK.open?`<div class="dkList">${rows.map(([k,st,i,t,v,bar])=>`<div class="dkRow"><i class="dot ${st}"></i>${ic(i)}<span><small>${t}</small><b>${v}</b>${bar?`<em class="dkBar"><i style="width:${Math.min(100,p)}%" class="${ok?'ok':''}"></i></em>`:''}</span></div>`).join('')}</div>`:''}`;
+  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};
+  if(!DK.open)el.querySelector('.dkMini').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=true;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
@@ -2068,7 +2076,7 @@ function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
   const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on 2 corners',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
-  $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
+  $('svPop').innerHTML=items.filter(([id,,,dis])=>!dis||id==='svUndo'||id==='svUndoDev').map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
   on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
@@ -2289,9 +2297,10 @@ function xPrompt(title,val,fn,ph,chips){xSheet(`<h2>${esc(title)}</h2>${chips&&c
     el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{i.value=b.dataset.c;go();});setTimeout(()=>{if(!chips)i.focus();},350);});}
 $('xSheet').addEventListener('click',e=>{if(e.target.id==='xSheet')xClose();});
 // Android back button: close the top-most layer first
+$('svBack').innerHTML=ic('chevron-left');$('svBack').onclick=()=>{if(S)finishSurvey();};
 window.__arBack=()=>{if(!$('xSheet').hidden){xClose();return true;}if(!$('pjSheet').hidden){$('pjSheet').hidden=true;return true;}
   if($('drawer').classList.contains('on')){openMenu(false);return true;}if(PGS.length){pgClose(PGS[PGS.length-1]);return true;}
-  if(S){return false;}if(!document.body.classList.contains('home')){if(editing)toggleEdit(false);goHome();return true;}return false;};
+  if(S){if(!S.gate&&S.alignMode){al2Stop();return true;}finishSurvey();return true;}if(!document.body.classList.contains('home')){if(editing)toggleEdit(false);goHome();return true;}return false;};
 
 // ---------- home ----------
 $('hmScan').innerHTML=ic('plus')+'New scan';$('hmScan').onclick=()=>openSetup();
@@ -2356,9 +2365,8 @@ function hudTick(){const el=$('scanHud'),now=Date.now();const act=!!(S&&S.phase!
   if(!act){if(!el.hidden)el.hidden=true;return;}
   const ch=(S.chain||[]).length>=3?polyArea(S.chain):0,area=rArea(plan)+ch,n=(plan.rooms||[]).length,tg=Math.max(plan.target||0,n+1);
   const sig=`${plan.floor}|${RM.next||roomDefault()}|${Math.floor(HUD.sec)}|${area.toFixed(1)}|${n}/${tg}|${SET.unit}`;if(sig===HUD.sig&&!el.hidden)return;HUD.sig=sig;
-  el.innerHTML=`<button id="hudRoom" aria-label="Room name"><small>${FLOOR_NAME(plan.floor||0)}</small><b>${esc(RM.next||roomDefault())}${ic('chevron-down')}</b></button>
-    <span class="hs">${ic('timer')}${fmtDur(HUD.sec)}</span><span class="hs">${ic('vector-square-close')}${SET.unit==='ft'?(area*10.7639).toFixed(0)+' ft²':area.toFixed(1)+' m²'}</span><span class="hs">${n}/${tg}</span>
-    <button id="hudHelp" aria-label="Help">${ic('help')}</button>`;el.hidden=false;
+  el.innerHTML=`<button id="hudRoom" aria-label="Room name"><small>${FLOOR_NAME(plan.floor||0)} · ${n}/${tg}</small><b>${esc(RM.next||roomDefault())}${ic('chevron-down')}</b></button>
+    <span class="hs">${ic('timer')}${fmtDur(HUD.sec)}</span><span class="hs">${ic('vector-square-close')}${SET.unit==='ft'?(area*10.7639).toFixed(0)+' ft²':area.toFixed(1)+' m²'}</span><button id="hudHelp" aria-label="Help">${ic('help')}</button>`;el.hidden=false;
   $('hudRoom').onclick=()=>xPrompt('Name of the room you are scanning',RM.next||roomDefault(),v=>{RM.next=v;HUD.sig='';hudTick();},'Room name',ROOM_NAMES[plan.space||'house']);
   $('hudHelp').onclick=()=>xSheet(`<h2>How to scan</h2><div class="gl">${SCAN_STEPS.slice(1,7).map(([i,t,d],k)=>`<div class="li tut"><i class="num">${k+1}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div><button class="btn wide" id="xNo" style="margin-top:8px">Close</button>`,()=>{$('xNo').onclick=xClose;});}
 setInterval(hudTick,500);
