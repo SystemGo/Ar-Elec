@@ -498,6 +498,20 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 #alCard .btn{padding:8px 10px;font-size:12.5px;gap:5px}#alCard .btn .ic{width:16px;height:16px}#alCard .icon{width:32px;height:32px}
 .alSteps{display:flex;gap:4px}.alSteps i{width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--muted);font:700 12px/24px var(--f-display);text-align:center;font-style:normal}
 .alSteps i.on{background:var(--fg);color:var(--bg)}.alSteps i.done{background:var(--ok);color:#fff}
+#arAsk{left:12px;right:12px;bottom:calc(var(--navH) + 84px);border-radius:18px;padding:12px 12px 12px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--glass);animation:popUp .35s var(--ease);font:500 13.5px var(--f-display);z-index:13}
+#arAsk[hidden]{display:none}#arAsk>span{flex:1;min-width:150px}#arAsk small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
+#arAsk>.btn{min-width:64px;justify-content:center}#arAsk .akOpts{display:flex;gap:8px;width:100%}#arAsk .akOpts .btn{flex:1;justify-content:center}#arAsk .btn .ic{width:17px;height:17px}
+#arDock{position:fixed;z-index:12;top:calc(10px + var(--st));right:calc(10px + var(--sr));width:52px;max-height:46px;border-radius:23px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;transition:width .3s var(--ease),max-height .4s var(--ease),border-radius .3s;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#arDock[hidden]{display:none}#arDock.open{width:min(236px,calc(100vw - 20px));max-height:420px;border-radius:20px}
+#arDock .dkTop{display:flex;align-items:center;gap:6px;width:100%;height:46px;padding:0 13px;border:0;background:transparent;color:var(--fg);cursor:pointer;position:relative}
+#arDock .dkTop .ic{width:22px;height:22px;flex:none}#arDock .dkTop .dot{position:absolute;top:9px;left:31px;width:8px;height:8px;margin:0}
+#arDock:not(.open):has(.dkPct){width:96px}.dkPct{font:700 13px var(--f-display);font-variant-numeric:tabular-nums}.dkPct.ok{color:var(--ok)}
+#arDock .dkList{padding:0 8px 8px;opacity:0;transition:opacity .25s}#arDock.open .dkList{opacity:1}
+.dkRow{display:flex;align-items:center;gap:9px;padding:7px 6px;border-top:1px solid var(--line)}.dkRow .ic{width:18px;height:18px;flex:none;color:var(--muted)}
+.dkRow span{flex:1;min-width:0}.dkRow small{display:block;font-size:11px;color:var(--muted)}.dkRow b{display:block;font:600 13px var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkRow .dot,#arDock .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted)}#arDock .dot.ok{background:var(--ok)}#arDock .dot.weak{background:var(--warn)}#arDock .dot.off{background:var(--bad)}
+.dkBar{display:block;height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.dkBar i{display:block;height:100%;background:var(--fg);border-radius:3px;transition:width .5s var(--ease)}.dkBar i.ok{background:var(--ok)}
+body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 </style>
 </head>
 <body>
@@ -530,7 +544,7 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div class="float" id="alCard" hidden role="status"></div><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1429,8 +1443,8 @@ function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=t
   if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();vlUI();}
   if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
-    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length&&!spots().length){al2Start();}else flash(spots().length?'Drag a photo onto its real place':'Turn slowly around you');}}
-  if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
+    if(S.phase==='locate'){S.needFix=false;}}
+  if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();if(S.phase==='locate')arAsk('ask');}
 $('gpsSkip').addEventListener('click',()=>passGate(false));
 $('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
 function recordGps(c){if(!S||S.phase==='locate'||c.accuracy>25)return;const T=plan.gpsTrack||(plan.gpsTrack=[]);const last=T[T.length-1];const now=Date.now();
@@ -1562,6 +1576,40 @@ function al2Solve(R1,R2,M1,M2){let dl=yawOf(M2[0]-M1[0],M2[1]-M1[1])-yawOf(R2[0]
   L.dragYaw+=dl;const v=rotYaw(L.pos.x-rm[0],L.pos.z-rm[1],dl);L.pos.x=mm[0]+v[0];L.pos.z=mm[1]+v[1];
   kick();
   return{dl,err:Math.abs(Math.hypot(R2[0]-R1[0],R2[1]-R1[1])-Math.hypot(M2[0]-M1[0],M2[1]-M1[1]))};}
+
+// ---- AR Viewer: "is the model in the right place?" card, and the top-right status menu (identification, camera, GPS…) ----
+function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=true;return;}S.ask=step;if(!step){el.hidden=true;return;}
+  const hasImg=VL.frames.length>0||spots().length>0;if(step==='ask')DK.open=false;
+  if(step==='ask')el.innerHTML=`<span><b>Is the model in the right place?</b><small>Check that the walls sit on the real walls</small></span><button class="btn" id="akNo">No</button><button class="btn primary" id="akYes">Yes</button>`;
+  else el.innerHTML=`<span><b>Reposition with</b><small>${hasImg?'Two floor corners, or the photos saved during the scan':'Two floor corners (no photos saved in this project)'}</small></span>
+    <div class="akOpts"><button class="btn primary" id="akCorner">${ic('target')}2 corners</button><button class="btn" id="akImg" ${hasImg?'':'disabled'}>${ic('image-multiple')}Photos</button><button class="icon" id="akX" aria-label="Close">${ic('close')}</button></div>`;
+  el.className='float'+(step==='how'?' how':'');el.hidden=false;
+  on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');});
+  on('akNo','click',()=>arAsk('how'));
+  on('akCorner','click',()=>{arAsk(null);S.imgMode=false;al2Start();});
+  on('akImg','click',()=>{arAsk(null);S.imgMode=true;DK.open=true;dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
+  on('akX','click',()=>arAsk(null));}
+const DK={open:false,sig:''};
+function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
+  const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
+function dockTick(force){const el=$('arDock');const act=!!(S&&S.phase==='locate'&&!S.gate&&live);document.body.classList.toggle('arloc',act);
+  if(!act){if(!el.hidden)el.hidden=true;return;}
+  const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=dockPct();
+  const rows=[['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true],
+    ['cam',L.stream?'ok':'off','camera-outline','Camera',L.stream?'On':'Off'],
+    ['cmp',L.ori?(L.ori.abs?'ok':'weak'):'off','compass-outline','Compass',L.ori?(L.ori.abs?'On':'Gyroscope only'):'Off'],
+    ['gps',!g||g.err?'off':g.acc<=GPS_OK?'ok':'weak','crosshairs-gps','GPS',!g?'Waiting':g.err?'Off':`±${fmtL(g.acc,1)}${n?` · ${n.used} sat.`:''}`],
+    ['stp',L.accSeen?'ok':'off','shoe-print','Steps',L.lockPos?'Position held':`${L.steps||0}`],
+    ['site',plan.geo?'ok':'off','map-marker-radius','Site',plan.geo?'Saved':'Not saved'],
+    ['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']];
+  const worst=rows.slice(1,4).some(r=>r[1]==='off')?'off':rows.slice(1,4).some(r=>r[1]==='weak')?'weak':'ok';
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]+r[4]),S.imgMode]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Status">${ic(DK.open?'close':'menu')}${S.imgMode||ok?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}<i class="dot ${worst}"></i></button>
+    <div class="dkList">${rows.map(([k,st,i,t,v,bar])=>`<div class="dkRow"><i class="dot ${st}"></i>${ic(i)}<span><small>${t}</small><b>${v}</b>${bar?`<em class="dkBar"><i style="width:${Math.min(100,p)}%" class="${ok?'ok':''}"></i></em>`:''}</span></div>`).join('')}</div>`;
+  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
+setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
+// swipe down on the menu opens it, swipe up closes it
+(()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
 function alignCorner(){const ap=aimPoint();if(!ap){flash('Aim at a corner');return;}
   let best=null,bd=2.2;plan.walls.forEach(w=>w.forEach(c=>{const dd=Math.hypot(c[0]-ap.x,c[1]-ap.z);if(dd<bd){bd=dd;best=c;}}));
   if(!best){flash('No corner nearby');return;}
