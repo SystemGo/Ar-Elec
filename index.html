@@ -534,6 +534,11 @@ body.home .hmTop,body.home .hmSep{display:none}
 .dkRing.ok .fg{stroke:var(--ok)}.dkRing b{position:absolute;inset:0;display:grid;place-items:center;font:700 9.5px var(--f-display);font-variant-numeric:tabular-nums}
 .dkMini .mi.off,.dkMini .mi.weak{animation:dkWarn 1.6s ease-in-out infinite}@keyframes dkWarn{50%{transform:scale(1.12)}}
 small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}small.addr .ic{width:13px!important;height:13px!important;flex:none;color:var(--muted)}.card>small.addr{padding:0 12px 12px;margin-top:-8px}
+#arDock .dkRing{position:relative;width:46px;height:var(--dkH,44px);display:grid;place-items:center;padding:0}
+#arDock .dkRing svg{position:absolute;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%)}#arDock .dkRing circle{fill:none;stroke-width:3.4}
+#arDock .dkRing .bg{stroke:var(--line)}#arDock .dkRing .fg{stroke:var(--fg);stroke-linecap:round;transition:stroke-dasharray .5s var(--ease)}#arDock .dkRing.ok .fg{stroke:var(--ok)}
+#arDock .dkRing>.ic{width:19px!important;height:19px!important;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}#arDock .dkRing.g-ok>.ic{color:var(--ok)}#arDock .dkRing.g-weak>.ic{color:var(--warn)}#arDock .dkRing.g-off>.ic{color:var(--bad)}
+#arDock .dkMini{padding-top:0}
 </style>
 </head>
 <body>
@@ -1615,7 +1620,8 @@ function cpRank(){const pose=vlPose(),fr=vlGrab(pose.roll);if(!fr)return null;co
   for(const kf of cpFrames()){if(kf.W!==live.W||kf.H!==live.H)continue;vlPrep(kf);const dyp=Math.round((kf.pitch-pose.pitch)*fy/2);let best=-1,bx=0,by=0;
     for(let dy=dyp-2;dy<=dyp+2;dy++)for(let dx=-8;dx<=8;dx++){const sc=vlScore(lh,kf.h,dx,dy);if(sc>best){best=sc;bx=dx;by=dy;}}
     let fb=-1;for(let dy=2*by-1;dy<=2*by+1;dy++)for(let dx=2*bx-2;dx<=2*bx+2;dx++){const sc=vlScore(live,kf.n,dx,dy);if(sc>fb)fb=sc;}
-    const m=cpResolve(kf.corner);if(m)out.push({kf,m,s:Math.max(best,fb)});}
+    let fb2=-1,fdx=0,fdy=0;for(let dy=2*by-1;dy<=2*by+1;dy++)for(let dx=2*bx-2;dx<=2*bx+2;dx++){const sc=vlScore(live,kf.n,dx,dy);if(sc>fb2){fb2=sc;fdx=dx;fdy=dy;}}
+    const m=cpResolve(kf.corner);if(m)out.push({kf,m,s:Math.max(best,fb),fdx,fdy});}
   out.sort((a,b)=>b.s-a.s);const seen=[];return out.filter(o=>{if(seen.some(q=>q[0]===o.m[0]&&q[1]===o.m[1]))return false;seen.push(o.m);return true;});}
 // small plan in the card: forward is up, tap a corner to choose it
 function alMini(A,list,cand){const cs=al2Corners(),b=plBounds(plan),cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,R_=Math.max(b.x1-b.x0,b.z1-b.z0)*0.62+0.6,r=R_*0.075;
@@ -1631,7 +1637,7 @@ function al2Tick(){const act=!!(S&&S.phase==='locate'&&S.alignMode);if(!act){if(
   if(A.mode==='manual'){if(A.sel!=null&&cs[A.sel])cand=cs[A.sel];
     else if(ap){const pr=first?[ap.x+first.m[0]-first.r[0],ap.z+first.m[1]-first.r[1]]:[ap.x,ap.z];
       list=cs.filter(c=>!first||Math.hypot(c[0]-first.m[0],c[1]-first.m[1])>0.3).sort((a,b)=>Math.hypot(a[0]-pr[0],a[1]-pr[1])-Math.hypot(b[0]-pr[0],b[1]-pr[1]));cand=list.length?list[A.skip%list.length]:null;}}
-  else if(A.pend)cand=A.pend.list[A.pend.k]&&A.pend.list[A.pend.k].m;
+  else{if(!A.pend)try{cpAuto(A);}catch(_){}if(A.pend)cand=A.pend.list[A.pend.k]&&A.pend.list[A.pend.k].m;}
   A.cur=ap&&cand?{r:[ap.x,ap.z],m:cand}:null;AL.grp.visible=true;
   AL.cand.visible=!!cand;if(cand){AL.cand.position.set(cand[0],0.01,cand[1]);AL.candPost.scale.y=H;AL.candPost.position.y=H/2;}
   AL.m1.visible=AL.r1.visible=AL.link.visible=!!first;
@@ -1652,6 +1658,18 @@ function al2Tick(){const act=!!(S&&S.phase==='locate'&&S.alignMode);if(!act){if(
     on('alOk','click',()=>al2Accept());on('alNext','click',()=>{P.k=(P.k+1)%P.list.length;AL.sig='';});on('alRe','click',()=>{A.pend=null;AL.sig='';});
     if(P&&top)cpURL(top.kf.cid).then(u=>{const im=$('alImg');if(im&&u)im.src=u;});}
   alMiniOrient();}
+// photo mode: while aiming, the corner photos that GPS and compass say should be in front are checked automatically
+function cpAuto(A){const now=performance.now();if(A.pend||now-(A.autoT||0)<450||!jobFree())return;A.autoT=now;JOB.n++;
+  const ap=aimPoint();if(!ap)return;const first=A.pts[0],d=new THREE.Vector3();cam.getWorldDirection(d);const hd=Math.atan2(d.z,d.x);
+  let list=(cpRank()||[]).filter(o=>!(first&&o.m[0]===first.m[0]&&o.m[1]===first.m[1]));
+  const pr=first?[ap.x+first.m[0]-first.r[0],ap.z+first.m[1]-first.r[1]]:[ap.x,ap.z];
+  list=list.filter(o=>{const b=Math.atan2(o.m[1]-L.pos.z,o.m[0]-L.pos.x);return Math.abs(Math.atan2(Math.sin(b-hd),Math.cos(b-hd)))<0.8;}); // in front of the phone
+  list.forEach(o=>{const dd=Math.hypot(o.m[0]-pr[0],o.m[1]-pr[1]);o.rk=o.s+0.12*Math.exp(-dd*dd/2.9);});list.sort((a,b)=>b.rk-a.rk);
+  const t=list[0],u=list[1];if(!t||t.s<0.4||Math.abs(t.fdx)>1||Math.abs(t.fdy)>1||(u&&t.s-u.s<0.05)){A.autoC=null;return;}
+  if(first&&Math.hypot(ap.x-first.r[0],ap.z-first.r[1])<0.8)return;
+  const key=t.m.join(),q=A.autoC; // the same corner, centred, on two checks in a row with the phone held still
+  if(!q||q.key!==key||Math.hypot(ap.x-q.x,ap.z-q.z)>0.06){A.autoC={key,x:ap.x,z:ap.z};return;}A.autoC=null;
+  A.pend={r:[ap.x,ap.z],list,k:0,auto:true};AL.sig='';svUI();flash('Corner recognised · confirm with Yes');}
 function al2Accept(){const A=S&&S.al2;if(!A)return;let c=null;
   if(A.mode==='img'){const P=A.pend,top=P&&P.list[P.k];if(!top)return;c={r:P.r,m:top.m};A.pend=null;}
   else{if(!A.cur){flash(A.sel==null?'Tap the corner on the plan first':'Aim the cross at the floor corner');return;}c={r:A.cur.r.slice(),m:A.cur.m.slice()};}
@@ -1705,10 +1723,10 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
   const by={};rows.forEach(r=>by[r[0]]=r);const bad=['cam','cmp'].filter(k=>by[k]&&by[k][1]!=='ok');
   const hb=$('scanHud'),H=hb&&!hb.hidden&&hb.offsetHeight?hb.offsetHeight:44;el.style.setProperty('--dkH',H+'px');
   const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),showPct,showPct?pct:0,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
-  const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`;
-  const R_=13,C=2*Math.PI*R_,ring=showPct?`<div class="dkRing ${pOk?'ok':''}" title="Image identification ${pct}%" aria-label="Image identification ${pct}%"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="${R_}" class="bg"/><circle cx="16" cy="16" r="${R_}" class="fg" stroke-dasharray="${(C*pct/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 16 16)"/></svg><b>${pct}</b></div>`:'';
-  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}</button>
-    <div class="dkMini">${ring}${DK.open?rows.filter(r=>r[0]!=='mode'&&r[0]!=='vl').map(mi).join(''):mi(by.gps)+bad.map(k=>mi(by[k])).join('')}</div>`;
+  const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`,gp=by.gps;
+  const R_=19,C=2*Math.PI*R_,prog=showPct?pct:0;
+  el.innerHTML=`<button class="dkTop dkRing ${pOk?'ok':''} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]}${showPct?' · identification '+pct+'%':''}"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
+    ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
   el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
@@ -1957,8 +1975,8 @@ function vlScore(a,b,dx,dy){const W=a.W,H=a.H;let s=0,sa=0,sb=0,n=0;const x0=Mat
 function vlFocal(W,H){const vf=cam.fov*Math.PI/180,fy=(H/2)/Math.tan(vf/2),hf=2*Math.atan(Math.tan(vf/2)*W/H);return{fx:(W/2)/Math.tan(hf/2),fy};}
 function vlPrep(fr){if(!fr.n){fr.n=vlNorm(fr.Y,fr.W,fr.H);fr.h=vlHalf(fr.n);}return fr;}
 // best match of the live view among stored views (coarse-to-fine shift search)
-function vlMatch(live,pose,near){const{W,H}=live,{fx,fy}=vlFocal(W,H),lh=vlHalf(live);const cand=[];
-  for(const kf of VL.frames){if(kf.W!==W||kf.H!==H||Math.abs(kf.pitch-pose.pitch)>0.26)continue;if(near&&Math.hypot(kf.x-near.x,kf.z-near.z)>near.r)continue;vlPrep(kf);
+function vlMatch(live,pose,near){const{W,H}=live,{fx,fy}=vlFocal(W,H),lh=vlHalf(live);const cand=[];const hdg=L.headLock&&L.ori&&L.ori.abs; // compass is settled: only look at views taken facing about the same way
+  for(const kf of VL.frames){if(kf.W!==W||kf.H!==H||Math.abs(kf.pitch-pose.pitch)>0.26)continue;if(hdg&&Math.abs(Math.atan2(Math.sin(kf.yaw-pose.yaw),Math.cos(kf.yaw-pose.yaw)))>0.8)continue;if(near&&Math.hypot(kf.x-near.x,kf.z-near.z)>near.r)continue;vlPrep(kf);
     const dyp=Math.round((kf.pitch-pose.pitch)*fy/2);let best=-1,bdx=0,bdy=0;
     for(let dy=dyp-1;dy<=dyp+1;dy++)for(let dx=-7;dx<=7;dx++){const sc=vlScore(lh,kf.h,dx,dy);if(sc>best){best=sc;bdx=dx;bdy=dy;}}
     cand.push({kf,s:best,dx:bdx,dy:bdy});}
