@@ -493,6 +493,11 @@ i.av{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent-
 details.faq{display:block;min-height:0;padding:0}details.faq summary{display:flex;align-items:center;gap:10px;min-height:50px;padding:0 14px;list-style:none;cursor:pointer;font-weight:500}
 details.faq summary::-webkit-details-marker{display:none}details.faq summary .ic{margin-left:auto;width:17px;height:17px;color:var(--muted);transition:transform .25s var(--ease)}
 details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;padding:0 14px 14px;color:var(--muted);font-size:14px;line-height:1.45}
+#alCard{left:12px;right:12px;bottom:calc(var(--navH) + 84px);border-radius:18px;padding:10px 10px 10px 12px;display:flex;align-items:center;gap:10px;background:var(--glass);animation:popUp .35s var(--ease);font:500 13.5px var(--f-display);z-index:12}
+#alCard[hidden]{display:none}#alCard>span{flex:1;min-width:0}#alCard small{display:block;color:var(--muted);font-size:12.5px}
+#alCard .btn{padding:8px 10px;font-size:12.5px;gap:5px}#alCard .btn .ic{width:16px;height:16px}#alCard .icon{width:32px;height:32px}
+.alSteps{display:flex;gap:4px}.alSteps i{width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--muted);font:700 12px/24px var(--f-display);text-align:center;font-style:normal}
+.alSteps i.on{background:var(--fg);color:var(--bg)}.alSteps i.done{background:var(--ok);color:#fff}
 </style>
 </head>
 <body>
@@ -525,7 +530,7 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1424,7 +1429,7 @@ function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=t
   if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();vlUI();}
   if(withGps&&plan.geoFrame&&(S.phase==='locate'||!S.fresh))applyFix(L.geoAvg||L.geo);
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
-    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length&&!spots().length){S.alignMode=true;flash('Aim at a corner');}else flash(spots().length?'Drag a photo onto its real place':'Turn slowly around you');}}
+    if(S.phase==='locate'){S.needFix=false;if(!VL.frames.length&&!spots().length){al2Start();}else flash(spots().length?'Drag a photo onto its real place':'Turn slowly around you');}}
   if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();}
 $('gpsSkip').addEventListener('click',()=>passGate(false));
 $('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
@@ -1514,6 +1519,49 @@ function closeRoom(){if(S.chain.length<3){flash('3 corners needed');return;}
 // rotate a plan vector by a heading change δ (same sense as camera yaw)
 const rotYaw=(vx,vz,dl)=>[vx*Math.cos(dl)+vz*Math.sin(dl),vz*Math.cos(dl)-vx*Math.sin(dl)];
 const yawOf=(vx,vz)=>Math.atan2(-vx,-vz);
+
+// ---- two-corner alignment: mark two real floor corners, the model turns and slides so its two corners sit exactly on them ----
+const AL={grp:new THREE.Group(),sig:''};world.add(AL.grp);AL.grp.visible=false;
+(()=>{const mb=c=>new THREE.MeshBasicMaterial({color:c,depthTest:false,transparent:true,opacity:0.95,side:THREE.DoubleSide});
+  const ring=(c,r)=>{const m=new THREE.Mesh(new THREE.RingGeometry(r*0.62,r,40),mb(c));m.rotation.x=-Math.PI/2;m.renderOrder=30;return m;};
+  const post=c=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,1,8),mb(c));m.renderOrder=30;return m;};
+  AL.cand=new THREE.Group();AL.cand.add(ring(0x1fa45a,0.24));AL.candPost=post(0x1fa45a);AL.cand.add(AL.candPost);
+  AL.m1=new THREE.Group();AL.m1.add(ring(0x1fa45a,0.17));AL.m1Post=post(0x1fa45a);AL.m1.add(AL.m1Post);
+  AL.r1=ring(0xff8a1f,0.12);AL.link=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xff8a1f,depthTest:false,transparent:true}));AL.link.renderOrder=30;
+  AL.grp.add(AL.cand,AL.m1,AL.r1,AL.link);})();
+function al2Corners(){const out=[];plan.walls.forEach(w=>w.forEach(c=>{if(!out.some(q=>Math.hypot(q[0]-c[0],q[1]-c[1])<0.03))out.push(c);}));return out;}
+function al2Start(){if(!S)return;if(!plan.walls.length){flash('No walls to align');return;}S.alignMode=true;S.al2={pts:[],skip:0};S.spotPlace=false;AL.sig='';svUI();flash('Aim the cross at a floor corner');}
+function al2Stop(){if(!S)return;S.alignMode=false;S.al2=null;AL.grp.visible=false;$('alCard').hidden=true;svUI();}
+function al2Tick(){const act=!!(S&&S.phase==='locate'&&S.alignMode);if(!act){if(AL.grp.visible)AL.grp.visible=false;if(!$('alCard').hidden)$('alCard').hidden=true;return;}
+  const A=S.al2||(S.al2={pts:[],skip:0}),ap=aimPoint(),H=plan.height||2.5,first=A.pts[0];let cand=null,list=[];
+  if(ap){const pr=first?[ap.x+first.m[0]-first.r[0],ap.z+first.m[1]-first.r[1]]:[ap.x,ap.z];
+    list=al2Corners().filter(c=>!first||Math.hypot(c[0]-first.m[0],c[1]-first.m[1])>0.3).sort((a,b)=>Math.hypot(a[0]-pr[0],a[1]-pr[1])-Math.hypot(b[0]-pr[0],b[1]-pr[1]));
+    cand=list.length?list[A.skip%list.length]:null;}
+  A.cur=ap&&cand?{r:[ap.x,ap.z],m:cand}:null;AL.grp.visible=true;
+  AL.cand.visible=!!cand;if(cand){AL.cand.position.set(cand[0],0.01,cand[1]);AL.candPost.scale.y=H;AL.candPost.position.y=H/2;}
+  AL.m1.visible=AL.r1.visible=AL.link.visible=!!first;
+  if(first){AL.m1.position.set(first.m[0],0.01,first.m[1]);AL.m1Post.scale.y=H;AL.m1Post.position.y=H/2;AL.r1.position.set(first.r[0],0.01,first.r[1]);
+    const g=AL.link.geometry.attributes.position;g.setXYZ(0,first.r[0],0.01,first.r[1]);g.setXYZ(1,first.m[0],0.01,first.m[1]);g.needsUpdate=true;
+    if(ap)setDashes(first.r[0],first.r[1],ap.x,ap.z);}
+  const n=A.pts.length+1,d=first&&ap?Math.hypot(ap.x-first.r[0],ap.z-first.r[1]):0;
+  const msg=!ap?'Aim the cross at the floor':!cand?'No model corner':n===1?'Aim at a floor corner of the room':d<0.8?'Pick a second corner further away':'Aim at the second corner';
+  const sig=`${n}|${msg}|${list.length>1}`;if(sig!==AL.sig){AL.sig=sig;const el=$('alCard');
+    el.innerHTML=`<div class="alSteps"><i class="${n>1?'done':'on'}">1</i><i class="${n>1?'on':''}">2</i></div><span><b>Corner ${n} of 2</b><small>${msg}</small></span>
+      ${list.length>1?`<button class="btn" id="alNext" aria-label="Match another model corner">${ic('refresh')}Other</button>`:''}${first?`<button class="icon" id="alUndo" aria-label="Redo corner 1">${ic('undo')}</button>`:''}<button class="icon" id="alX" aria-label="Cancel">${ic('close')}</button>`;
+    el.hidden=false;on('alNext','click',()=>{A.skip++;});on('alUndo','click',()=>{A.pts=[];A.skip=0;AL.sig='';svUI();});on('alX','click',al2Stop);}}
+function al2Mark(){const A=S&&S.al2;if(!A||!A.cur){flash('Aim the cross at a floor corner');return;}
+  const c={r:A.cur.r.slice(),m:A.cur.m.slice()};
+  if(A.pts.length===1&&Math.hypot(c.r[0]-A.pts[0].r[0],c.r[1]-A.pts[0].r[1])<0.8){flash('Pick a corner at least 1 m from the first one');return;}
+  A.pts.push(c);A.skip=0;AL.sig='';
+  if(A.pts.length<2){svUI();flash('Corner 1 marked · now aim at a second corner');return;}
+  const[p1,p2]=A.pts,res=al2Solve(p1.r,p2.r,p1.m,p2.m);S.align={c:p2.m,two:true};S.needFix=false;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}al2Stop();
+  flash(`Aligned on 2 corners · ${Math.abs(res.dl*57.2958).toFixed(1)}° turned · ${res.err<0.01?'exact':fmtL(res.err,2)+' length gap'}`);}
+// rigid fit (turn + slide) of the two marked real corners R onto the two model corners M, applied to the viewer pose
+function al2Solve(R1,R2,M1,M2){let dl=yawOf(M2[0]-M1[0],M2[1]-M1[1])-yawOf(R2[0]-R1[0],R2[1]-R1[1]);dl=Math.atan2(Math.sin(dl),Math.cos(dl));
+  const rm=[(R1[0]+R2[0])/2,(R1[1]+R2[1])/2],mm=[(M1[0]+M2[0])/2,(M1[1]+M2[1])/2];
+  L.dragYaw+=dl;const v=rotYaw(L.pos.x-rm[0],L.pos.z-rm[1],dl);L.pos.x=mm[0]+v[0];L.pos.z=mm[1]+v[1];
+  kick();
+  return{dl,err:Math.abs(Math.hypot(R2[0]-R1[0],R2[1]-R1[1])-Math.hypot(M2[0]-M1[0],M2[1]-M1[1]))};}
 function alignCorner(){const ap=aimPoint();if(!ap){flash('Aim at a corner');return;}
   let best=null,bd=2.2;plan.walls.forEach(w=>w.forEach(c=>{const dd=Math.hypot(c[0]-ap.x,c[1]-ap.z);if(dd<bd){bd=dd;best=c;}}));
   if(!best){flash('No corner nearby');return;}
@@ -1579,6 +1627,7 @@ function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.gate){ga
   if(S.assist&&L.stream&&now-LD.t>140&&jobFree()){LD.t=now;LD.res=detectLines();drawLines(LD.res);ltAdd(LD.res);ltAlign(now);}else if(!S.assist&&LD.res){LD.res=null;drawLines(null);}
   LT.grp.visible=!!S.assist;
   const a=aimInfo();const lbl=(lblN=(lblN+1)%6)===0;let read='';prevLine.visible=false;
+  al2Tick();
   if(S.phase==='locate'&&!S.alignMode){const w=devAimTick();aim.visible=false;highlightWall(w?w.wall:-1);
     read=w?`${TYPES[S.devType].label} · ${fmtL(TYPES[S.devType].h,2)} · ${fmtL(w.dist,1)}`:'Aim at a wall';}
   else if(S.phase==='locate'){devAim.visible=false;castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
@@ -1617,7 +1666,7 @@ function drawMini(go){if(!go||!S)return;const dpr=Math.min(2,devicePixelRatio||1
   g.fillStyle='#7d7aff';g.beginPath();g.moveTo(me[0]+fx*7,me[1]+fz*7);g.lineTo(me[0]-fz*4-fx*3,me[1]+fx*4-fz*3);g.lineTo(me[0]+fz*4-fx*3,me[1]-fx*4-fz*3);g.closePath();g.fill();}
 const PH={low:['arrow-collapse-down','Set low point'],high:['arrow-collapse-up','Set high point'],corner:['plus','Add corner'],align:['target','Align on this corner'],place:['plus','Place device']};
 function svPhase(){return S.phase==='locate'?(S.alignMode?'align':'place'):S.phase==='height'?(S.low?'high':'low'):'corner';}
-function svPrimary(){const p=svPhase();if(p==='low')setLow();else if(p==='high')setHigh();else if(p==='align'){alignCorner();S.alignMode=false;svUI();}else if(p==='place')placeDevice();else addCorner();}
+function svPrimary(){const p=svPhase();if(p==='low')setLow();else if(p==='high')setHigh();else if(p==='align')al2Mark();else if(p==='place')placeDevice();else addCorner();}
 // ---- one shared grey snapshot of what the screen shows (192 px wide); every analysis reads from it ----
 const FR={cv:document.createElement('canvas'),W:192,t:-1e9,d:null};FR.g=FR.cv.getContext('2d',{willReadFrequently:true});
 function frame(maxAge=100){const vw=vid.videoWidth,vh=vid.videoHeight;if(!vw||vid.hidden)return null;const now=performance.now();
@@ -1782,7 +1831,7 @@ function vlEvaluate(V){let best=null;for(const v of V.votes){const cl=V.votes.fi
     // position: views matched were taken near here; blend with GPS by accuracy
     let wx=0,wz=0,ww=0;best.forEach(v=>{const w=v.s*v.s;wx+=v.kf.x*w;wz+=v.kf.z*w;ww+=w;});const kx=wx/ww,kz=wz/ww,ga=g?g.acc:99,wg=1/(ga*ga),wk=1/(1.6*1.6);
     if(!plan.geoFrame||ga>25){L.pos.x=kx;L.pos.z=kz;}else{L.pos.x=(L.pos.x*wg+kx*wk)/(wg+wk);L.pos.z=(L.pos.z*wg+kz*wk)/(wg+wk);}
-    V.located=true;V.recent=[];S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
+    V.located=true;V.recent=[];if(!S.al2)S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
 function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
   if(S.phase!=='locate'){el.hidden=!L.headLock;el.className='float learn';el.innerHTML=`${ic('camera')}<span>${VL.frames.length} view${VL.frames.length===1?"":"s"}</span>`;return;}
   const V=S.vl;if(!V){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);
@@ -1901,7 +1950,7 @@ function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===
   if(rms>3.5||!q.every(Number.isFinite)){flash('Photos disagree · check their places');return;}
   L.dragYaw=q[0];L.pos.x=q[1];L.pos.z=q[2];S.h=Math.max(0.6,Math.min(2.2,q[3]));
   const nUser=obs.filter(o=>o.user).length,nAuto=obs.length-nUser;S.spotConf=Math.min(1,nUser*0.5+nAuto*0.25);
-  if(nUser>=2||(nUser>=1&&vl)){if(!S.spotFix&&S.respot)flash('Model pinned');S.spotFix=true;S.respot=false;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.alignMode=false;S.needFix=false;}
+  if(nUser>=2||(nUser>=1&&vl)){if(!S.spotFix&&S.respot)flash('Model pinned');S.spotFix=true;S.respot=false;if(S.vl){S.vl.located=true;S.vl.recent=[];}if(!S.al2)S.alignMode=false;S.needFix=false;}
   if(typeof vlUI==='function')vlUI();svUI();}
 function solve4(A,b){const n=4,M=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let k=i+1;k<n;k++)if(Math.abs(M[k][i])>Math.abs(M[p][i]))p=k;if(Math.abs(M[p][i])<1e-12)return null;[M[i],M[p]]=[M[p],M[i]];
   for(let k=0;k<n;k++){if(k===i)continue;const f=M[k][i]/M[i][i];for(let c=i;c<=n;c++)M[k][c]-=f*M[i][c];}}return M.map((r,i)=>r[n]/r[i]);}
@@ -1969,13 +2018,13 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on a corner',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on 2 corners',false,!!S.alignMode],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
   on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
-  on('svAlign','click',()=>{S.alignMode=!S.alignMode;svUI();done();flash(S.alignMode?'Aim at a corner':'');});on('svClose','click',()=>{closeRoom();done();});
+  on('svAlign','click',()=>{done();if(S.alignMode)al2Stop();else al2Start();});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
   on('svRespot','click',()=>{done();spRespot();});on('svGal','click',()=>{done();spGallery(true);});
   on('svFloor','click',()=>{S.floorMode=!S.floorMode;done();svUI();flash(S.floorMode?'Drag up or down to sit the walls on the floor':'');});
@@ -2039,7 +2088,7 @@ function openPlan(){document.body.classList.remove('home');$('pjSheet').hidden=t
 function navRefresh(){if(!navEl)return;
   if(typeof S!=='undefined'&&S){
     if(S.phase==='locate'){
-      if(S.alignMode){navRender([{k:'tools',ic:'menu',label:'Tools',on:toggleSvPop},{k:'align',ic:'target',label:'Align',on:svPrimary},{k:'done',ic:'check',label:'Done',on:finishSurvey}],'align',{ic:'target',label:'Align on this corner',on:svPrimary});return;}
+      if(S.alignMode){navRender([{k:'tools',ic:'menu',label:'Tools',on:toggleSvPop},{k:'align',ic:'target',label:`Corner ${(S.al2?S.al2.pts.length:0)+1}`,on:svPrimary},{k:'done',ic:'check',label:'Done',on:finishSurvey}],'align',{ic:'target',label:`Mark corner ${(S.al2?S.al2.pts.length:0)+1} of 2`,on:svPrimary});return;}
       const opts=devs.some(d=>d.type==='panel')?['socket','switch','light']:['panel'];if(!opts.includes(S.devType))S.devType=opts[0];
       navRender([{k:'tools',ic:'menu',label:'Tools',on:toggleSvPop}].concat(opts.map(k=>({k,ic:TYPES[k].ic,label:DEV_SHORT[k],on:()=>{if(S.devType===k)svPrimary();else{S.devType=k;svUI();}}})),[{k:'done',ic:'check',label:'Done',on:finishSurvey}]),
         S.devType,{ic:TYPES[S.devType].ic,badge:'plus',label:'Place '+TYPES[S.devType].label,on:svPrimary});return;}
@@ -2587,12 +2636,12 @@ const SCAN_STEPS=[['check','Prepare the space','Lights on, floor clear, doors op
   ['plus','Corners','Aim at each floor corner in turn and tap: walls snap to 90° and stay where you place them.'],
   ['vector-square-close','Close the room','Tools › Close room. Name the next room from the header, then continue with its corners.'],
   ['camera','Photo spots','Tap textured places (sockets, frames, tiles). They are saved in Photos and help put the walls back in AR.'],
-  ['video-3d','AR Viewer','Open the project in AR, place a photo spot when asked or accept the suggestion: the walls lock on the room.'],
+  ['video-3d','AR Viewer','Open the project in AR, then Tools › Align on 2 corners (aim at two floor corners), or place photo spots: the walls lock on the room.'],
   ['power-socket-fr','Devices','In AR, place panel, sockets, switches and lights at NF C 15-100 heights; wiring is computed.']];
 function openTutorials(){pgOpen('tutorials','Tutorials',grp('Scan step by step',SCAN_STEPS.map(([i,t,d],k)=>`<div class="li tut"><i class="num">${k+1}</i><span><b>${t}</b><small>${d}</small></span>${ic(i)}</div>`).join(''))+`<div class="pad"><button class="btn primary wide" id="tuEx">${ic('sparkles')}Try with an example</button></div>`);
   $('tuEx').onclick=()=>makeExample(true);}
 const FAQ=[['The screen stays grey','AR Elec waits for a steady GPS fix and compass. Turn on location (high accuracy), step near a window and move the phone in a figure 8.'],
-  ['The walls drift in AR','Use Tools › Re-place photos and line up one or two photo spots, or Align on a corner. Line assist (Tools) re-uses the floor lines it sees.'],
+  ['The walls drift in AR','Use Tools › Align on 2 corners: aim at two floor corners of the room and the model snaps onto them. Re-place photos also works. Line assist (Tools) re-uses the floor lines it sees.'],
   ['Which export should I use?','PDF to print or send, DXF for AutoCAD/DWG tools, OBJ or GLB for 3D software, STL for 3D printing, AR Elec to send the full project to a colleague.'],
   ['Where are exported files?','In the Downloads folder of the phone (AR Elec), and in the share menu when you choose to send.'],
   ['Several floors','After a scan, “Next floor” starts a new floor in the same building. The 3D view stacks the floors.']];
