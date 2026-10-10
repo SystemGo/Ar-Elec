@@ -230,7 +230,8 @@ body.home .tr,body.home #sheet,body.home #props,body.home #c3d,body.home #plan,b
 #pjList .li span b{display:block;font-weight:600;font-size:16px}
 #pjList .li span small{display:block;font-size:13px;color:var(--muted)}
 #pjList .cur,#pjList .nocur{display:none}
-#pjList .li.curPj{box-shadow:0 0 0 2px var(--fg),var(--sh)}
+#pjList .li.curPj{box-shadow:var(--sh)}
+#pjList .li:active,#pjList .li.press{background:#2563eb;color:#fff;transition:background .12s,color .12s,transform .2s var(--spring)}#pjList .li:active small,#pjList .li:active .ic,#pjList .li.press small,#pjList .li.press .ic{color:#fff!important}#pjList .li:active svg.th,#pjList .li.press svg.th{background:rgba(255,255,255,.18)}#pjList .li:active svg.th .wl line,#pjList .li.press svg.th .wl line{stroke:#fff}
 #pjList .th{width:58px;height:58px;flex:none;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;color:var(--muted)}
 #pjList i.th svg{width:24px;height:24px}
 #pjList svg.th .wl line{stroke:var(--fg);stroke-width:2;stroke-linecap:round}
@@ -526,6 +527,8 @@ body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 #alCard .alPhoto{position:relative;height:84px;border-radius:12px;overflow:hidden;background:var(--surface-2)}#alCard .alPhoto img{width:100%;height:100%;object-fit:cover;display:block}
 #alCard .alPhoto em{position:absolute;right:6px;bottom:6px;font:700 12px var(--f-display);font-style:normal;background:var(--glass);border-radius:999px;padding:2px 8px}
 #alCard .alBtns{display:flex;gap:6px}#alCard .alBtns .btn{flex:1;justify-content:center;padding:8px 6px}
+#nav-new span{display:none}
+body.home .hmTop,body.home .hmSep{display:none}
 </style>
 </head>
 <body>
@@ -1673,6 +1676,18 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
+
+// ---- ceiling: once a room is closed, its ceiling is drawn at the measured height (seen from inside, hidden from above) ----
+const gCeil=new THREE.Group();world.add(gCeil);
+const buildWalls0=buildWalls;
+buildWalls=function(){buildWalls0();clear(gCeil);const rooms=(plan.rooms||[]).filter(r=>r.pts&&r.pts.length>=3);if(!rooms.length)return;
+  const isLive=typeof live!=='undefined'&&!!live,H=plan.height;
+  const mat=isLive?new THREE.MeshBasicMaterial({map:gridTex(),transparent:true,depthWrite:false,side:THREE.FrontSide})
+    :new THREE.MeshLambertMaterial({color:tok('--wall'),transparent:true,opacity:xray?0.22:0.95,depthWrite:!xray,side:THREE.FrontSide});
+  const edge=new THREE.LineBasicMaterial({color:isLive?0xffffff:tok('--plan-ink'),transparent:true,opacity:isLive?0.9:0.6});
+  rooms.forEach(r=>{const sh=new THREE.Shape(r.pts.map(p=>new THREE.Vector2(p[0],p[1])));const geo=new THREE.ShapeGeometry(sh).rotateX(Math.PI/2);if(isLive){const uv=geo.attributes.uv;for(let k=0;k<uv.count;k++)uv.setXY(k,uv.getX(k)/0.3,uv.getY(k)/0.3);}
+    const m=new THREE.Mesh(geo,mat);m.position.y=H-0.002;m.renderOrder=2;gCeil.add(m);
+    const ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(r.pts.map(p=>new THREE.Vector3(p[0],H,p[1]))),edge);gCeil.add(ln);});};
 function alignCorner(){const ap=aimPoint();if(!ap){flash('Aim at a corner');return;}
   let best=null,bd=2.2;plan.walls.forEach(w=>w.forEach(c=>{const dd=Math.hypot(c[0]-ap.x,c[1]-ap.z);if(dd<bd){bd=dd;best=c;}}));
   if(!best){flash('No corner nearby');return;}
@@ -2210,7 +2225,8 @@ function navRefresh(){if(!navEl)return;
   const home=document.body.classList.contains('home'),has=curHasPlan(),more=$('drawer').classList.contains('on');
   const act=more?'more':home?'pj':'plan';
   const goNew=()=>{openMenu(false);if(editing)toggleEdit(false);navThen('new',newProject);};
-  navRender([{k:'new',ic:'plus',label:'New project',on:goNew}],'new',{ic:'plus',label:'New project',on:goNew});}
+  const goSearch=()=>{openMenu(false);if(typeof openLibrary==='function')openLibrary();},goMenu=()=>{const o=!$('drawer').classList.contains('on');menuTab=null;openMenu(o);};
+  navRender([{k:'search',ic:'search',label:'Search',on:goSearch},{k:'new',ic:'plus',label:'New project',on:goNew},{k:'menu',ic:'menu',label:'Menu',on:goMenu}],'new',{ic:'plus',label:'New project',on:goNew});}
 function toggleSvPop(){const o=$('svPop').hidden;$('svPop').hidden=!o;if(o){const x=navX('tools');$('svPop').style.left=Math.max(12,x-30)+'px';}}
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#svPop,#nav-tools'))$('svPop').hidden=true;},true);
 
@@ -2392,7 +2408,7 @@ function purgeProject(id){mDel('kf-'+id).catch(()=>{});const p=projects.find(q=>
   projects=projects.filter(q=>q.id!==id);if(curId===id){curId=null;emptyPlan();}saveNow();try{localStorage.setItem('arelec-projects',JSON.stringify(projects));}catch(e){}}
 
 // ---------- new scan: space type + preparation, then the unchanged scan ----------
-const SU={space:'house',floor:0,target:4,name:'',ck:{}};
+const SU={space:'house',floor:0,target:1,name:'',ck:{}};
 function newProject_(meta){saveNow();curId=Date.now();emptyPlan();plan.name=`Project ${projects.length+1}`;Object.assign(plan,meta||{});if(plan.bld==null)plan.bld=curId;if(!plan.bname)plan.bname=plan.name;
   projects.unshift({id:curId,plan,devs});saveNow();pgCloseAll();$('pjSheet').hidden=true;openMenu(false);return startSurvey(true);}
 newProject=function(meta){if(meta)return newProject_(meta);openSetup();};
@@ -2545,7 +2561,7 @@ function pvSnap(pl,p,stg){const svg=stg.querySelector('svg.pl2'),r=svg.getBoundi
   return best||[+p[0].toFixed(3),+p[1].toFixed(3)];}
 
 // geometry shared by the 3D preview and the 3D exports: walls (cut around doors/windows), floor slabs, devices
-function meshData(pl,o){o=o||{};const H=o.H!=null?o.H:pl.height,T=pl.thick||0.15,y0=o.y0||0,out={walls:[],floor:[],dev:[]};
+function meshData(pl,o){o=o||{};const H=o.H!=null?o.H:pl.height,T=pl.thick||0.15,y0=o.y0||0,out={walls:[],floor:[],dev:[],ceil:[]};
   const tri=(arr,a,b,c,n)=>{const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2],cx=uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx;
     if(n&&cx*n[0]+cy*n[1]+cz*n[2]<0)arr.push(...a,...c,...b);else arr.push(...a,...b,...c);};
   const box=(arr,g,u0,u1,v0,v1,s0,s1)=>{if(s1<s0)[s0,s1]=[s1,s0];if(u1-u0<0.005||v1-v0<0.005)return;const P=(u,s,v)=>[g.ax+g.ux*u+g.nx*s,y0+v,g.ay+g.uy*u+g.ny*s];
@@ -2557,7 +2573,7 @@ function meshData(pl,o){o=o||{};const H=o.H!=null?o.H:pl.height,T=pl.thick||0.15
     let u=-ext;os.forEach(op=>{box(out.walls,g,u,op.u0,0,H,-T/2,T/2);if(op.v0>0.01)box(out.walls,g,op.u0,op.u1,0,op.v0,-T/2,T/2);if(H-op.v1>0.01)box(out.walls,g,op.u0,op.u1,op.v1,H,-T/2,T/2);u=op.u1;});
     box(out.walls,g,u,g.L+ext,0,H,-T/2,T/2);});
   const slab=pts=>{const c=pts.map(p=>new THREE.Vector2(p[0],p[1]));const tr=THREE.ShapeUtils.triangulateShape(c,[]);tr.forEach(([a,b,cc])=>tri(out.floor,[pts[a][0],y0,pts[a][1]],[pts[b][0],y0,pts[b][1]],[pts[cc][0],y0,pts[cc][1]],[0,1,0]));};
-  if((pl.rooms||[]).length)pl.rooms.forEach(r=>{if(r.pts.length>=3)slab(r.pts);});else if((pl.walls||[]).length){const b=plBounds(pl);slab([[b.x0,b.z0],[b.x1,b.z0],[b.x1,b.z1],[b.x0,b.z1]]);}
+  if((pl.rooms||[]).length)pl.rooms.forEach(r=>{if(r.pts.length>=3){slab(r.pts);if(o.ceil){const c=r.pts.map(p=>new THREE.Vector2(p[0],p[1]));THREE.ShapeUtils.triangulateShape(c,[]).forEach(([a,b,cc])=>tri(out.ceil,[r.pts[a][0],y0+H,r.pts[a][1]],[r.pts[b][0],y0+H,r.pts[b][1]],[r.pts[cc][0],y0+H,r.pts[cc][1]],[0,-1,0]));}}});else if((pl.walls||[]).length){const b=plBounds(pl);slab([[b.x0,b.z0],[b.x1,b.z0],[b.x1,b.z1],[b.x0,b.z1]]);}
   if(o.devs)(o.devs||[]).forEach(d=>{if(d.wall>=pl.walls.length)return;const g=wg(pl,d.wall),s=(d.side||1)>0?1:-1,u=d.t*g.L;box(out.dev,g,u-0.04,u+0.04,d.h-0.04,d.h+0.04,s*T/2,s*(T/2+0.03));});
   return out;}
 
@@ -2622,24 +2638,24 @@ function openCompare(id){const p=projects.find(q=>q.id===id);if(!p)return;CMP.id
   $('cmpSave').onclick=()=>xPrompt('Save a version','Version '+(vs.length+1),v=>{verSnap(v,pl);const l=pl.versions[pl.versions.length-1];if(l)l.label=v;saveP(p);openCompare(id);});}
 
 // ---------- export ----------
-const EXP={fmt:'pdf',all:true,ops:true,devs:true,dims:true,names:true};
+const EXP={fmt:'pdf',all:true,ops:true,devs:true,dims:true,names:true,ceil:true};
 const FMTS=[['obj','OBJ','3D'],['stl','STL','3D print'],['glb','GLB','3D web'],['ply','PLY','3D colour'],['pdf','PDF','Plan'],['dxf','DXF','CAD/DWG'],['svg','SVG','Vector'],['arelec','AR Elec','Project']];
 function openExport(id){const p=projects.find(q=>q.id===id);if(!p)return;EXP.id=id;const multi=bldFloors(bldOf(p)).length>1,is3=['obj','stl','glb','ply'].includes(EXP.fmt),is2=['pdf','dxf','svg'].includes(EXP.fmt);
   const h=`<div class="grp"><h4>Format</h4></div><div class="fmt">${FMTS.map(([k,l,s])=>`<button data-fmt="${k}" aria-pressed="${EXP.fmt===k}">${l}<small>${s}</small></button>`).join('')}</div>
-    ${grp('Options',(multi?sw2('exAll','All floors',EXP.all,'layers-triple-outline'):'')+(is3?sw2('exOps','Cut doors & windows',EXP.ops,'door')+sw2('exDev','Include devices',EXP.devs,'power-socket-fr'):'')
+    ${grp('Options',(multi?sw2('exAll','All floors',EXP.all,'layers-triple-outline'):'')+(is3?sw2('exOps','Cut doors & windows',EXP.ops,'door')+sw2('exCeil','Include ceilings',EXP.ceil,'arrow-collapse-up')+sw2('exDev','Include devices',EXP.devs,'power-socket-fr'):'')
       +(is2?sw2('exDims','Dimensions',EXP.dims,'ruler')+sw2('exNames','Room names & surfaces',EXP.names,'vector-square-close'):'')+`<div class="li">${ic('information-outline')}<span>Units</span><em>${EXP.fmt==='pdf'||EXP.fmt==='svg'?uLbl():'metres'}</em></div>`)}
     <p class="note pad">${EXP.fmt==='dxf'?'DXF opens in AutoCAD, DraftSight, LibreCAD and most DWG tools (layers: WALLS, OPENINGS, ROOMS, DIMS).':EXP.fmt==='arelec'?'The project file keeps the plan, rooms, versions, notes and comments; open it with “Import a project” in AR Elec.':is3?'Walls are solid boxes, floors are one slab per room; 1 unit = 1 metre, Y up.':'A4 landscape, one page per floor, with the room table.'}</p>`;
   pgOpen('export','Export',h,{foot:`<button class="btn primary wide" id="exGo">${ic('download')}Export ${FMTS.find(f=>f[0]===EXP.fmt)[1]}</button>`});
   document.querySelectorAll('#pg-export [data-fmt]').forEach(b=>b.onclick=()=>{EXP.fmt=b.dataset.fmt;openExport(id);});
-  [['exAll','all'],['exOps','ops'],['exDev','devs'],['exDims','dims'],['exNames','names']].forEach(([i,k])=>on(i,'click',()=>{EXP[k]=!EXP[k];$(i).setAttribute('aria-checked',EXP[k]);}));
+  [['exAll','all'],['exOps','ops'],['exCeil','ceil'],['exDev','devs'],['exDims','dims'],['exNames','names']].forEach(([i,k])=>on(i,'click',()=>{EXP[k]=!EXP[k];$(i).setAttribute('aria-checked',EXP[k]);}));
   $('exGo').onclick=async()=>{const b=$('exGo');b.disabled=true;try{const m=await doExport(p,EXP.fmt);flash(m);}catch(e){console.error(e);flash('Export failed');}b.disabled=false;};}
 function expFloors(p){return EXP.all?bldFloors(bldOf(p)):[p];}
 const safeName=s=>String(s||'project').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'project';
 async function doExport(p,fmt){const fl=expFloors(p),base=safeName(bldName(p.plan)+(fl.length===1&&(p.plan.floor||0)!==0?'-'+FLOOR_NAME(p.plan.floor):''));
   if(fmt==='arelec')return deliver(base+'.arelec','application/json',projFile(p),'save');
-  if(['obj','stl','glb','ply'].includes(fmt)){const G={walls:[],floor:[],dev:[]};let y=0;
-    fl.forEach(q=>{const pl=EXP.ops?q.plan:{...q.plan,openings:[]};const m=meshData(pl,{y0:y,devs:EXP.devs?q.devs:null});G.walls.push(...m.walls);G.floor.push(...m.floor);G.dev.push(...m.dev);y+=q.plan.height+0.25;});
-    const groups=[['walls',[0.93,0.93,0.94],G.walls],['floor',[0.86,0.9,0.96],G.floor],['devices',[0.9,0.25,0.2],G.dev]].filter(g=>g[2].length);
+  if(['obj','stl','glb','ply'].includes(fmt)){const G={walls:[],floor:[],dev:[],ceil:[]};let y=0;
+    fl.forEach(q=>{const pl=EXP.ops?q.plan:{...q.plan,openings:[]};const m=meshData(pl,{y0:y,devs:EXP.devs?q.devs:null,ceil:EXP.ceil});G.walls.push(...m.walls);G.floor.push(...m.floor);G.dev.push(...m.dev);G.ceil.push(...m.ceil);y+=q.plan.height+0.25;});
+    const groups=[['walls',[0.93,0.93,0.94],G.walls],['floor',[0.86,0.9,0.96],G.floor],['devices',[0.9,0.25,0.2],G.dev],['ceiling',[0.97,0.97,0.98],G.ceil]].filter(g=>g[2].length);
     if(fmt==='obj')return deliver(base+'.obj','text/plain',toOBJ(groups),'save');if(fmt==='stl')return deliver(base+'.stl','model/stl',toSTL(groups,base),'save');
     if(fmt==='ply')return deliver(base+'.ply','text/plain',toPLY(groups),'save');return deliver(base+'.glb','model/gltf-binary',toGLB(groups,base),'save');}
   if(fmt==='dxf')return deliver(base+'.dxf','application/dxf',toDXF(fl),'save');
@@ -2773,6 +2789,7 @@ renderSettings=function(){renderSettings0();const segH=(id,opts,cur)=>`<div clas
   $('sTut').onclick=go(openTutorials);$('sHelp').onclick=go(openHelp);$('sAbout').onclick=()=>openAbout();};
 GPS_N=SET.gpsQ==='hi'?10:5;
 
+(()=>{const L_=$('pjList');let t=null;const off=()=>{if(t){t.classList.remove('press');t=null;}};L_.addEventListener('pointerdown',e=>{const b=e.target.closest('.li');if(b){off();t=b;b.classList.add('press');}});['pointerup','pointercancel','pointerleave'].forEach(k=>L_.addEventListener(k,()=>setTimeout(off,120)));addEventListener('scroll',off,true);})();
 paintIcons();size();setCam(true);themeScene();refresh();goHome();renderer.setAnimationLoop(loop);
 })();
 </script>
