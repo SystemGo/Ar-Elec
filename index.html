@@ -408,7 +408,7 @@ body.surveying #status{top:calc(106px + var(--st))}
 .spc button:active{transform:scale(.96)}.spc button[aria-pressed="true"]{border-color:var(--fg)}.spc .ic{width:30px;height:30px}
 .stepper{display:flex;align-items:center;gap:8px;flex:none}
 .stepper button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);font:600 18px var(--f-display);color:var(--fg);cursor:pointer;display:grid;place-items:center}
-.stepper b{min-width:24px;text-align:center;font-weight:600;font-size:14px}
+.li>.stepper{flex:none;overflow:visible;min-width:auto}.stepper button{flex:none}.stepper b{flex:none;width:108px;text-align:center;font-weight:600;font-size:14px;white-space:nowrap}
 .li.ck{padding-top:8px;padding-bottom:8px}.li.ck>.ic:first-child{color:var(--muted);transition:color .2s}.li.ck[aria-checked="true"]>.ic:first-child{color:var(--ok)}
 .li.ck>span,.li.tut>span,.li.cmt>span,.li.note2>span{white-space:normal}
 /* scan header */
@@ -503,11 +503,11 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 #arAsk[hidden]{display:none}#arAsk>span{flex:1;min-width:150px}#arAsk small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
 #arAsk>.btn{min-width:64px;justify-content:center}#arAsk .akOpts{display:flex;gap:8px;width:100%}#arAsk .akOpts .btn{flex:1;justify-content:center}#arAsk .btn .ic{width:17px;height:17px}
 #arDock{position:fixed;z-index:12;top:calc(10px + var(--st));right:calc(10px + var(--sr));width:46px;border-radius:23px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;transition:width .3s var(--ease),border-radius .3s;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .3s var(--ease)}
-#arDock[hidden]{display:none}#arDock.open{width:min(236px,calc(100vw - 20px));border-radius:20px}
+#arDock[hidden]{display:none}#arDock.open{width:46px;border-radius:23px}
 #arDock .dkTop{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;padding:0;border:0;background:transparent;color:var(--fg);cursor:pointer}
-#arDock.open .dkTop{justify-content:flex-start;padding:0 12px}#arDock .dkTop .ic{width:22px;height:22px;flex:none}.dkTitle{font:600 14px var(--f-display)}
+#arDock .dkTop .ic{width:22px;height:22px;flex:none}.dkTitle{font:600 14px var(--f-display)}
 .dkPct{display:block;text-align:center;font:700 11.5px var(--f-display);font-variant-numeric:tabular-nums;margin:-6px 0 4px}.dkPct.ok{color:var(--ok)}
-.dkMini{display:flex;flex-direction:column;align-items:center;gap:6px;padding:2px 0 9px;cursor:pointer}
+.dkMini{display:flex;flex-direction:column;align-items:center;gap:6px;padding:2px 0 9px;animation:fadeIn .25s var(--ease)}
 .dkMini .mi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted)}.dkMini .mi .ic{width:16px;height:16px}
 .dkMini .mi.ok{background:rgba(31,164,90,.16);color:var(--ok)}.dkMini .mi.weak{background:rgba(201,138,18,.18);color:var(--warn)}.dkMini .mi.off{background:rgba(229,56,59,.14);color:var(--bad)}
 #arDock .dkList{padding:0 8px 8px;animation:fadeIn .25s var(--ease)}
@@ -1651,7 +1651,7 @@ function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=tr
   on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');});
   on('akNo','click',()=>arAsk('how'));
   on('akCorner','click',()=>{arAsk(null);S.imgMode=false;al2Start('manual');});
-  on('akImg','click',()=>{arAsk(null);S.imgMode=true;if(cpFrames().length>=2){al2Start('img');return;}DK.open=true;dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
+  on('akImg','click',()=>{arAsk(null);S.imgMode=true;if(cpFrames().length>=2){al2Start('img');return;}dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
   on('akX','click',()=>arAsk(null));}
 const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
@@ -1667,12 +1667,10 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
     ['site',plan.geo?'ok':'off','map-marker-radius','Site',plan.geo?'Saved':'Not saved'],
     loc?['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']:null].filter(Boolean);
   const showPct=loc&&(S.imgMode||ok);
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]+r[4]),showPct]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
-  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}${DK.open?'<b class="dkTitle">Status</b>':''}</button>
-    ${DK.open?'':`${showPct?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}<div class="dkMini">${rows.filter(r=>r[0]!=='vl'&&r[0]!=='mode').map(([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}">${ic(i)}</i>`).join('')}</div>`}
-    ${DK.open?`<div class="dkList">${rows.map(([k,st,i,t,v,bar])=>`<div class="dkRow"><i class="dot ${st}"></i>${ic(i)}<span><small>${t}</small><b>${v}</b>${bar?`<em class="dkBar"><i style="width:${Math.min(100,p)}%" class="${ok?'ok':''}"></i></em>`:''}</span></div>`).join('')}</div>`:''}`;
-  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};
-  if(!DK.open)el.querySelector('.dkMini').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=true;dockTick(true);};}
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),showPct,showPct?p:0]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}</button>${showPct?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}
+    ${DK.open?`<div class="dkMini">${rows.filter(r=>r[0]!=='mode').map(([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}" aria-label="${t}">${ic(i)}</i>`).join('')}</div>`:''}`;
+  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};;}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
@@ -2389,11 +2387,11 @@ renderHome=function(){const cur=projects.find(q=>q.id===curId);$('hmAR').disable
 function useProject(id){if(id!==curId){saveNow();loadProject(id);refresh();}}
 function toPlanEditor(){pgCloseAll();$('pjSheet').hidden=true;document.body.classList.remove('home');sel=null;setView(true);setCam(false);refresh();}
 openPjSheet=function(id){useProject(id);const p=projects.find(q=>q.id===id);if(!p)return;renderHome();
-  $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p);const has=p.plan.walls.length>0,nv=(p.plan.versions||[]).length;
+  $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p)+(p.plan.address?' · '+p.plan.address:'');const has=p.plan.walls.length>0,nv=(p.plan.versions||[]).length;
   const tile=(id_,icn,l,dis)=>`<button id="${id_}" ${dis?'disabled':''}>${ic(icn)}<span>${l}</span></button>`;
   $('pjsActs').innerHTML=(has?`<div class="qa">${tile('paPrev','cube-outline','3D view')}${tile('paPlan','floor-plan','Plan')}${tile('paExp','download','Export')}${tile('paShare','share','Share')}</div>`:'')
     +`<div class="gl">${(has?row('paAR','video-3d','AR Viewer'):'')+row('paScan','cube-scan',has?'Scan more rooms':'Scan')+(has?row('paProg','stairs','Floors & rooms',`${(p.plan.rooms||[]).length}/${Math.max(p.plan.target||0,(p.plan.rooms||[]).length)}`):'')
-    +(has?row('paCmp','compare','Compare versions',nv||null):'')+row('paRen','pencil-outline','Rename')+row('paDel','trash-can-outline','Move to trash',null,'danger')}</div>`;
+    +(has?row('paCmp','compare','Compare versions',nv||null):'')+row('paRen','pencil-outline','Rename')+row('paAddr','map-marker-radius','Address',p.plan.address?esc(p.plan.address.length>18?p.plan.address.slice(0,17)+'…':p.plan.address):null)+row('paDel','trash-can-outline','Move to trash',null,'danger')}</div>`;
   $('pjSheet').hidden=false;const close=()=>{$('pjSheet').hidden=true;};
   on('paAR','click',()=>{close();pgCloseAll();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
   on('paScan','click',()=>{close();pgCloseAll();startSurvey(!has);});
@@ -2402,13 +2400,14 @@ openPjSheet=function(id){useProject(id);const p=projects.find(q=>q.id===id);if(!
   on('paExp','click',()=>{close();openExport(id);});on('paShare','click',()=>{close();openShare(id);});
   on('paProg','click',()=>{close();openProgress(bldOf(p));});on('paCmp','click',()=>{close();openCompare(id);});
   on('paRen','click',()=>{close();xPrompt('Rename project',p.plan.name,v=>{p.plan.name=v;if(!p.plan.floor)p.plan.bname=v;saveNow();renderHome();PGS.includes('library')&&openLibrary();});});
-  on('paDel','click',()=>{close();trashProject(id);});};
+  on('paDel','click',()=>{close();trashProject(id);});
+  on('paAddr','click',()=>{close();xPrompt('Project address',p.plan.address||'',v=>{bldFloors(bldOf(p)).forEach(q=>q.plan.address=v);saveNow();renderHome();},'Street, city');});};
 function trashProject(id){const p=projects.find(q=>q.id===id);if(!p)return;p.trash=Date.now();if(curId===id){curId=null;emptyPlan();refresh();}saveNow();renderHome();flash('Moved to trash');if(PGS.includes('library'))openLibrary();}
 function purgeProject(id){mDel('kf-'+id).catch(()=>{});const p=projects.find(q=>q.id===id);(((p||{}).plan||{}).cphotos||[]).forEach(c=>mDel(`cph-${id}-${c.id}`).catch(()=>{}));((p||{}).plan||{}).spots?.forEach(sp=>{mDel(spKey(id,sp.id)).catch(()=>{});if(sp.photo)mDel(sp.photo).catch(()=>{});});
   projects=projects.filter(q=>q.id!==id);if(curId===id){curId=null;emptyPlan();}saveNow();try{localStorage.setItem('arelec-projects',JSON.stringify(projects));}catch(e){}}
 
 // ---------- new scan: space type + preparation, then the unchanged scan ----------
-const SU={space:'house',floor:0,target:1,name:'',ck:{}};
+const SU={space:'house',floor:0,target:1,name:'',addr:'',ck:{}};
 function newProject_(meta){saveNow();curId=Date.now();emptyPlan();plan.name=`Project ${projects.length+1}`;Object.assign(plan,meta||{});if(plan.bld==null)plan.bld=curId;if(!plan.bname)plan.bname=plan.name;
   projects.unshift({id:curId,plan,devs});saveNow();pgCloseAll();$('pjSheet').hidden=true;openMenu(false);return startSurvey(true);}
 newProject=function(meta){if(meta)return newProject_(meta);openSetup();};
@@ -2416,16 +2415,17 @@ function openSetup(){const n=alive().filter(p=>(p.plan.space||'house')===SU.spac
   const CK=[['light','Turn on the lights','Even lighting helps photo spots and door detection'],['clear','Clear the floor','Wall bases and corners must be visible'],['doors','Open the doors','Doorways are detected automatically'],['gps','Location and GPS on','The screen stays grey until GPS and compass are ready'],['hold','Hold the phone at chest height','Aim with the centre cross']];
   const body=`<div class="grp"><h4>Space type</h4></div><div class="spc">${Object.entries(SPACES).map(([k,[l,i]])=>`<button data-sp="${k}" aria-pressed="${SU.space===k}">${ic(i)}${l}</button>`).join('')}</div>
     ${grp('Project',`<label class="li">${ic('pencil-outline')}<span>Name</span><input id="suName" type="text" value="${esc(SU.name)}"></label>
+      <label class="li">${ic('map-marker-radius')}<span>Address</span><input id="suAddr" type="text" placeholder="Street, city" autocomplete="street-address" value="${esc(SU.addr)}"></label>
       <div class="li">${ic('stairs')}<span>Floor</span><span class="stepper"><button id="suFm" aria-label="Lower">−</button><b id="suF">${FLOOR_NAME(SU.floor)}</b><button id="suFp" aria-label="Higher">+</button></span></div>
       <div class="li">${ic('vector-square-close')}<span>Rooms to scan</span><span class="stepper"><button id="suRm" aria-label="Fewer">−</button><b id="suR">${SU.target}</b><button id="suRp" aria-label="More">+</button></span></div>`)}
     ${grp('Preparation',CK.map(([k,t,s])=>`<button class="li ck" data-ck="${k}" role="checkbox" aria-checked="${!!SU.ck[k]}">${ic(SU.ck[k]?'check-circle':'circle')}<span><b>${t}</b><small>${s}</small></span></button>`).join(''))}`;
   pgOpen('setup','New scan',body,{foot:`<button class="btn primary wide" id="suGo">Continue${ic('arrow-right')}</button>`});
   document.querySelectorAll('#pg-setup [data-sp]').forEach(b=>b.onclick=()=>{SU.space=b.dataset.sp;openSetup();});
-  $('suName').oninput=e=>{SU.name=e.target.value;};
+  $('suName').oninput=e=>{SU.name=e.target.value;};$('suAddr').oninput=e=>{SU.addr=e.target.value;};
   const st=(id,f)=>{$(id).onclick=()=>{f();$('suF').textContent=FLOOR_NAME(SU.floor);$('suR').textContent=SU.target;};};
   st('suFm',()=>SU.floor=Math.max(-2,SU.floor-1));st('suFp',()=>SU.floor=Math.min(20,SU.floor+1));st('suRm',()=>SU.target=Math.max(1,SU.target-1));st('suRp',()=>SU.target=Math.min(30,SU.target+1));
   document.querySelectorAll('#pg-setup [data-ck]').forEach(b=>b.onclick=()=>{const k=b.dataset.ck;SU.ck[k]=!SU.ck[k];b.setAttribute('aria-checked',SU.ck[k]);b.firstElementChild.outerHTML=ic(SU.ck[k]?'check-circle':'circle');});
-  $('suGo').onclick=()=>{const nm=(SU.name||'').trim()||'Project';SU.ck={};newProject_({name:SU.floor?`${nm} · ${FLOOR_NAME(SU.floor)}`:nm,bname:nm,space:SU.space,floor:SU.floor,target:SU.target}).catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();});};}
+  $('suGo').onclick=()=>{const nm=(SU.name||'').trim()||'Project';SU.ck={};const ad=SU.addr;SU.addr='';newProject_({name:SU.floor?`${nm} · ${FLOOR_NAME(SU.floor)}`:nm,bname:nm,space:SU.space,floor:SU.floor,target:SU.target,address:(ad||'').trim()}).catch(e=>{flash('Camera failed: '+(e&&e.message||e));if(S)finishSurvey();});};}
 
 // ---------- in-scan header: floor · room, time, surface, rooms done, help ----------
 const RM={next:null};const HUD={s:null,sec:0,last:0,sig:''};
@@ -2459,7 +2459,7 @@ function openProgress(B){const fl=bldFloors(B);if(!fl.length){pgClose('progress'
     h+=`<div class="grp"><h4>${FLOOR_NAME(pl.floor||0)}<span class="cnt">${rs.length}/${tg}</span></h4><div class="gl"><div class="pbar"><i style="width:${pc}%"></i></div>${rowsH}<button class="li acc" data-scan="${p.id}">${ic('cube-scan')}<span>${rs.length?'Continue scanning':'Start scanning'}</span>${ic('chevron-right')}</button></div></div>`;});
   pgOpen('progress',bldName(g),h,{foot:`<div class="row2"><button class="btn wide" id="prNext">${ic('stairs')}Next floor</button><button class="btn primary wide" id="prView">${ic('cube-outline')}View in 3D</button></div>`});
   document.querySelectorAll('#pg-progress [data-scan]').forEach(b=>b.onclick=()=>{const id=+b.dataset.scan;useProject(id);pgCloseAll();startSurvey(!plan.walls.length).catch(e=>flash('Camera failed'));});
-  $('prNext').onclick=()=>{const top=fl[fl.length-1].plan,f=(top.floor||0)+1,nm=bldName(g);newProject_({name:`${nm} · ${FLOOR_NAME(f)}`,bname:nm,space:g.space||'house',bld:B,floor:f,target:top.target||4}).catch(e=>flash('Camera failed'));};
+  $('prNext').onclick=()=>{const top=fl[fl.length-1].plan,f=(top.floor||0)+1,nm=bldName(g);newProject_({name:`${nm} · ${FLOOR_NAME(f)}`,bname:nm,space:g.space||'house',bld:B,floor:f,target:top.target||1,address:g.address||''}).catch(e=>flash('Camera failed'));};
   $('prView').onclick=()=>openPreview(B,'3d');}
 
 // ---------- plan drawing (SVG in metres) used by the preview, measures, notes, compare and exports ----------
@@ -2699,7 +2699,7 @@ async function toPDF(fl){const enc=new TextEncoder(),chunks=[],offs=[];let len=0
   const nObj=3+pages.length*3;const obj=(i,body)=>{offs[i]=len;put(`${i} 0 obj\n`);if(typeof body==='string')put(body);else body();put('\nendobj\n');};
   put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,`<< /Type /Pages /Kids [${pages.map((_,i)=>`${4+i*3} 0 R`).join(' ')}] /Count ${pages.length} >>`);obj(3,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
   pages.forEach((pg,i)=>{const pl=pg.q.plan,id=4+i*3,x0=40,y0=555-pg.h-10;let t=`q ${pg.w.toFixed(2)} 0 0 ${pg.h.toFixed(2)} ${x0} ${y0.toFixed(2)} cm /Im0 Do Q\n`;
-    const tx=(x,y,s,str,bold)=>{t+=`BT /F1 ${s} Tf ${x} ${y} Td (${asc(str)}) Tj ET\n`;};tx(40,565,16,`${bldName(pl)} - ${FLOOR_NAME(pl.floor||0)}`);
+    const tx=(x,y,s,str,bold)=>{t+=`BT /F1 ${s} Tf ${x} ${y} Td (${asc(str)}) Tj ET\n`;};tx(40,565,16,`${bldName(pl)} - ${FLOOR_NAME(pl.floor||0)}`);if(pl.address)tx(40,550,10,pl.address);
     let y=540;const X=580;tx(X,y,11,'Summary');y-=16;[['Floor area',fmtA(plArea(pl))],['Ceiling height',fmtL(pl.height)],['Rooms',(pl.rooms||[]).length],['Walls',pl.walls.length],['Doors',(pl.openings||[]).filter(o=>o.type==='door').length],['Windows',(pl.openings||[]).filter(o=>o.type==='window').length],['Devices',(pg.q.devs||[]).length]]
       .forEach(([k,v])=>{tx(X,y,9,k);tx(X+120,y,9,String(v));y-=13;});y-=10;tx(X,y,11,'Rooms');y-=16;(pl.rooms||[]).slice(0,22).forEach((r,k)=>{tx(X,y,9,r.name||'Room '+(k+1));tx(X+120,y,9,fmtA(polyArea(r.pts)));y-=13;});
     if((pl.pins||[]).length&&y>80){y-=10;tx(X,y,11,'Notes');y-=16;pl.pins.slice(0,8).forEach((p,k)=>{tx(X,y,8,`${k+1}. ${p.t}`.slice(0,48));y-=12;});}
@@ -2728,7 +2728,7 @@ function openLibrary(){const tr=projects.filter(p=>p.trash);const cats=[['all','
   $('libQ').oninput=e=>{LIB.q=e.target.value;libCards();};document.querySelectorAll('#pg-library [data-cat]').forEach(b=>b.onclick=()=>{LIB.cat=b.dataset.cat;openLibrary();});
   on('libEmpty','click',()=>xConfirm('Empty the trash?',`${tr.length} project${tr.length>1?'s':''} will be deleted for good, with their photos.`,'Delete',()=>{tr.forEach(p=>purgeProject(p.id));openLibrary();renderHome();},true));libCards();}
 function libCards(){const q=LIB.q.trim().toLowerCase();const T=LIB.cat==='trash';
-  const L_=projects.filter(p=>T?p.trash:!p.trash).filter(p=>T||LIB.cat==='all'||(p.plan.space||'house')===LIB.cat).filter(p=>!q||(p.plan.name||'').toLowerCase().includes(q)||(p.plan.rooms||[]).some(r=>(r.name||'').toLowerCase().includes(q)));
+  const L_=projects.filter(p=>T?p.trash:!p.trash).filter(p=>T||LIB.cat==='all'||(p.plan.space||'house')===LIB.cat).filter(p=>!q||(p.plan.name||'').toLowerCase().includes(q)||(p.plan.address||'').toLowerCase().includes(q)||(p.plan.rooms||[]).some(r=>(r.name||'').toLowerCase().includes(q)));
   $('libCards').innerHTML=L_.length?L_.map((p,i)=>`<div class="card" style="animation-delay:${Math.min(i,8)*0.03}s"><button class="cv" data-pj="${p.id}" aria-label="${esc(p.plan.name||'Project')}">${p.plan.cover?`<img src="${p.plan.cover}" alt="">${thumb(p.plan).replace('class="th"','class="th mini"')}`:thumb(p.plan)}${p.plan.space?`<span class="tag">${ic(SPACES[p.plan.space][1])}</span>`:''}</button>
       <b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small>${T?`<div class="acts"><button class="btn sm" data-rs="${p.id}">Restore</button><button class="btn sm dangerT" data-pg="${p.id}">Delete</button></div>`:''}</div>`).join('')
     :`<div class="pjEmpty">${ic(T?'trash-can-outline':'folder')}${T?'Trash is empty':q?'No match':'No projects'}</div>`;
