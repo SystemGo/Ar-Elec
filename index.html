@@ -540,6 +540,11 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 #arDock .dkRing>.ic{width:19px!important;height:19px!important;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}#arDock .dkRing.g-ok>.ic{color:var(--ok)}#arDock .dkRing.g-weak>.ic{color:var(--warn)}#arDock .dkRing.g-off>.ic{color:var(--bad)}
 #arDock .dkMini{padding-top:0}
 #arDock .dkRing.c-ok .fg{stroke:var(--ok)}#arDock .dkRing.c-weak .fg{stroke:var(--warn)}#arDock .dkRing.c-off .fg{stroke:var(--bad)}
+#miniPlan{position:fixed;z-index:11;right:calc(10px + var(--sr));top:calc(64px + var(--st));width:112px;height:112px;border-radius:18px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;pointer-events:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#miniPlan[hidden]{display:none}#miniPlan svg{width:100%;height:100%;display:block}#miniPlan .mw line{stroke:var(--fg);stroke-linecap:round;opacity:.8}
+#miniPlan .cn{fill:var(--surface);stroke:var(--fg);stroke-width:.05}#miniPlan .me{fill:#2563eb;stroke:#fff;stroke-width:.06}#miniPlan .cone{fill:#2563eb;opacity:.2}
+#odrCard{left:12px;right:12px;bottom:calc(var(--navH) + 84px);border-radius:18px;padding:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--glass);animation:popUp .35s var(--ease);font:500 13.5px var(--f-display);z-index:13}
+#odrCard[hidden]{display:none}#odrCard>span{flex:1 1 100%}#odrCard small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}#odrCard .seg{flex:1}#odrCard .seg .ic{width:16px;height:16px}
 </style>
 </head>
 <body>
@@ -572,7 +577,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="miniPlan" hidden></div><div class="float" id="odrCard" hidden role="dialog" aria-label="Draw doors and windows"></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -779,7 +784,7 @@ function circuits(){
 
 // cable path between two wall devices following the walls (through corners), at the lower device height
 function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+lane*0.012,ga=wallGeo(a.wall),gb=wallGeo(b.wall);
-  const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
+  const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=(plan.wireVia||SET.wire||'ceiling')==='floor'?0.05+lane*0.02:Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
   const pa=devPos(a,extra).p,pb=devPos(b,extra).p,V=(x,z,y)=>new THREE.Vector3(x,y,z);
   const onW=(g,u,s,yy)=>V(g.ax+g.ux*u+g.nx*s*off,g.ay+g.uy*u+g.ny*s*off,yy);
   if(a.wall===b.wall){const pts=[pa.clone(),onW(ga,ua,sa,h),onW(gb,ub,sb,h),pb.clone()];return{pts,len:Math.abs(ua-ub)+Math.abs(a.h-h)+Math.abs(b.h-h)+(sa!==sb?T:0)};}
@@ -804,7 +809,8 @@ function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+la
   return{pts,len:dist[B]+Math.abs(a.h-h)+Math.abs(b.h-h)+(fb!==flip?plan.thick:0)};}
 function routeCircuits(){
   clear(gWires); const {panel,list}=circuits(); if(!panel){return {panel,list};}
-  list.forEach(c=>{const y=plan.height-0.1-c.lane*0.045;let pts=[];let prev=devPos(panel,0.02).p;let len=0;
+  const viaF=(plan.wireVia||SET.wire||'ceiling')==='floor';
+  list.forEach(c=>{const y=viaF&&c.kind!=='light'?0.05+c.lane*0.03:plan.height-0.1-c.lane*0.045;let pts=[];let prev=devPos(panel,0.02).p;let len=0;
     const chain=c.kind!=='light';let prevD=null;
     c.devs.forEach(d=>{const q=devPos(d,0.02).p;let seg;
       if(chain&&prevD){seg=wallRoute(prevD,d,0.02,c.lane).pts;} // socket → next socket, along the walls, one cable each
@@ -1455,7 +1461,7 @@ async function startLocate(){await vlLoad(curId);
   await startSensor({survey:true});aim.visible=true;svUI();openGate();}
 function enterLocate(){const keep=S?S.assist:false;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:keep,needFix:false,align:null};
   clear(svGroup);prevLine.visible=false;setAimLabel('');xray=true;build();svUI();}
-function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();ltReset();vlSave();$('vlBar').hidden=true;
+function finishSurvey(){if(!S)return;if(S.opDraw){S.opDraw=null;clear(ODR.g);$('odrCard').hidden=true;}if(editing)toggleEdit(false);odReset();ltReset();vlSave();$('vlBar').hidden=true;
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
@@ -1682,7 +1688,7 @@ function al2Accept(){const A=S&&S.al2;if(!A)return;let c=null;
   A.pts.push(c);A.skip=0;A.sel=null;AL.sig='';
   if(A.pts.length<2){svUI();flash('Corner 1 done · now a second corner');return;}
   const[p1,p2]=A.pts,res=al2Solve(p1.r,p2.r,p1.m,p2.m);S.align={c:p2.m,two:true,img:A.mode==='img'};S.needFix=false;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}al2Stop();
-  flash(`Aligned on 2 corners · ${Math.abs(res.dl*57.2958).toFixed(1)}° turned · ${res.err<0.01?'exact':fmtL(res.err,2)+' length gap'}`);}
+  flash(`Aligned on 2 corners · ${Math.abs(res.dl*57.2958).toFixed(1)}° turned · ${res.err<0.01?'exact':fmtL(res.err,2)+' length gap'}`);setTimeout(odrOffer,1200);}
 function al2Mark(){const A=S&&S.al2;if(!A)return;
   if(A.mode==='img'){if(A.pend){al2Accept();return;}const ap=aimPoint();if(!ap){flash('Aim the cross at the floor');return;}
     const first=A.pts[0];let list=cpRank()||[];if(first)list=list.filter(o=>!(o.m[0]===first.m[0]&&o.m[1]===first.m[1]));
@@ -1704,7 +1710,7 @@ function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=tr
   else el.innerHTML=`<span><b>Reposition with</b><small>${hasImg?'Two floor corners, or the photos saved during the scan':'Two floor corners (no photos saved in this project)'}</small></span>
     <div class="akOpts"><button class="btn primary" id="akCorner">${ic('target')}2 corners</button><button class="btn" id="akImg" ${hasImg?'':'disabled'}>${ic('image-multiple')}Photos</button><button class="icon" id="akX" aria-label="Close">${ic('close')}</button></div>`;
   el.className='float'+(step==='how'?' how':'');el.hidden=false;
-  on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');});
+  on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');setTimeout(odrOffer,700);});
   on('akNo','click',()=>arAsk('how'));
   on('akCorner','click',()=>{arAsk(null);S.imgMode=false;al2Start('manual');});
   on('akImg','click',()=>{arAsk(null);S.imgMode=true;if(cpFrames().length>=2){al2Start('img');return;}dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
@@ -1742,7 +1748,7 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
   el.innerHTML=`<button class="dkTop dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
   el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
-setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
+setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.phase!=='locate'||S.alignMode||S.respot||S.pend||S.opDraw))$('arAsk').hidden=true;if($('arAsk')&&!$('arAsk').hidden&&!S)$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
 
@@ -1757,6 +1763,53 @@ buildWalls=function(){buildWalls0();clear(gCeil);const rooms=(plan.rooms||[]).fi
   rooms.forEach(r=>{const sh=new THREE.Shape(r.pts.map(p=>new THREE.Vector2(p[0],p[1])));const geo=new THREE.ShapeGeometry(sh).rotateX(Math.PI/2);if(isLive){const uv=geo.attributes.uv;for(let k=0;k<uv.count;k++)uv.setXY(k,uv.getX(k)/0.3,uv.getY(k)/0.3);}
     const m=new THREE.Mesh(geo,mat);m.position.y=H-0.002;m.renderOrder=2;gCeil.add(m);
     const ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(r.pts.map(p=>new THREE.Vector3(p[0],H,p[1]))),edge);gCeil.add(ln);});};
+
+// ---------- mini plan (top right): the room seen from above, forward is up, you are the blue cone ----------
+const MP={sig:'',last:0};
+function miniPlanTick(){const el=$('miniPlan');const on_=!!(S&&!S.gate&&live&&plan.walls.length&&!(S.alignMode)&&!PGS.length);
+  if(!on_){if(!el.hidden)el.hidden=true;return;}
+  const sig=JSON.stringify(plan.walls)+(S.chain||[]).length;if(sig!==MP.sig||el.hidden){MP.sig=sig;const cs=al2Corners(),b=plBounds(plan),cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,R_=Math.max(b.x1-b.x0,b.z1-b.z0)*0.62+0.6,r=R_*0.075;
+    el.innerHTML=`<svg viewBox="${cx-R_} ${cz-R_} ${2*R_} ${2*R_}" aria-hidden="true"><g id="mpG"><g class="mw" stroke-width="${r*0.45}">${plan.walls.map(w=>`<line x1="${w[0][0]}" y1="${w[0][1]}" x2="${w[1][0]}" y2="${w[1][1]}"/>`).join('')}</g>
+      ${cs.map(c=>`<circle cx="${c[0]}" cy="${c[1]}" r="${r*0.8}" class="cn"/>`).join('')}<g id="mpMe"><path d="M0 0L${-r*1.6} ${-r*3.6}A${r*3.9} ${r*3.9} 0 0 1 ${r*1.6} ${-r*3.6}Z" class="cone"/><circle r="${r*0.75}" class="me"/></g></g></svg>`;el.hidden=false;MP.c=[cx,cz];}
+  const dk=$('arDock').getBoundingClientRect();el.style.top=Math.round((dk.bottom||54)+8)+'px';
+  const d=new THREE.Vector3();cam.getWorldDirection(d);const a=Math.atan2(d.z,d.x)*180/Math.PI;const g=$('mpG'),me=$('mpMe');
+  if(g)g.setAttribute('transform',`rotate(${(-90-a).toFixed(1)} ${MP.c[0]} ${MP.c[1]})`);if(me)me.setAttribute('transform',`translate(${L.pos.x.toFixed(2)} ${L.pos.z.toFixed(2)}) rotate(${(a+90).toFixed(1)})`);}
+renderMini=function(){try{miniPlanTick();}catch(_){}};
+setInterval(()=>{try{if(!$('miniPlan').hidden||S)miniPlanTick();}catch(_){}},250);
+
+// ---------- draw doors and windows in AR: slide a finger from one corner of the real opening to the opposite one ----------
+const ODR={g:new THREE.Group(),drag:null};world.add(ODR.g);
+function odrStart(type){if(!S||S.phase!=='locate')return;S.opDraw=type||'window';ODR.drag=null;clear(ODR.g);odrCard();svUI();}
+function odrStop(){if(!S)return;S.opDraw=null;ODR.drag=null;clear(ODR.g);$('odrCard').hidden=true;svUI();}
+function odrCard(msg){const el=$('odrCard');if(!S||!S.opDraw){el.hidden=true;return;}
+  el.innerHTML=`<span><b>${S.opDraw==='door'?'Draw a door':'Draw a window'}</b><small>${msg||'Slide a finger over the real '+S.opDraw+', from one corner to the opposite corner'}</small></span>
+    <div class="seg"><button data-t="door" aria-pressed="${S.opDraw==='door'}">${ic('door')}Door</button><button data-t="window" aria-pressed="${S.opDraw==='window'}">${ic('window-closed-variant')}Window</button></div><button class="btn primary" id="odrDone">Done</button>`;
+  el.hidden=false;el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.opDraw=b.dataset.t;odrCard();});$('odrDone').onclick=odrStop;}
+function odrHit(x,y){castAt(x,y);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh&&o.userData.wall!=null))[0];if(!h)return null;
+  const i=h.object.userData.wall,g=wallGeo(i),p=world.worldToLocal(h.point.clone());const s=((p.x-g.ax)*g.nx+(p.z-g.ay)*g.ny)>=0?1:-1;return{i,g,s,u:(p.x-g.ax)*g.ux+(p.z-g.ay)*g.uy,v:p.y};}
+function odrPlaneUV(x,y,D){castAt(x,y);const o=world.worldToLocal(ray.ray.origin.clone()),q=world.worldToLocal(ray.ray.origin.clone().add(ray.ray.direction)),dir=q.sub(o);
+  const g=D.g,off=D.s*plan.thick/2,nx=g.nx,nz=g.ny,den=dir.x*nx+dir.z*nz;if(Math.abs(den)<1e-6)return null;
+  const t=((g.ax+nx*off-o.x)*nx+(g.ay+nz*off-o.z)*nz)/den;if(t<=0)return null;const P=o.add(dir.multiplyScalar(t));return{u:(P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy,v:P.y};}
+function odrRect(D,u0,v0,u1,v1){clear(ODR.g);const g=D.g,off=D.s*(plan.thick/2+0.012),P=(u,v)=>new THREE.Vector3(g.ax+g.ux*u+g.nx*off,v,g.ay+g.uy*u+g.ny*off);
+  const pts=[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1),P(u0,v0)];const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:S.opDraw==='door'?0xff8a1f:0x38bdf8,depthTest:false,transparent:true}));ln.renderOrder=40;ODR.g.add(ln);
+  const fill=new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(u1-u0),Math.abs(v1-v0)),new THREE.MeshBasicMaterial({color:S.opDraw==='door'?0xff8a1f:0x38bdf8,transparent:true,opacity:0.22,depthTest:false,side:THREE.DoubleSide}));
+  const c=P((u0+u1)/2,(v0+v1)/2);fill.position.copy(c);fill.rotation.y=-Math.atan2(g.dy,g.dx);fill.renderOrder=39;ODR.g.add(fill);kick();}
+canvas.addEventListener('pointerdown',e=>{if(!S||S.phase!=='locate'||!S.opDraw)return;const h=odrHit(e.clientX,e.clientY);if(!h){odrCard('Start on a wall of the model');return;}
+  e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}ODR.drag={...h,u0:h.u,v0:h.v,u1:h.u,v1:h.v,id:e.pointerId};},true);
+canvas.addEventListener('pointermove',e=>{const D=ODR.drag;if(!D||e.pointerId!==D.id)return;e.stopImmediatePropagation();const q=odrPlaneUV(e.clientX,e.clientY,D);if(!q)return;
+  D.u1=Math.max(0,Math.min(D.g.L,q.u));D.v1=Math.max(0,Math.min(plan.height,q.v));odrRect(D,D.u0,D.v0,D.u1,D.v1);
+  odrCard(`${fmtL(Math.abs(D.u1-D.u0),2)} × ${fmtL(Math.abs(D.v1-D.v0),2)}`);},true);
+const odrEnd=e=>{const D=ODR.drag;if(!D||e.pointerId!==D.id)return;e.stopImmediatePropagation();ODR.drag=null;
+  const w=Math.abs(D.u1-D.u0),hgt=Math.abs(D.v1-D.v0);if(w<0.25||hgt<0.25){clear(ODR.g);odrCard('Too small: slide from one corner to the opposite corner');return;}
+  let sill=Math.min(D.v0,D.v1),type=S.opDraw;if(type==='door'||sill<0.15){if(type==='door')sill=0;}
+  const top=Math.min(plan.height-0.02,Math.max(D.v0,D.v1)),id=Math.max(0,...ops().map(o=>o.id||0))+1;
+  plan.openings=ops();plan.openings.push({id,type,wall:D.i,t:+(((D.u0+D.u1)/2)/D.g.L).toFixed(4),w:+w.toFixed(3),h:+(top-sill).toFixed(3),sill:+sill.toFixed(3),drawn:true});
+  clear(ODR.g);save();build();odrCard(`${type==='door'?'Door':'Window'} added · ${fmtL(w,2)} × ${fmtL(top-sill,2)}`);flash(`${type==='door'?'Door':'Window'} added`);};
+canvas.addEventListener('pointerup',odrEnd,true);canvas.addEventListener('pointercancel',odrEnd,true);
+// once the model is confirmed in place, offer to draw the doors and windows
+function odrOffer(){if(!S||S.phase!=='locate'||S.opDraw||S.odrOffered)return;S.odrOffered=true;const el=$('arAsk');
+  el.innerHTML=`<span><b>Model in place</b><small>Add the doors and windows by sliding a finger over them</small></span><button class="btn" id="oaLater">Later</button><button class="btn primary" id="oaGo">${ic('window-closed-variant')}Add</button>`;el.className='float';el.hidden=false;
+  on('oaLater','click',()=>{el.hidden=true;});on('oaGo','click',()=>{el.hidden=true;odrStart('window');});}
 function alignCorner(){const ap=aimPoint();if(!ap){flash('Aim at a corner');return;}
   let best=null,bd=2.2;plan.walls.forEach(w=>w.forEach(c=>{const dd=Math.hypot(c[0]-ap.x,c[1]-ap.z);if(dd<bd){bd=dd;best=c;}}));
   if(!best){flash('No corner nearby');return;}
@@ -2213,12 +2266,14 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;$('miniMap').hidden=true;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svAlign','target','Align on 2 corners',false,!!(S.alignMode&&S.al2&&S.al2.mode!=='img')],['svAlignImg','image-multiple','Align with corner photos',cpFrames().length<2,!!(S.alignMode&&S.al2&&S.al2.mode==='img')],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svWire','vector-polyline',`Wiring through ${(plan.wireVia||SET.wire||'ceiling')==='floor'?'floor':'ceiling'}`,false,false],['svOpDraw','window-closed-variant','Draw doors & windows',false,!!S.opDraw],['svAlign','target','Align on 2 corners',false,!!(S.alignMode&&S.al2&&S.al2.mode!=='img')],['svAlignImg','image-multiple','Align with corner photos',cpFrames().length<2,!!(S.alignMode&&S.al2&&S.al2.mode==='img')],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','footprints','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.filter(([id,,,dis])=>!dis||id==='svUndo'||id==='svUndoDev').map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
   on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
+  on('svWire','click',()=>{plan.wireVia=(plan.wireVia||SET.wire||'ceiling')==='floor'?'ceiling':'floor';save();build();svUI();done();flash(`Wiring through the ${plan.wireVia}`);});
+  on('svOpDraw','click',()=>{done();if(S.opDraw)odrStop();else odrStart('window');});
   on('svAlign','click',()=>{done();if(S.alignMode&&S.al2&&S.al2.mode!=='img')al2Stop();else al2Start('manual');});on('svAlignImg','click',()=>{done();if(S.alignMode&&S.al2&&S.al2.mode==='img')al2Stop();else al2Start('img');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
   on('svRespot','click',()=>{done();spRespot();});on('svGal','click',()=>{done();spGallery(true);});
@@ -2849,10 +2904,11 @@ function openAbout(){xSheet(`<h2>AR Elec</h2><p class="note">Version 0.2 · elec
 // ---------- settings additions ----------
 const renderSettings0=renderSettings;
 renderSettings=function(){renderSettings0();const segH=(id,opts,cur)=>`<div class="li segrow"><div class="seg" id="${id}" role="group">${opts.map(([k,l])=>`<button data-v="${k}" aria-pressed="${cur===k}">${l}</button>`).join('')}</div></div>`;const tr=projects.filter(p=>p.trash).length;
-  const h=grp('Scan',segH('sGpsQ',[['std','GPS standard'],['hi','GPS precise']],SET.gpsQ||'std'))+grp('Profile',`<label class="li">${ic('user')}<span>Your name</span><input id="sName" type="text" placeholder="For comments" value="${esc(SET.name||'')}"></label>`)
+  const h=grp('Wiring',segH('sWire',[['ceiling','Through ceiling'],['floor','Through floor']],SET.wire||'ceiling'))+grp('Scan',segH('sGpsQ',[['std','GPS standard'],['hi','GPS precise']],SET.gpsQ||'std'))+grp('Profile',`<label class="li">${ic('user')}<span>Your name</span><input id="sName" type="text" placeholder="For comments" value="${esc(SET.name||'')}"></label>`)
     +grp('Storage',`<div class="li">${ic('database')}<span>Used on this phone</span><em id="sStor">…</em></div>`+row('sTrash','trash-can-outline','Trash',tr||null)+row('sBack','download','Back up all projects')+`<label class="li" for="fImport">${ic('upload')}<span>Import a project</span>${ic('chevron-right')}</label>`)
     +grp('Help',row('sTut','book','Tutorials')+row('sHelp','help','Help')+row('sAbout','information-outline','About'));
   $('stepBody').insertAdjacentHTML('beforeend',h);
+  $('sWire').querySelectorAll('button').forEach(b=>b.onclick=()=>{SET.wire=b.dataset.v;setSave();projects.forEach(q=>delete q.plan.wireVia);if(typeof build==='function')build();renderSettings();});
   $('sGpsQ').querySelectorAll('button').forEach(b=>b.onclick=()=>{SET.gpsQ=b.dataset.v;GPS_N=SET.gpsQ==='hi'?10:5;setSave();renderSettings();});
   $('sName').onchange=e=>{SET.name=e.target.value.trim();setSave();};
   try{if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{const el=$('sStor');if(el)el.textContent=((e.usage||0)/1048576).toFixed(1)+' MB';});else $('sStor').textContent='–';}catch(_){}
