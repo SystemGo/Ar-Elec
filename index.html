@@ -539,6 +539,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 #arDock .dkRing .bg{stroke:var(--line)}#arDock .dkRing .fg{stroke:var(--fg);stroke-linecap:round;transition:stroke-dasharray .5s var(--ease)}#arDock .dkRing.ok .fg{stroke:var(--ok)}
 #arDock .dkRing>.ic{width:19px!important;height:19px!important;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}#arDock .dkRing.g-ok>.ic{color:var(--ok)}#arDock .dkRing.g-weak>.ic{color:var(--warn)}#arDock .dkRing.g-off>.ic{color:var(--bad)}
 #arDock .dkMini{padding-top:0}
+#arDock .dkRing.c-ok .fg{stroke:var(--ok)}#arDock .dkRing.c-weak .fg{stroke:var(--warn)}#arDock .dkRing.c-off .fg{stroke:var(--bad)}
 </style>
 </head>
 <body>
@@ -1659,6 +1660,9 @@ function al2Tick(){const act=!!(S&&S.phase==='locate'&&S.alignMode);if(!act){if(
     if(P&&top)cpURL(top.kf.cid).then(u=>{const im=$('alImg');if(im&&u)im.src=u;});}
   alMiniOrient();}
 // photo mode: while aiming, the corner photos that GPS and compass say should be in front are checked automatically
+
+// the corner sits at the centre of its photo: shift the aim by the image offset found between photo and live view
+function cpRefine(list,ap){const[W,H]=vlDims(),kx=innerWidth/W,ky=innerHeight/H;list.forEach(o=>{const f=floorAt(innerWidth/2-(o.fdx||0)*kx,innerHeight/2-(o.fdy||0)*ky);o.r=f&&Math.hypot(f.x-ap.x,f.z-ap.z)<0.6?[f.x,f.z]:[ap.x,ap.z];});return list;}
 function cpAuto(A){const now=performance.now();if(A.pend||now-(A.autoT||0)<450||!jobFree())return;A.autoT=now;JOB.n++;
   const ap=aimPoint();if(!ap)return;const first=A.pts[0],d=new THREE.Vector3();cam.getWorldDirection(d);const hd=Math.atan2(d.z,d.x);
   let list=(cpRank()||[]).filter(o=>!(first&&o.m[0]===first.m[0]&&o.m[1]===first.m[1]));
@@ -1669,9 +1673,9 @@ function cpAuto(A){const now=performance.now();if(A.pend||now-(A.autoT||0)<450||
   if(first&&Math.hypot(ap.x-first.r[0],ap.z-first.r[1])<0.8)return;
   const key=t.m.join(),q=A.autoC; // the same corner, centred, on two checks in a row with the phone held still
   if(!q||q.key!==key||Math.hypot(ap.x-q.x,ap.z-q.z)>0.06){A.autoC={key,x:ap.x,z:ap.z};return;}A.autoC=null;
-  A.pend={r:[ap.x,ap.z],list,k:0,auto:true};AL.sig='';svUI();flash('Corner recognised · confirm with Yes');}
+  cpRefine(list,ap);A.pend={r:[ap.x,ap.z],list,k:0,auto:true};AL.sig='';svUI();flash('Corner recognised · confirm with Yes');}
 function al2Accept(){const A=S&&S.al2;if(!A)return;let c=null;
-  if(A.mode==='img'){const P=A.pend,top=P&&P.list[P.k];if(!top)return;c={r:P.r,m:top.m};A.pend=null;}
+  if(A.mode==='img'){const P=A.pend,top=P&&P.list[P.k];if(!top)return;c={r:top.r||P.r,m:top.m};A.pend=null;}
   else{if(!A.cur){flash(A.sel==null?'Tap the corner on the plan first':'Aim the cross at the floor corner');return;}c={r:A.cur.r.slice(),m:A.cur.m.slice()};}
   if(A.pts.length===1){if(Math.hypot(c.r[0]-A.pts[0].r[0],c.r[1]-A.pts[0].r[1])<0.8){flash('Pick a corner at least 1 m from the first one');AL.sig='';return;}
     if(c.m[0]===A.pts[0].m[0]&&c.m[1]===A.pts[0].m[1]){flash('That is the same corner as the first one');AL.sig='';return;}}
@@ -1684,7 +1688,7 @@ function al2Mark(){const A=S&&S.al2;if(!A)return;
     const first=A.pts[0];let list=cpRank()||[];if(first)list=list.filter(o=>!(o.m[0]===first.m[0]&&o.m[1]===first.m[1]));
     // photo likeness first, nudged by where the model thinks the aimed corner is
     const pr=first?[ap.x+first.m[0]-first.r[0],ap.z+first.m[1]-first.r[1]]:[ap.x,ap.z];list.forEach(o=>{const d=Math.hypot(o.m[0]-pr[0],o.m[1]-pr[1]);o.rk=o.s+0.12*Math.exp(-d*d/2.9);});list.sort((a,b)=>b.rk-a.rk);
-    A.pend={r:[ap.x,ap.z],list,k:0};AL.sig='';svUI();return;}
+    cpRefine(list,ap);A.pend={r:[ap.x,ap.z],list,k:0};AL.sig='';svUI();return;}
   al2Accept();}
 // rigid fit (turn + slide) of the two marked real corners R onto the two model corners M, applied to the viewer pose
 function al2Solve(R1,R2,M1,M2){let dl=yawOf(M2[0]-M1[0],M2[1]-M1[1])-yawOf(R2[0]-R1[0],R2[1]-R1[1]);dl=Math.atan2(Math.sin(dl),Math.cos(dl));
@@ -1705,6 +1709,16 @@ function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=tr
   on('akCorner','click',()=>{arAsk(null);S.imgMode=false;al2Start('manual');});
   on('akImg','click',()=>{arAsk(null);S.imgMode=true;if(cpFrames().length>=2){al2Start('img');return;}dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
   on('akX','click',()=>arAsk(null));}
+
+// how sure the app is that the model sits at the right place (0–100): GPS + compass + image recognition + what the user confirmed
+function placeConf(){if(!S)return 0;const g=L.geoAvg||L.geo,gps=!g||g.err?0:Math.max(0,Math.min(1,(25-g.acc)/22)),cmp=L.ori?(L.ori.abs?(L.headLock?1:0.7):0.3):0;
+  if(S.phase!=='locate')return Math.round(100*(0.6*gps+0.4*cmp)); // while scanning: how ready the sensors are
+  const V=S.vl;let img=0;if(V){img=Math.max(V.conf||0,S.spotConf||0,S.lineConf||0);if(V.located)img=Math.max(img,0.75+0.25*Math.min(1,(V.lastScore||0)/0.6));}
+  if(S.spotFix)img=Math.max(img,0.9);
+  let c=(plan.geoFrame?0.25*gps:0.1*gps)+0.15*cmp+0.6*img;
+  if(S.align&&S.align.two)c=Math.max(c,0.9+0.1*Math.max(img,S.align.img?1:0.5));
+  if(S.ok)c=1;
+  return Math.round(100*Math.max(0,Math.min(1,c)));}
 const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
   const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
@@ -1722,10 +1736,10 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
   const showPct=loc&&(S.imgMode||!!A2||imgDone||ok),pct=A2?Math.min(100,A2.pts.length*50):imgDone?100:p,pOk=imgDone||ok||pct>=100;
   const by={};rows.forEach(r=>by[r[0]]=r);const bad=['cam','cmp'].filter(k=>by[k]&&by[k][1]!=='ok');
   const hb=$('scanHud'),H=hb&&!hb.hidden&&hb.offsetHeight?hb.offsetHeight:44;el.style.setProperty('--dkH',H+'px');
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),showPct,showPct?pct:0,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),placeConf(),H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
   const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`,gp=by.gps;
-  const R_=19,C=2*Math.PI*R_,prog=showPct?pct:0;
-  el.innerHTML=`<button class="dkTop dkRing ${pOk?'ok':''} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]}${showPct?' · identification '+pct+'%':''}"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
+  const cf=placeConf(),R_=19,C=2*Math.PI*R_,prog=cf;
+  el.innerHTML=`<button class="dkTop dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
   el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
