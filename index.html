@@ -529,6 +529,11 @@ body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 #alCard .alBtns{display:flex;gap:6px}#alCard .alBtns .btn{flex:1;justify-content:center;padding:8px 6px}
 #nav-new span{display:none}
 body.home .hmTop,body.home .hmSep{display:none}
+#arDock{top:calc(10px + var(--st))}#arDock .dkTop{height:var(--dkH,44px)}
+.dkRing{position:relative;width:32px;height:32px}.dkRing svg{width:32px;height:32px;display:block}.dkRing circle{fill:none;stroke-width:3.2}.dkRing .bg{stroke:var(--line)}.dkRing .fg{stroke:var(--fg);stroke-linecap:round;transition:stroke-dasharray .5s var(--ease)}
+.dkRing.ok .fg{stroke:var(--ok)}.dkRing b{position:absolute;inset:0;display:grid;place-items:center;font:700 9.5px var(--f-display);font-variant-numeric:tabular-nums}
+.dkMini .mi.off,.dkMini .mi.weak{animation:dkWarn 1.6s ease-in-out infinite}@keyframes dkWarn{50%{transform:scale(1.12)}}
+small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}small.addr .ic{width:13px!important;height:13px!important;flex:none;color:var(--muted)}.card>small.addr{padding:0 12px 12px;margin-top:-8px}
 </style>
 </head>
 <body>
@@ -1695,11 +1700,16 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
     ['stp',L.accSeen?'ok':'off','shoe-print','Steps',L.lockPos?'Position held':`${L.steps||0}`],
     ['site',plan.geo?'ok':'off','map-marker-radius','Site',plan.geo?'Saved':'Not saved'],
     loc?['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']:null].filter(Boolean);
-  const showPct=loc&&(S.imgMode||ok);
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),showPct,showPct?p:0]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
-  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}</button>${showPct?`<b class="dkPct ${ok?'ok':''}">${p}%</b>`:''}
-    ${DK.open?`<div class="dkMini">${rows.filter(r=>r[0]!=='mode').map(([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}" aria-label="${t}">${ic(i)}</i>`).join('')}</div>`:''}`;
-  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};;}
+  const A2=S.al2&&S.al2.mode==='img'?S.al2:null,imgDone=S.align&&S.align.img;
+  const showPct=loc&&(S.imgMode||!!A2||imgDone||ok),pct=A2?Math.min(100,A2.pts.length*50):imgDone?100:p,pOk=imgDone||ok||pct>=100;
+  const by={};rows.forEach(r=>by[r[0]]=r);const bad=['cam','cmp'].filter(k=>by[k]&&by[k][1]!=='ok');
+  const hb=$('scanHud'),H=hb&&!hb.hidden&&hb.offsetHeight?hb.offsetHeight:44;el.style.setProperty('--dkH',H+'px');
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),showPct,showPct?pct:0,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`;
+  const R_=13,C=2*Math.PI*R_,ring=showPct?`<div class="dkRing ${pOk?'ok':''}" title="Image identification ${pct}%" aria-label="Image identification ${pct}%"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="${R_}" class="bg"/><circle cx="16" cy="16" r="${R_}" class="fg" stroke-dasharray="${(C*pct/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 16 16)"/></svg><b>${pct}</b></div>`:'';
+  el.innerHTML=`<button class="dkTop" id="dkTgl" aria-expanded="${DK.open}" aria-label="Camera, GPS and sensors">${ic(DK.open?'close':'menu')}</button>
+    <div class="dkMini">${ring}${DK.open?rows.filter(r=>r[0]!=='mode'&&r[0]!=='vl').map(mi).join(''):mi(by.gps)+bad.map(k=>mi(by[k])).join('')}</div>`;
+  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&(!S||S.phase!=='locate'||S.alignMode||S.respot||S.pend))$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
@@ -2408,7 +2418,7 @@ projMeta=function(p){const pl=p.plan,n=pl.walls.length,a=plArea(pl),multi=bldFlo
   return [fmtDate(pl.date||p.id),multi?FLOOR_NAME(pl.floor||0):null,n?`${a?fmtA(a)+' · ':''}${(pl.rooms||[]).length||1} room${(pl.rooms||[]).length>1?'s':''}`:'empty',(p.devs||[]).length?`${p.devs.length} devices`:null].filter(Boolean).join(' · ');};
 renderHome=function(){const cur=projects.find(q=>q.id===curId);$('hmAR').disabled=!(cur&&cur.plan.walls.length);
   const L_=alive();$('hmAll').hidden=L_.length<=4;$('hmRecent').hidden=!L_.length;
-  $('pjList').innerHTML=L_.length?L_.slice(0,4).map(p=>`<button class="li${p.id===curId?' curPj':''}" data-pj="${p.id}">${thumb(p.plan)}<span><b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small></span>${ic('chevron-right')}</button>`).join('')
+  $('pjList').innerHTML=L_.length?L_.slice(0,4).map(p=>`<button class="li${p.id===curId?' curPj':''}" data-pj="${p.id}">${thumb(p.plan)}<span><b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small>${p.plan.address?`<small class="addr">${ic('map-marker-radius')}${esc(p.plan.address)}</small>`:''}</span>${ic('chevron-right')}</button>`).join('')
     :`<div class="pjEmpty">${ic('folder')}No projects yet<small>Tap “New scan” to scan your first room</small></div>`;
   $('pjList').querySelectorAll('[data-pj]').forEach(x=>x.onclick=()=>openPjSheet(+x.dataset.pj));if(typeof navRefresh==='function')navRefresh();};
 
@@ -2759,7 +2769,7 @@ function openLibrary(){const tr=projects.filter(p=>p.trash);const cats=[['all','
 function libCards(){const q=LIB.q.trim().toLowerCase();const T=LIB.cat==='trash';
   const L_=projects.filter(p=>T?p.trash:!p.trash).filter(p=>T||LIB.cat==='all'||(p.plan.space||'house')===LIB.cat).filter(p=>!q||(p.plan.name||'').toLowerCase().includes(q)||(p.plan.address||'').toLowerCase().includes(q)||(p.plan.rooms||[]).some(r=>(r.name||'').toLowerCase().includes(q)));
   $('libCards').innerHTML=L_.length?L_.map((p,i)=>`<div class="card" style="animation-delay:${Math.min(i,8)*0.03}s"><button class="cv" data-pj="${p.id}" aria-label="${esc(p.plan.name||'Project')}">${p.plan.cover?`<img src="${p.plan.cover}" alt="">${thumb(p.plan).replace('class="th"','class="th mini"')}`:thumb(p.plan)}${p.plan.space?`<span class="tag">${ic(SPACES[p.plan.space][1])}</span>`:''}</button>
-      <b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small>${T?`<div class="acts"><button class="btn sm" data-rs="${p.id}">Restore</button><button class="btn sm dangerT" data-pg="${p.id}">Delete</button></div>`:''}</div>`).join('')
+      <b>${esc(p.plan.name||'Project')}</b><small>${projMeta(p)}</small>${p.plan.address?`<small class="addr">${ic('map-marker-radius')}${esc(p.plan.address)}</small>`:''}${T?`<div class="acts"><button class="btn sm" data-rs="${p.id}">Restore</button><button class="btn sm dangerT" data-pg="${p.id}">Delete</button></div>`:''}</div>`).join('')
     :`<div class="pjEmpty">${ic(T?'trash-can-outline':'folder')}${T?'Trash is empty':q?'No match':'No projects'}</div>`;
   document.querySelectorAll('#libCards [data-pj]').forEach(b=>b.onclick=()=>{if(!T)openPjSheet(+b.dataset.pj);});
   document.querySelectorAll('#libCards [data-rs]').forEach(b=>b.onclick=()=>{const p=projects.find(x=>x.id===+b.dataset.rs);delete p.trash;saveNow();openLibrary();renderHome();flash('Restored');});
