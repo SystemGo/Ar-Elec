@@ -316,6 +316,15 @@ body.editing #lineCv{display:none}
 #spConfirm .no{background:var(--surface-2)}#spConfirm .yes{background:var(--ok);color:#fff}
 #spSuggest{left:12px;right:12px;bottom:calc(var(--navH) + 150px);border-radius:18px;padding:10px 10px 10px 14px;display:flex;align-items:center;gap:10px;animation:popUp .35s var(--ease);font:500 13.5px var(--f-display)}
 #spSuggest span{flex:1}#spSuggest .btn{padding:9px 12px;font-size:13px;white-space:nowrap}
+#spAim{position:fixed;inset:0;z-index:7;pointer-events:none}
+#spAim .aimImg{position:absolute;inset:0;background:center/cover no-repeat;opacity:.42;transition:opacity .3s}
+#spAim.ok .aimImg{opacity:.32}
+#spAim .aimRing{position:absolute;left:0;top:0;width:96px;height:96px;border-radius:50%;border:2.5px dashed #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);transition:border-color .2s}
+#spAim .aimRing i{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;background:linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat}
+#spAim.ok .aimRing{border-color:#ffe14d}#spAim.snap .aimRing{border:3px solid var(--ok);box-shadow:0 0 0 4px rgba(31,164,90,.35)}
+#spAim .aimGuide{position:absolute;left:0;right:0;top:calc(96px + var(--st));margin-inline:auto;width:fit-content;padding:8px 14px;border-radius:999px;background:var(--glass);color:var(--fg);font:600 15px var(--f-display);letter-spacing:.02em;box-shadow:var(--sh)}
+#spAim.ok .aimGuide{background:var(--ok);color:#fff}
+#spotGhost.snapped::before{border:3px solid var(--ok);box-shadow:0 0 0 4px rgba(31,164,90,.35)}
 /* ---- wall editor ---- */
 #plan .hdl{cursor:grab;touch-action:none}
 #plan .hdl.drag{cursor:grabbing}
@@ -365,7 +374,7 @@ body.editing.surveying #plan{background:rgba(247,247,248,.97)}
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -1219,7 +1228,7 @@ function finishSurvey(){if(!S)return;if(editing)toggleEdit(false);odReset();ltRe
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
-  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;$('spConfirm').hidden=true;$('spSuggest').hidden=true;$('spPlace').hidden=true;$('spotGhost').hidden=true;$('spGal').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
+  $('startOv').hidden=true;$('gpsOv').hidden=true;const n=plan.walls.length;S=null;$('spotLayer').hidden=true;$('spotTray').hidden=true;$('spConfirm').hidden=true;$('spAim').hidden=true;$('spSuggest').hidden=true;$('spPlace').hidden=true;$('spotGhost').hidden=true;$('spGal').hidden=true;aim.visible=false;prevLine.visible=false;setAimLabel('');highlightWall(-1);clear(svGroup);drawLines(null);
   xray=false;stopLive();save();refresh();
   goHome();if(n)flash('Saved');}
 
@@ -1408,7 +1417,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${fmtL(g.L,2)}`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.gate){gateTick(now);return;}try{vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
+function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.gate){gateTick(now);return;}try{spAimTick(now);spPendTick(now);vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.phase==='corners'&&S.autoOp!==false&&L.stream&&!editing&&now-OD.t>320&&jobFree()){OD.t=now;try{odTick();}catch(err){console.warn(err);}}
@@ -1641,6 +1650,7 @@ function addSpot(x,y){const hit=spPoint(x,y);if(!hit){flash('Aim at the floor or
   const DI=220,c=document.createElement('canvas');c.width=c.height=192;const g=c.getContext('2d'),vw=vid.videoWidth,vh=vid.videoHeight,sc=Math.max(innerWidth/vw,innerHeight/vh),R=DI/2/sc;
   const vx=(vw-innerWidth/sc)/2+x/sc,vy=(vh-innerHeight/sc)/2+y/sc;g.drawImage(vid,vx-R,vy-R,2*R,2*R,0,0,192,192);
   const s={id:spots().reduce((a,q)=>Math.max(a,q.id),0)+1,p:[+hit.p.x.toFixed(3),+hit.p.y.toFixed(3),+hit.p.z.toFixed(3)],kind:hit.kind,dist:+hit.dist.toFixed(2),diam:DI,img:c.toDataURL('image/jpeg',0.75),tpl,T,fw:G.W,t:Date.now(),fx:+(x/innerWidth).toFixed(4),fy:+(y/innerHeight).toFixed(4)};
+  {_ae.setFromQuaternion(cam.quaternion,'YXZ');s.ori={yaw:+_ae.y.toFixed(4),pitch:+_ae.x.toFixed(4),roll:+_ae.z.toFixed(4),fx:s.fx,fy:s.fy,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),dist:s.dist};}
   spots().push(s);spStore(s,curId);save();spPulse(x,y,s);flash(`Spot ${s.id} saved · photo in gallery`);spRender();
   // full photo of what the screen shows, kept in the gallery
   try{const f=document.createElement('canvas'),W=720,H=Math.round(W*innerHeight/innerWidth);f.width=W;f.height=H;f.getContext('2d').drawImage(vid,(vw-innerWidth/sc)/2,(vh-innerHeight/sc)/2,innerWidth/sc,innerHeight/sc,0,0,W,H);
@@ -1663,7 +1673,7 @@ function spRender(){const lay=$('spotLayer'),tray=$('spotTray');const on=!!(S&&!
     tray.querySelectorAll('button.st').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();spStartDrag(+b.dataset.sp,e);}));}}}
 function spState(id){const o=S&&S.obs&&S.obs.find(q=>q.id===id);return !o?'':'ok';}
 function spLayout(){const lay=$('spotLayer');if(lay.hidden)return;lay.querySelectorAll('.spot').forEach(el=>{const s=spots().find(q=>q.id===+el.dataset.sp);if(!s)return;
-  if((SP.drag&&SP.drag.id===s.id)||(S.pend&&S.pend.id===s.id)){el.style.opacity=0;el.style.pointerEvents='none';return;}const pr=S.prop&&S.prop.id===s.id,p=pr?spDirScreen(S.prop.d):spProject(s);
+  if((SP.drag&&SP.drag.id===s.id)||(S.pend&&S.pend.id===s.id)||(S.aim&&S.aim.id===s.id)){el.style.opacity=0;el.style.pointerEvents='none';return;}const pr=S.prop&&S.prop.id===s.id,p=pr?spDirScreen(S.prop.d):spProject(s);
   if(!p||p[0]<-60||p[1]<-60||p[0]>innerWidth+60||p[1]>innerHeight+60){el.style.opacity=0;el.style.pointerEvents='none';return;}
   const st=pr?'prop':spState(s.id);el.className='spot '+st;el.style.opacity=1;el.style.pointerEvents='auto';el.style.transform=`translate(${p[0]-42}px,${p[1]-42}px)`;});}
 function spSize(s){const d=Math.max(0.3,cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])));return Math.max(90,Math.min(320,(s.diam||120)*(s.dist||d)/d));}
@@ -1674,25 +1684,25 @@ function spStartDrag(id,e){const s=spots().find(q=>q.id===id);if(!s)return;spEnd
     const x=ev.clientX,y=ev.clientY-z/2-18;SP.drag=null;if(ev.type==='pointerup')spBeginPlace(id,x,Math.max(70,Math.min(innerHeight-160,y)));else $('spotGhost').hidden=true;};
   addEventListener('pointermove',mv,true);addEventListener('pointerup',up,true);addEventListener('pointercancel',up,true);mv(e);}
 // fine placement: the photo (see-through, real size) can be moved with a finger anywhere on the screen, then ✓
-function spBeginPlace(id,x,y){const s=spots().find(q=>q.id===id);if(!s)return;spPropClose();S.pend={id,x,y};spGhost(s,x,y);$('spotGhost').classList.add('fine');
+function spBeginPlace(id,x,y){const s=spots().find(q=>q.id===id);if(!s)return;spPropClose();if(S.aim)spAimEnd();S.pend={id,x,y};spGhost(s,x,y);$('spotGhost').classList.add('fine');
   const lay=$('spPlace');lay.hidden=false;const el=$('spConfirm');
-  el.innerHTML=`<i style="background-image:url(${s.img})"></i><span>Spot ${id}<br><b>Align the photo</b></span><button class="no" id="spNo" aria-label="Cancel">${ic('close')}</button><button class="yes" id="spYes" aria-label="Place here">${ic('check')}</button>`;el.hidden=false;
+  el.innerHTML=`<i style="background-image:url(${s.img})"></i><span>Spot ${id}<br><b id="pendTxt">Align the photo</b></span><button class="no" id="spNo" aria-label="Cancel">${ic('close')}</button><button class="yes" id="spYes" aria-label="Place here">${ic('check')}</button>`;el.hidden=false;
   $('spYes').onclick=()=>{const p=S.pend;spEndPlace();if(p)spObserve(p.id,p.x,p.y,true);};$('spNo').onclick=()=>spEndPlace();spRender();}
 function spEndPlace(){if(!S)return;const was=S.pend;S.pend=null;$('spPlace').hidden=true;$('spotGhost').hidden=true;$('spotGhost').classList.remove('fine');if(was&&!S.prop)$('spConfirm').hidden=true;}
-(()=>{const lay=$('spPlace');let last=null;lay.addEventListener('pointerdown',e=>{e.preventDefault();last=[e.clientX,e.clientY];try{lay.setPointerCapture(e.pointerId)}catch(_){}});
+(()=>{const lay=$('spPlace');let last=null;lay.addEventListener('pointerdown',e=>{e.preventDefault();last=[e.clientX,e.clientY];if(S&&S.pend){S.pend.dragging=true;$('spotGhost').classList.remove('snapped');}try{lay.setPointerCapture(e.pointerId)}catch(_){}});
   lay.addEventListener('pointermove',e=>{if(!last||!S||!S.pend)return;const k=e.pointerType==='mouse'?1:0.6;S.pend.x+=(e.clientX-last[0])*k;S.pend.y+=(e.clientY-last[1])*k;last=[e.clientX,e.clientY];
     const s=spots().find(q=>q.id===S.pend.id);if(s)spGhost(s,S.pend.x,S.pend.y);});
-  const end=()=>{last=null;};lay.addEventListener('pointerup',end);lay.addEventListener('pointercancel',end);})();
+  const end=()=>{last=null;if(S&&S.pend){S.pend.dragging=false;S.pend.t=performance.now()-200;}};lay.addEventListener('pointerup',end);lay.addEventListener('pointercancel',end);})();
 // ---- gallery of the photos taken while scanning ----
 const spURL={};
 async function spPhotoURL(s){if(!s.photo)return null;if(spURL[s.photo])return spURL[s.photo];try{const m=await mGet(s.photo);if(m&&m.blob)return spURL[s.photo]=URL.createObjectURL(m.blob);}catch(_){}return null;}
 function vlThumb(f){const c=document.createElement('canvas');c.width=f.W;c.height=f.H;const g=c.getContext('2d'),im=g.createImageData(f.W,f.H);for(let i=0;i<f.W*f.H;i++){const v=f.Y[i];im.data[4*i]=im.data[4*i+1]=im.data[4*i+2]=v;im.data[4*i+3]=255;}g.putImageData(im,0,0);return c.toDataURL();}
 async function spGallery(open){const el=$('spGal');if(!open){el.hidden=true;return;}const list=spots(),loc=S&&S.phase==='locate',auto=VL.frames.slice(-120);
   el.innerHTML=`<div class="sg"><div class="sgh"><b>Photos</b><button class="icon" id="sgClose" aria-label="Close">${ic('close')}</button></div>
-   <h4>Manual · ${list.length}</h4><div class="sgg">${list.map(s=>`<button class="sgi ${spState(s.id)}" data-sp="${s.id}"><span class="ph" style="background-image:url(${s.img})"><em style="left:${(s.fx||.5)*100}%;top:${(s.fy||.5)*100}%"></em></span><small>Spot ${s.id}${spState(s.id)?' · placed':''}</small></button>`).join('')||'<p class="note">Tap the camera view while scanning to add one</p>'}</div>
+   <h4>Manual · ${list.length}</h4><div class="sgg">${list.map(s=>`<button class="sgi ${spState(s.id)}" data-sp="${s.id}"><span class="ph" style="background-image:url(${s.img})"><em style="left:${(s.fx||.5)*100}%;top:${(s.fy||.5)*100}%"></em></span><small>Spot ${s.id}${spState(s.id)?' · placed':''}${s.ori?' · aim':''}</small></button>`).join('')||'<p class="note">Tap the camera view while scanning to add one</p>'}</div>
    <h4>Automatic · ${VL.frames.length}</h4><div class="sga">${auto.map((f,i)=>`<span class="sgv${f.learned?' l':''}" style="background-image:url(${vlThumb(f)})"></span>`).join('')||'<p class="note">None yet</p>'}</div></div>`;
   el.hidden=false;$('sgClose').onclick=()=>spGallery(false);el.onclick=e=>{if(e.target===el)spGallery(false);};
-  el.querySelectorAll('[data-sp]').forEach(b=>b.onclick=async()=>{const id=+b.dataset.sp;if(loc){spGallery(false);spBeginPlace(id,innerWidth/2,innerHeight*0.42);return;}
+  el.querySelectorAll('[data-sp]').forEach(b=>b.onclick=async()=>{const id=+b.dataset.sp;if(loc){spGallery(false);spAimStart(id);return;}
     const s=spots().find(q=>q.id===id);const m=s&&s.photo?await mGet(s.photo):null;if(m){spGallery(false);openViewer(m);}});
   for(const s of list){const u=await spPhotoURL(s);const b=el.querySelector(`[data-sp="${s.id}"] .ph`);if(u&&b){b.style.backgroundImage=`url(${u})`;b.classList.add('full');}}}
 // an observation = the ray (with the current heading correction removed) through the screen point where the spot really is
@@ -1741,21 +1751,49 @@ function spSolve(){const obs=(S.obs||[]).map(o=>({...o,s:spots().find(q=>q.id===
 function solve4(A,b){const n=4,M=A.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let k=i+1;k<n;k++)if(Math.abs(M[k][i])>Math.abs(M[p][i]))p=k;if(Math.abs(M[p][i])<1e-12)return null;[M[i],M[p]]=[M[p],M[i]];
   for(let k=0;k<n;k++){if(k===i)continue;const f=M[k][i]/M[i][i];for(let c=i;c<=n;c++)M[k][c]-=f*M[i][c];}}return M.map((r,i)=>r[n]/r[i]);}
 // ---- automatic search: look for each spot's photo around where it should be (zero-mean NCC) ----
-function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||S.pend||now-SP.last<((S.obs||[]).length?250:450)||!jobFree())return;SP.last=now;const list=spots();if(!list.length)return;let G=null;
+// look for spot s around screen point (sx,sy) within a radius (fraction of frame width); returns screen position + score
+function spFind(s,sx,sy,rad,distHint){const G=spGray();if(!G||!s.tpl)return null;const dist=distHint||cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])),scl=Math.max(0.55,Math.min(1.8,(s.dist||dist)/dist));
+  const T=s.T,Ts=Math.max(10,Math.round(T*scl*G.W/(s.fw||160))),tp=new Float32Array(Ts*Ts);for(let j=0;j<Ts;j++)for(let i=0;i<Ts;i++)tp[j*Ts+i]=s.tpl[Math.min(T-1,(j*T/Ts)|0)*T+Math.min(T-1,(i*T/Ts)|0)];
+  let tm=0;tp.forEach(v=>tm+=v);tm/=tp.length;let ts=0;for(let i=0;i<tp.length;i++){tp[i]-=tm;ts+=tp[i]*tp[i];}if(ts<1)return null;
+  const cx=Math.round(sx*G.k),cy=Math.round(sy*G.k),R=Math.round(G.W*rad),sc=[];
+  const ncc=(x,y)=>{const x0=x-(Ts>>1),y0=y-(Ts>>1);if(x0<0||y0<0||x0+Ts>G.W||y0+Ts>G.H)return -1;let m=0;
+    for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++)m+=G.Y[row+i];}m/=Ts*Ts;let num=0,den=0;
+    for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++){const v=G.Y[row+i]-m;num+=v*tp[j*Ts+i];den+=v*v;}}return den>1?num/Math.sqrt(den*ts):-1;};
+  let best=-1,bx=0,by=0,second=-1;
+  for(let y=cy-R;y<=cy+R;y+=2)for(let x=cx-R;x<=cx+R;x+=2){const c=ncc(x,y);sc.push([c,x,y]);if(c>best){best=c;bx=x;by=y;}}
+  sc.forEach(([c,x,y])=>{if(Math.hypot(x-bx,y-by)>Ts*0.6&&c>second)second=c;});
+  const x0=bx,y0=by;for(let y=y0-1;y<=y0+1;y++)for(let x=x0-1;x<=x0+1;x++){const c=ncc(x,y);if(c>best){best=c;bx=x;by=y;}}
+  return{x:bx/G.k,y:by/G.k,score:best,margin:best-second};}
+function spAuto(now){if(!S||S.phase!=='locate'||S.gate||SP.drag||S.pend||S.aim||now-SP.last<((S.obs||[]).length?250:450)||!jobFree())return;SP.last=now;const list=spots();if(!list.length)return;
   if(S.prop)return;
   for(const s of list){if((S.obs||[]).some(o=>o.id===s.id))continue;const rj=S.rejected&&S.rejected.get(s.id);if(rj&&now-rj<20000)continue;const p=spProject(s);if(!p||p[0]<0||p[1]<0||p[0]>innerWidth||p[1]>innerHeight)continue;
-    G=G||spGray();if(!G)return;const dist=cam.position.distanceTo(_sv.set(s.p[0],s.p[1],s.p[2])),scl=Math.max(0.55,Math.min(1.8,(s.dist||dist)/dist));
-    const T=s.T,Ts=Math.max(10,Math.round(T*scl*G.W/(s.fw||160))),tp=new Float32Array(Ts*Ts);for(let j=0;j<Ts;j++)for(let i=0;i<Ts;i++)tp[j*Ts+i]=s.tpl[Math.min(T-1,(j*T/Ts)|0)*T+Math.min(T-1,(i*T/Ts)|0)];
-    let tm=0;tp.forEach(v=>tm+=v);tm/=tp.length;let ts=0;for(let i=0;i<tp.length;i++){tp[i]-=tm;ts+=tp[i]*tp[i];}if(ts<1)continue;
-    const cx=Math.round(p[0]*G.k),cy=Math.round(p[1]*G.k),R=Math.round(G.W*(S.spotFix||(S.vl&&S.vl.located)?0.18:(S.obs||[]).length?0.25:0.45));const sc=[];
-    const ncc=(x,y)=>{const x0=x-(Ts>>1),y0=y-(Ts>>1);if(x0<0||y0<0||x0+Ts>G.W||y0+Ts>G.H)return -1;let m=0;
-      for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++)m+=G.Y[row+i];}m/=Ts*Ts;let num=0,den=0;
-      for(let j=0;j<Ts;j++){const row=(y0+j)*G.W+x0;for(let i=0;i<Ts;i++){const v=G.Y[row+i]-m;num+=v*tp[j*Ts+i];den+=v*v;}}return den>1?num/Math.sqrt(den*ts):-1;};
-    let best=-1,bx=0,by=0,second=-1;
-    for(let y=cy-R;y<=cy+R;y+=2)for(let x=cx-R;x<=cx+R;x+=2){const c=ncc(x,y);sc.push([c,x,y]);if(c>best){best=c;bx=x;by=y;}}
-    sc.forEach(([c,x,y])=>{if(Math.hypot(x-bx,y-by)>Ts*0.6&&c>second)second=c;});
-    const x0=bx,y0=by;for(let y=y0-1;y<=y0+1;y++)for(let x=x0-1;x<=x0+1;x++){const c=ncc(x,y);if(c>best){best=c;bx=x;by=y;}}
-if(best>0.8&&best-second>0.08){spPropose(s.id,bx/G.k,by/G.k,best);return;}}}
+    const f=spFind(s,p[0],p[1],S.spotFix||(S.vl&&S.vl.located)?0.18:(S.obs||[]).length?0.25:0.45);if(f&&f.score>0.8&&f.margin>0.08){spPropose(s.id,f.x,f.y,f.score);return;}}}
+// ---- aim mode: point the phone exactly as when the photo was taken; the saved photo is overlaid to line up ----
+const _ae=new THREE.Euler();
+async function spAimStart(id){const s=spots().find(q=>q.id===id);if(!s||!s.ori)return spBeginPlace(id,innerWidth/2,innerHeight*0.42);spEndPlace();spPropClose();
+  S.aim={id,found:null,t:0};const ov=$('spAim');ov.querySelector('.aimImg').style.backgroundImage=`url(${s.img})`;ov.hidden=false;ov.classList.remove('ok','snap');
+  const u=await spPhotoURL(s);if(u&&S.aim&&S.aim.id===id)ov.querySelector('.aimImg').style.backgroundImage=`url(${u})`;
+  const el=$('spConfirm');el.innerHTML=`<i style="background-image:url(${s.img})"></i><span>Spot ${id}<br><b id="aimTxt">Aim the phone</b></span><button class="no" id="spNo" aria-label="Cancel">${ic('close')}</button><button class="yes" id="spYes" aria-label="Use this view">${ic('check')}</button>`;el.hidden=false;
+  $('spYes').onclick=()=>{const a=S.aim;if(!a)return;const s2=spots().find(q=>q.id===a.id),pt=a.found||[s2.ori.fx*innerWidth,s2.ori.fy*innerHeight];spAimEnd();spObserve(a.id,pt[0],pt[1],true);};
+  $('spNo').onclick=()=>spAimEnd();spRender();}
+function spAimEnd(){if(!S)return;S.aim=null;$('spAim').hidden=true;$('spConfirm').hidden=true;spRender();}
+function spAimTick(now){const a=S&&S.aim;if(!a)return;const s=spots().find(q=>q.id===a.id);if(!s){spAimEnd();return;}const o=s.ori,ov=$('spAim');
+  _ae.setFromQuaternion(cam.quaternion,'YXZ');const D=180/Math.PI,dp=(o.pitch-_ae.x)*D,dr=(o.roll-_ae.z)*D;let dy=(o.yaw-_ae.y)*D;dy=((dy%360)+540)%360-180;
+  const ok=Math.abs(dp)<1.5&&Math.abs(dr)<2;
+  // guide: pitch ↑↓, roll ⟲⟳, heading ←→ (heading is only approximate until the model is pinned)
+  const g=[];if(Math.abs(dp)>=1.5)g.push(`${dp>0?'↑':'↓'} ${Math.abs(dp).toFixed(0)}°`);if(Math.abs(dr)>=2)g.push(`${dr>0?'⟲':'⟳'} ${Math.abs(dr).toFixed(0)}°`);
+  const trust=S.spotFix||(S.vl&&S.vl.located);if(trust&&Math.abs(dy)>=3)g.push(`${dy>0?'←':'→'} ${Math.abs(dy).toFixed(0)}°`); // heading hint only once the model is pinned
+  ov.querySelector('.aimGuide').textContent=a.found?'Found · press ✓':g.length?g.join('   '):trust?'Hold still · match the photo':'Turn slowly until the photo matches';ov.classList.toggle('ok',ok);
+  const tx=o.fx*innerWidth,ty=o.fy*innerHeight;
+  // help: look for the spot near where it should be on screen and snap the ring onto it
+  if(ok&&now-a.t>320&&jobFree()){a.t=now;const f=spFind(s,tx,ty,0.2,o.dist);if(f&&(f.score>0.85||(f.score>0.78&&f.margin>0.06))&&Math.hypot(f.x-tx,f.y-ty)<innerWidth*0.22){a.found=[f.x,f.y];a.score=f.score;}else{a.found=null;}}
+  if(!ok)a.found=null;const pt=a.found||[tx,ty],r=ov.querySelector('.aimRing');r.style.transform=`translate(${pt[0]-48}px,${pt[1]-48}px)`;ov.classList.toggle('snap',!!a.found);
+  const t=$('aimTxt');if(t)t.textContent=a.found?`Found · ${Math.round(a.score*100)}%`:ok?'Match the photo':'Aim the phone';}
+// ---- drag placement: snap the photo when the spot is detected near it ----
+function spPendTick(now){const p=S&&S.pend;if(!p||SP.drag||p.dragging||now-(p.t||0)<350||!jobFree())return;p.t=now;const s=spots().find(q=>q.id===p.id);if(!s)return;
+  const f=spFind(s,p.x,p.y,0.12);const el=$('spotGhost');
+  if(f&&(f.score>0.85||(f.score>0.78&&f.margin>0.06))&&Math.hypot(f.x-p.x,f.y-p.y)<70){p.x=f.x;p.y=f.y;spGhost(s,p.x,p.y);el.classList.add('snapped');const t=$('pendTxt');if(t)t.textContent=`Snapped · ${Math.round(f.score*100)}%`;}
+  else{el.classList.remove('snapped');const t=$('pendTxt');if(t)t.textContent='Align the photo';}}
 
 // AR view: the device goes on the wall in the middle of the screen, at its standard height
 function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
