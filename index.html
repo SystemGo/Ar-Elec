@@ -1729,7 +1729,7 @@ function al2Accept(){const A=S&&S.al2;if(!A)return;let c=null;
   A.pts.push(c);A.skip=0;A.sel=null;AL.sig='';
   if(A.pts.length<2){svUI();flash('Corner 1 done · now a second corner');return;}
   const[p1,p2]=A.pts,res=al2Solve(p1.r,p2.r,p1.m,p2.m);S.align={c:p2.m,two:true,img:A.mode==='img'};S.needFix=false;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}al2Stop();
-  flash(`Aligned on 2 corners · ${Math.abs(res.dl*57.2958).toFixed(1)}° turned · ${res.err<0.01?'exact':fmtL(res.err,2)+' length gap'}`);setTimeout(odrOffer,1200);}
+  flash(`Aligned on 2 corners · ${Math.abs(res.dl*57.2958).toFixed(1)}° turned · ${res.err<0.01?'exact':fmtL(res.err,2)+' length gap'}`);}
 function al2Mark(){const A=S&&S.al2;if(!A)return;
   if(A.mode==='img'){if(A.pend){al2Accept();return;}const ap=aimPoint();if(!ap){flash('Aim the cross at the floor');return;}
     const first=A.pts[0];let list=cpRank()||[];if(first)list=list.filter(o=>!(o.m[0]===first.m[0]&&o.m[1]===first.m[1]));
@@ -1751,7 +1751,7 @@ function arAsk(step){const el=$('arAsk');if(!S||S.phase!=='locate'){el.hidden=tr
   else el.innerHTML=`<span><b>Reposition with</b><small>${hasImg?'Two floor corners, or the photos saved during the scan':'Two floor corners (no photos saved in this project)'}</small></span>
     <div class="akOpts"><button class="btn primary" id="akCorner">${ic('target')}2 corners</button><button class="btn" id="akImg" ${hasImg?'':'disabled'}>${ic('image-multiple')}Photos</button><button class="icon" id="akX" aria-label="Close">${ic('close')}</button></div>`;
   el.className='float'+(step==='how'?' how':'');el.hidden=false;
-  on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');setTimeout(odrOffer,700);});
+  on('akYes','click',()=>{S.ok=true;S.spotFix=true;if(S.vl){S.vl.located=true;S.vl.recent=[];}S.imgMode=false;arAsk(null);vlUI();flash('Position kept');});
   on('akNo','click',()=>arAsk('how'));
   on('akCorner','click',()=>{arAsk(null);S.imgMode=false;al2Start('manual');});
   on('akImg','click',()=>{arAsk(null);S.imgMode=true;if(cpFrames().length>=2){al2Start('img');return;}dockTick(true);if(spots().length)spRespot();else{if(S.vl){S.vl.located=false;S.vl.votes=[];S.vl.conf=0;}flash('Turn slowly around you: the saved views are being matched');}});
@@ -1847,7 +1847,8 @@ const odrEnd=e=>{const D=ODR.drag;if(!D||e.pointerId!==D.id)return;e.stopImmedia
   clear(ODR.g);save();build();odrCard(`${type==='door'?'Door':'Window'} added · ${fmtL(w,2)} × ${fmtL(top-sill,2)}`);flash(`${type==='door'?'Door':'Window'} added`);};
 canvas.addEventListener('pointerup',odrEnd,true);canvas.addEventListener('pointercancel',odrEnd,true);
 // once the model is confirmed in place, offer to draw the doors and windows
-function odrOffer(){if(!S||S.phase!=='locate'||S.opDraw||S.odrOffered)return;S.odrOffered=true;const el=$('arAsk');
+function odrOffer(){return; // doors & windows are only added from Tools › Draw doors & windows
+if(!S||S.phase!=='locate'||S.opDraw||S.odrOffered)return;S.odrOffered=true;const el=$('arAsk');
   el.innerHTML=`<span><b>Model in place</b><small>Add the doors and windows by sliding a finger over them</small></span><button class="btn" id="oaLater">Later</button><button class="btn primary" id="oaGo">${ic('window-closed-variant')}Add</button>`;el.className='float';el.hidden=false;
   on('oaLater','click',()=>{el.hidden=true;});on('oaGo','click',()=>{el.hidden=true;odrStart('window');});}
 function startRec(){if(!L.stream||typeof MediaRecorder==='undefined'){S.rec='na';return;}
