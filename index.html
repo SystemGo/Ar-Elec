@@ -183,6 +183,7 @@ button.li:active,label.li:active{background:var(--surface-2)}
 .gpsBox .ph{offset-path:path('M80 45 C55 10 15 10 15 45 S55 80 80 45 S145 10 145 45 S105 80 80 45Z');offset-rotate:auto 90deg;animation:fig8 3.2s linear infinite}
 @keyframes fig8{from{offset-distance:0%}to{offset-distance:100%}}
 .gpsBox b{font-size:19px;font-weight:600}
+.gpsNote{font-size:13px;color:rgba(255,255,255,.8);margin-top:-8px;max-width:280px}.gpsNote:empty{display:none}
 .gpsChips{display:flex;gap:10px}
 .gpsChips span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.12);font-size:14px;transition:background .3s}
 .gpsChips span svg{width:18px;height:18px}
@@ -309,6 +310,9 @@ body.editing #lineCv{display:none}
 /* ---- wall editor ---- */
 #plan .hdl{cursor:grab;touch-action:none}
 #plan .hdl.drag{cursor:grabbing}
+#wireBar{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:popUp .35s var(--ease)}
+#wireBar .wbh{display:flex;align-items:center;gap:10px}#wireBar .wbh span{flex:1;min-width:0}#wireBar small{display:block;color:var(--muted);font-size:12.5px}#wireBar .note{margin:0}#wireBar .row2 .btn{padding:10px 8px;font-size:13px}
+body.surveying #wireBar{bottom:calc(var(--navH) + 84px)}
 #wallSheet{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;animation:popUp .35s var(--ease)}
 #wallSheet .whd{display:flex;align-items:center;justify-content:space-between}
 #wallSheet .whd b{font-size:16px}
@@ -482,6 +486,7 @@ details.faq[open] summary .ic{transform:rotate(180deg)}details.faq p{margin:0;pa
 #svBack{position:fixed;z-index:12;top:calc(10px + var(--st));left:calc(10px + var(--sl));width:44px;height:44px;border-radius:50%;border:0;background:var(--glass);color:var(--fg);box-shadow:var(--sh);display:grid;place-items:center;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 #svBack[hidden]{display:none}#svBack .ic{width:22px;height:22px}
 body.arloc #scanHud{left:62px;right:62px;max-width:calc(100vw - 124px)}
+body.arloc #miniPlan{width:96px;height:96px}
 body.arloc #liveHud,body.arloc #vlBar{display:none!important}
 #alCard .alMap{width:118px;height:118px;flex:none;border-radius:14px;background:var(--surface-2);overflow:hidden}#alCard .alMap svg{width:100%;height:100%;display:block}
 #alCard .mw line{stroke:var(--fg);stroke-linecap:round;opacity:.75}#alCard .cn{fill:var(--surface);stroke:var(--fg);stroke-width:.05;cursor:pointer}
@@ -500,17 +505,19 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 #odrCard[hidden]{display:none}#odrCard>span{flex:1 1 100%}#odrCard small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}#odrCard .seg{flex:1}#odrCard .seg .ic{width:16px;height:16px}
 
 /* status button (top right): placement ring with the GPS icon in its centre; tap to list the sensors */
-#arDock{position:fixed;z-index:12;top:calc(10px + var(--st));right:calc(10px + var(--sr));width:46px;border-radius:23px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .3s var(--ease)}
+#arDock{position:fixed;z-index:12;top:calc(12px + var(--st));right:calc(10px + var(--sr));width:38px;border-radius:19px;background:var(--glass);box-shadow:var(--sh);overflow:hidden;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .3s var(--ease)}
 #arDock[hidden]{display:none}
-#arDock .dkRing{position:relative;display:block;width:46px;height:var(--dkH,44px);padding:0;border:0;background:transparent;color:var(--fg);cursor:pointer}
-#arDock .dkRing svg{position:absolute;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%)}
+#arPctTag{top:calc(17px + var(--st));right:calc(54px + var(--sr));border-radius:999px;padding:5px 10px;font:600 12.5px var(--f-display);font-variant-numeric:tabular-nums;background:var(--glass);z-index:12;pointer-events:none;animation:rise .3s var(--ease)}
+#arPctTag[hidden]{display:none}#arPctTag.ok{color:#0c5132}#arPctTag.weak{color:#5e4200}#arPctTag.off{color:var(--fg)}
+#arDock .dkRing{position:relative;display:block;width:38px;height:38px;padding:0;border:0;background:transparent;color:var(--fg);cursor:pointer}
+#arDock .dkRing svg{position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%)}
 #arDock .dkRing circle{fill:none;stroke-width:3.4}#arDock .dkRing .bg{stroke:var(--line)}
 #arDock .dkRing .fg{stroke:var(--fg);stroke-linecap:round;transition:stroke-dasharray .5s var(--ease)}
 #arDock .dkRing.c-ok .fg{stroke:var(--ok)}#arDock .dkRing.c-weak .fg{stroke:var(--warn)}#arDock .dkRing.c-off .fg{stroke:var(--bad)}
-#arDock .dkRing>.ic{position:absolute;left:50%;top:50%;width:19px;height:19px;transform:translate(-50%,-50%)}
+#arDock .dkRing>.ic{position:absolute;left:50%;top:50%;width:15px;height:15px;transform:translate(-50%,-50%)}
 #arDock .dkRing.g-ok>.ic{color:var(--ok)}#arDock .dkRing.g-weak>.ic{color:var(--warn)}#arDock .dkRing.g-off>.ic{color:var(--bad)}
-.dkMini{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 0 9px;animation:fadeIn .25s var(--ease)}
-.dkMini .mi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted)}.dkMini .mi .ic{width:16px;height:16px}
+.dkMini{display:flex;flex-direction:column;align-items:center;gap:5px;padding:2px 0 6px;animation:fadeIn .25s var(--ease)}
+.dkMini .mi{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted)}.dkMini .mi .ic{width:14px;height:14px}
 .dkMini .mi.ok{background:rgba(31,164,90,.16);color:var(--ok)}.dkMini .mi.weak{background:rgba(201,138,18,.18);color:var(--warn)}.dkMini .mi.off{background:rgba(229,56,59,.14);color:var(--bad)}
 .dkMini .mi.off,.dkMini .mi.weak{animation:dkWarn 1.6s ease-in-out infinite}
 </style>
@@ -530,7 +537,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
   <h3>View</h3>
   <button id="v2d" data-ic="floor-plan"><span>2D plan</span></button>
   <button id="v3d" data-ic="cube-outline"><span>3D model</span></button>
-  <hr><button id="xray" data-ic="square-opacity"><span>X-ray walls</span></button>
+  <hr><button id="xray" data-ic="square-opacity"><span>X-ray walls</span></button><button id="wEdit" data-ic="vector-polyline"><span>Edit wiring</span></button>
 </div>
 <div class="float pop" id="camPop" hidden role="menu" aria-label="Camera">
   <h3>Camera</h3>
@@ -545,7 +552,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="miniPlan" hidden></div><div class="float" id="odrCard" hidden role="dialog" aria-label="Draw doors and windows"></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="arPctTag" class="float" hidden role="status" aria-live="polite"></div><div id="miniPlan" hidden></div><div class="float" id="odrCard" hidden role="dialog" aria-label="Draw doors and windows"></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -555,7 +562,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 
 <div id="gpsOv" hidden aria-live="polite"><div class="gpsBox">
 <svg class="fig8" viewBox="0 0 160 90" aria-hidden="true"><path d="M80 45 C55 10 15 10 15 45 S55 80 80 45 S145 10 145 45 S105 80 80 45Z" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="4 5"/><g class="ph"><rect x="-11" y="-19" width="22" height="38" rx="4" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="2.4"/><circle cx="0" cy="13" r="1.8" fill="#fff"/></g></svg>
-<b id="gpsT">Turn on GPS</b>
+<b id="gpsT">Turn on GPS</b><small id="gpsNote" class="gpsNote"></small>
 <div class="gpsChips"><span id="gcGps"></span><span id="gcCmp"></span></div>
 <div class="gpsBtns"><button id="gpsSkip" class="lnk">Without GPS</button><button id="gpsCancel" class="lnk">Cancel</button></div></div></div>
 <div id="startOv" hidden aria-live="polite"><div><svg viewBox="0 0 160 90" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"><path d="M10 70 L50 40 L150 40 L110 70 Z" opacity=".9"/><rect x="66" y="10" width="26" height="46" rx="5" fill="rgba(255,255,255,.18)"/><circle cx="79" cy="50" r="2" fill="#fff" stroke="none"/></svg><span>Move phone to start</span></div></div>
@@ -572,7 +579,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 <div id="pjSheet" hidden><div class="pjs" role="dialog" aria-label="Project"><h2 id="pjsName"></h2><p class="note" id="pjsMeta"></p><div class="gl" id="pjsActs"></div></div></div>
 <div class="float" id="devBar" hidden role="group" aria-label="Device"></div>
 <button class="float" id="backBtn" aria-label="Projects"></button><button class="float" id="moreBtn" aria-label="More" aria-expanded="false"></button><button class="float" id="editBtn" aria-label="Edit walls" aria-pressed="false"></button>
-<section class="float" id="wallSheet" hidden aria-label="Wall"></section>
+<section class="float" id="wallSheet" hidden aria-label="Wall"></section><section class="float" id="wireBar" hidden aria-label="Wiring"></section>
 <nav id="nav" aria-label="Navigation"><svg class="navBg" aria-hidden="true"><path/></svg><div id="navItems"></div><button id="navBub" aria-label=""></button></nav>
 <div id="scrim"></div>
 <aside id="drawer" aria-label="Menu" aria-hidden="true">
@@ -733,62 +740,89 @@ function buildDevs(){clear(gDevs);clear(gHelp);devs=devs.filter(d=>d.wall<plan.w
   const d=devs.find(x=>x.id===sel);if(d){const{p}=devPos(d,0.01);const m=new THREE.LineDashedMaterial({color:tok('--accent'),dashSize:0.05,gapSize:0.04});
     const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.x,0,p.z),p]),m);l.computeLineDistances();gHelp.add(l);}}
 // ---------- Circuits & routing ----------
+// Wire sections (mm²). A socket takes one cable in and one out, so sockets are chained socket → socket only when they share the same section;
+// devices with another section get their own circuit from the panel. 6 and 10 mm² are dedicated circuits (one appliance).
+const SECS=[1.5,2.5,6,10];
+const SEC={1.5:{brk:'16 A',max:8},2.5:{brk:'20 A',max:12},6:{brk:'32 A',max:1},10:{brk:'40 A',max:1}};
+const secTxt=s=>s==null?'Cat 6':String(s).replace('.',',')+' mm²';
+function wsec(d){const T=TYPES[d.type];if(!T||!T.kind||T.kind==='data')return null;return SECS.includes(+d.sec)?+d.sec:(T.kind==='power'?2.5:1.5);}
 function circuits(){
-  const panel=devs.find(d=>d.type==='panel'); const out=[];
-  ['power','light','data'].forEach(k=>{
-    let pool=devs.filter(d=>TYPES[d.type].kind===k); if(!pool.length)return;
-    // greedy nearest-neighbour chains capped at the per-circuit maximum
-    const cap=k==='light'?Infinity:KIND[k].max; let idx=0;
-    while(pool.length){const chain=[];let cur=panel?devPos(panel).p:devPos(pool[0]).p,curD=panel||null;let lights=0;
-      while(pool.length){if(k!=='light'&&curD){const dd=new Map(pool.map(d=>[d,wallRoute(curD,d).len]));pool.sort((a,b)=>dd.get(a)-dd.get(b));}else pool.sort((a,b)=>devPos(a).p.distanceTo(cur)-devPos(b).p.distanceTo(cur));const nx=pool[0];curD=nx;
-        const pts=k==='light'?(nx.type==='light'?1:0):1; const used=k==='light'?lights:chain.length;
-        if(used+pts>(k==='light'?KIND.light.max:cap))break; chain.push(nx);pool.shift();cur=devPos(nx).p;if(nx.type==='light')lights++;}
-      if(!chain.length){chain.push(pool.shift());}
-      out.push({kind:k,idx:idx,devs:chain,color:KIND[k].cols[idx%KIND[k].cols.length]});idx++;}
-  });
+  const panel=devs.find(d=>d.type==='panel'),out=[],groups=new Map(),ord={power:0,light:1,data:2};
+  devs.forEach(d=>{const k=TYPES[d.type].kind;if(!k)return;const s=wsec(d),key=k+'|'+s;if(!groups.has(key))groups.set(key,{k,s,list:[]});groups.get(key).list.push(d);});
+  const kidx={power:0,light:0,data:0};
+  [...groups.values()].sort((a,b)=>ord[a.k]-ord[b.k]||(a.s||0)-(b.s||0)).forEach(G=>{const k=G.k,cap=k==='data'?KIND.data.max:SEC[G.s].max;let pool=G.list.slice();
+    // greedy chain: nearest next device along the walls, capped at the number of points allowed for that section
+    while(pool.length){const chain=[];let cur=panel?devPos(panel).p:devPos(pool[0]).p,curD=panel||null,used=0;
+      while(pool.length){if(k!=='light'&&curD){const dd=new Map(pool.map(d=>[d,wallRoute(curD,d).len]));pool.sort((a,b)=>dd.get(a)-dd.get(b));}else pool.sort((a,b)=>devPos(a).p.distanceTo(cur)-devPos(b).p.distanceTo(cur));
+        const nx=pool[0],pts=k==='light'?(nx.type==='light'?1:0):1;if(used+pts>cap&&chain.length)break;chain.push(nx);pool.shift();cur=devPos(nx).p;curD=nx;used+=pts;}
+      out.push({kind:k,sec:G.s,brk:G.s?SEC[G.s].brk:'—',idx:kidx[k],devs:chain,color:KIND[k].cols[kidx[k]%KIND[k].cols.length]});kidx[k]++;}});
   out.forEach((c,i)=>c.lane=i);
   return {panel,list:out};
 }
+// a horizontal cable run along a wall can't cross a door or window: it goes over it (ceiling wiring, or any door),
+// or under a window when the wiring runs through the floor; the rest of the run continues at its height
+function detour(pts){const H=plan.height,T=plan.thick,viaF=(plan.wireVia||SET.wire||'ceiling')==='floor',out=[pts[0].clone()];
+  for(let k=1;k<pts.length;k++){const p=pts[k-1],q=pts[k];
+    if(Math.abs(p.y-q.y)<1e-3&&p.distanceTo(q)>0.05){const iv=[];
+      plan.walls.forEach((w,i)=>{const os=opsOn(i);if(!os.length)return;const g=wallGeo(i);
+        const dp=(p.x-g.ax)*g.nx+(p.z-g.ay)*g.ny,dq=(q.x-g.ax)*g.nx+(q.z-g.ay)*g.ny;if(Math.abs(dp)>T/2+0.2||Math.abs(dq)>T/2+0.2)return;
+        const up=(p.x-g.ax)*g.ux+(p.z-g.ay)*g.uy,uq=(q.x-g.ax)*g.ux+(q.z-g.ay)*g.uy;if(Math.abs(uq-up)<1e-4)return;
+        os.forEach(o=>{const bot=o.sill||0,top=bot+o.h;if(p.y<bot-0.03||p.y>top+0.03)return;const c=o.t*g.L,u0=c-o.w/2-0.1,u1=c+o.w/2+0.1;
+          let s0=(u0-up)/(uq-up),s1=(u1-up)/(uq-up);if(s0>s1)[s0,s1]=[s1,s0];if(s1<=0||s0>=1)return;
+          let hy=viaF&&o.type==='window'&&bot>0.2?0.05:top+0.12<H-0.03?top+0.12:bot>0.2?Math.max(0.05,bot-0.1):null;if(hy==null)return;
+          iv.push({s0:Math.max(0,s0),s1:Math.min(1,s1),hy});});});
+      iv.sort((a,b)=>a.s0-b.s0);const m=[];iv.forEach(v=>{const l=m[m.length-1];if(l&&v.s0<=l.s1){l.s1=Math.max(l.s1,v.s1);l.hy=Math.max(l.hy,v.hy);}else m.push({...v});});
+      const P=(s,y)=>new THREE.Vector3(p.x+(q.x-p.x)*s,y,p.z+(q.z-p.z)*s);
+      m.forEach(v=>{out.push(P(v.s0,p.y),P(v.s0,v.hy),P(v.s1,v.hy),P(v.s1,p.y));});}
+    out.push(q.clone());}
+  return out.filter((v,i)=>i===0||v.distanceTo(out[i-1])>1e-4);}
+const ptsLen=pts=>{let l=0;for(let i=1;i<pts.length;i++)l+=pts[i].distanceTo(pts[i-1]);return l;};
 
 // cable path between two wall devices following the walls (through corners), at the lower device height
 function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+lane*0.012,ga=wallGeo(a.wall),gb=wallGeo(b.wall);
   const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=(plan.wireVia||SET.wire||'ceiling')==='floor'?0.05+lane*0.02:Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
   const pa=devPos(a,extra).p,pb=devPos(b,extra).p,V=(x,z,y)=>new THREE.Vector3(x,y,z);
   const onW=(g,u,s,yy)=>V(g.ax+g.ux*u+g.nx*s*off,g.ay+g.uy*u+g.ny*s*off,yy);
-  if(a.wall===b.wall){const pts=[pa.clone(),onW(ga,ua,sa,h),onW(gb,ub,sb,h),pb.clone()];return{pts,len:Math.abs(ua-ub)+Math.abs(a.h-h)+Math.abs(b.h-h)+(sa!==sb?T:0)};}
+  const fin=pts=>{const d=detour(pts);return{pts:d,len:ptsLen(d)};};
+  if(a.wall===b.wall&&sa===sb)return fin([pa.clone(),onW(ga,ua,sa,h),onW(gb,ub,sb,h),pb.clone()]);
   // graph: wall ends (merged when they touch) + both devices
   const nodes=[],key=p=>{let k=nodes.findIndex(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<0.05);if(k<0){nodes.push(p);k=nodes.length-1;}return k;};
   const E=[];plan.walls.forEach((w,i)=>{const g=wallGeo(i),i0=key(w[0]),i1=key(w[1]);E.push([i0,i1,g.L,i]);});
   const A=nodes.length,B=A+1;const ea=[key(plan.walls[a.wall][0]),key(plan.walls[a.wall][1])],eb=[key(plan.walls[b.wall][0]),key(plan.walls[b.wall][1])];
   E.push([A,ea[0],ua,a.wall],[A,ea[1],ga.L-ua,a.wall],[B,eb[0],ub,b.wall],[B,eb[1],gb.L-ub,b.wall]);
+  if(a.wall===b.wall)E.push([A,B,Math.abs(ua-ub),a.wall]);
   const N=nodes.length+2,dist=new Array(N).fill(1e9),prv=new Array(N).fill(-1),pw=new Array(N).fill(-1),done=new Array(N).fill(false);dist[A]=0;
   for(;;){let u=-1;for(let i=0;i<N;i++)if(!done[i]&&dist[i]<1e9&&(u<0||dist[i]<dist[u]))u=i;if(u<0||u===B)break;done[u]=true;
     E.forEach(([x,y,w,wi])=>{const v=x===u?y:y===u?x:-1;if(v<0||done[v])return;if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prv[v]=u;pw[v]=wi;}});}
-  if(dist[B]>=1e9){const pts=[pa.clone(),V(pa.x,h,pa.z),V(pb.x,h,pb.z),pb.clone()];return{pts,len:pa.distanceTo(pb)};}
+  if(dist[B]>=1e9)return fin([pa.clone(),V(pa.x,h,pa.z),V(pb.x,h,pb.z),pb.clone()]);
   const seq=[];for(let v=B;v!==-1;v=prv[v])seq.unshift(v);
   // offset each corner into the room: average of the normals of the two walls it joins, on the device side
   const bc=bounds(),inN0=wi=>{const g=wallGeo(wi);const sgn=((bc.cx-(g.ax+g.bx)/2)*g.nx+(bc.cy-(g.ay+g.by)/2)*g.ny)>=0?1:-1;return[g.nx*sgn,g.ny*sgn];};
-  const na=inN0(a.wall),flip=(ga.nx*sa*na[0]+ga.ny*sa*na[1])<0?-1:1,inN=wi=>{const n=inN0(wi);return[n[0]*flip,n[1]*flip];}; // device on the outer face: follow the outside
+  const na=inN0(a.wall),flip=(ga.nx*sa*na[0]+ga.ny*sa*na[1])<0?-1:1,inN=wi=>{const n=inN0(wi);return[n[0]*flip,n[1]*flip];};
   const pts=[pa.clone(),onW(ga,ua,sa,h)];
   for(let k=1;k<seq.length-1;k++){const n=nodes[seq[k]],w1=pw[seq[k]],w2=pw[seq[k+1]],n1=inN(w1),n2=inN(w2);let nx=n1[0]+n2[0],nz=n1[1]+n2[1];const l=Math.hypot(nx,nz)||1;
     const cs=Math.max(0.5,(n1[0]*n2[0]+n1[1]*n2[1]+1)/2);nx/=l;nz/=l;const o=off/Math.sqrt(cs);pts.push(V(n[0]+nx*o,n[1]+nz*o,h));}
   const nb=inN0(b.wall),fb=(gb.nx*sb*nb[0]+gb.ny*sb*nb[1])<0?-1:1;if(fb!==flip)pts.push(onW(gb,ub,-sb,h)); // other face: run on this side, then through the wall
   pts.push(onW(gb,ub,sb,h),pb.clone());
-  return{pts,len:dist[B]+Math.abs(a.h-h)+Math.abs(b.h-h)+(fb!==flip?plan.thick:0)};}
+  return fin(pts);}
+// each cable between two points of a circuit is a "leg"; a leg the user reshaped keeps its own bend points (plan.wireEdit[key])
 function routeCircuits(){
-  clear(gWires); const {panel,list}=circuits(); if(!panel){return {panel,list};}
-  const viaF=(plan.wireVia||SET.wire||'ceiling')==='floor';
-  list.forEach(c=>{const y=viaF&&c.kind!=='light'?0.05+c.lane*0.03:plan.height-0.1-c.lane*0.045;let pts=[];let prev=devPos(panel,0.02).p;let len=0;
-    const chain=c.kind!=='light';let prevD=null;
-    c.devs.forEach(d=>{const q=devPos(d,0.02).p;let seg;
-      if(chain&&prevD){seg=wallRoute(prevD,d,0.02,c.lane).pts;} // socket → next socket, along the walls, one cable each
-      else seg=[prev.clone(),new THREE.Vector3(prev.x,y,prev.z),new THREE.Vector3(q.x,y,q.z),q.clone()];
-      for(let i=0;i<seg.length-1;i++)len+=seg[i].distanceTo(seg[i+1]);pts.push(...seg);prev=q;prevD=d;});
-    c.length=len*1.1; // +10 % slack for drops & boxes
-    const path=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)if(pts[i].distanceTo(pts[i+1])>1e-4)path.add(new THREE.LineCurve3(pts[i],pts[i+1]));
-    const tube=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*6),0.011,6,false),new THREE.MeshLambertMaterial({color:c.color,emissive:new THREE.Color(c.color).multiplyScalar(0.25)}));
-    gWires.add(tube);});
-  return {panel,list};
+  clear(gWires); const {panel,list}=circuits(),legs=[]; if(!panel){return {panel,list,legs};}
+  const viaF=(plan.wireVia||SET.wire||'ceiling')==='floor',edits=plan.wireEdit||{};
+  list.forEach(c=>{const y=viaF&&c.kind!=='light'?0.05+c.lane*0.03:plan.height-0.1-c.lane*0.045;let prev=devPos(panel,0.02).p,prevD=panel,len=0;
+    const chain=c.kind!=='light';
+    c.devs.forEach((d,i)=>{const q=devPos(d,0.02).p,key=prevD.id+'>'+d.id;let pts;
+      if(chain&&prevD!==panel)pts=wallRoute(prevD,d,0.02,c.lane).pts; // socket → next socket along the walls, one cable each
+      else pts=detour([prev.clone(),new THREE.Vector3(prev.x,y,prev.z),new THREE.Vector3(q.x,y,q.z),q.clone()]);
+      const ed=edits[key],auto=!ed;if(ed)pts=[prev.clone(),...ed.map(a=>new THREE.Vector3(a[0],a[1],a[2])),q.clone()];
+      const L0=ptsLen(pts);len+=L0;legs.push({key,c,pts,len:L0,auto,from:prevD,to:d});prev=q;prevD=d;});
+    c.length=len*1.1;}); // +10 % slack for drops & boxes
+  legs.forEach(l=>{const pts=l.pts,on=typeof WE!=='undefined'&&WE.on&&WE.sel===l.key,r=0.006+(l.c.sec||1.5)*0.0012+(on?0.006:0);
+    const path=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)if(pts[i].distanceTo(pts[i+1])>1e-4)path.add(new THREE.LineCurve3(pts[i],pts[i+1]));if(!path.curves.length)return;
+    const col=on?0xffffff:l.c.color;
+    const tube=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*6),r,6,false),new THREE.MeshLambertMaterial({color:col,emissive:new THREE.Color(col).multiplyScalar(on?0.6:0.25)}));
+    tube.userData.leg=l.key;gWires.add(tube);});
+  return {panel,list,legs};
 }
 let lastRoute=null;
 // ---------- Validation (simplified NF C 15-100 checks) ----------
@@ -796,6 +830,10 @@ function checkDev(d){const r=[];const h=d.h;
   if(d.type==='panel'){const top=h+0.30,bot=h-0.30;if(bot<0.90||top>1.80)r.push(['bad',`Panel controls must sit between 0,90 m and 1,80 m (now ${bot.toFixed(2)}–${fmtL(top,2)}).`]);else r.push(['ok','Panel height within 0,90–1,80 m.']);}
   if(d.type==='socket'||d.type==='socket2'||d.type==='rj45'){if(h<0.05)r.push(['bad','16 A socket axis must be at least 5 cm above floor.']);else r.push(['ok','Socket axis ≥ 5 cm.']);}
   if(d.type==='switch'){if(h<0.90||h>1.30)r.push(['warn','Switches are expected between 0,90 m and 1,30 m (accessibility).']);else r.push(['ok','Switch between 0,90 and 1,30 m.']);}
+  const s=wsec(d),k=TYPES[d.type].kind;
+  if(s!=null){if(k==='power'&&s===1.5)r.push(['warn','1,5 mm² sockets: 16 A breaker, 8 sockets max.']);
+    if(k==='light'&&s>1.5)r.push(['warn',`Lighting is normally 1,5 mm² (16 A); ${secTxt(s)} makes its own circuit.`]);
+    if(s>=6)r.push(['ok',`${secTxt(s)} · ${SEC[s].brk} dedicated circuit (one appliance).`]);}
   if(h>plan.height-0.05)r.push(['bad','Above ceiling height.']);
   return r;}
 
@@ -850,6 +888,51 @@ canvas.addEventListener('contextmenu',e=>e.preventDefault());
 ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 
+// ---------- wire editor: tap a wire to select it, drag its points, tap the selected wire to add a bend point ----------
+const WE={on:false,sel:null,drag:null,mode:'h',last:-1,g:new THREE.Group(),down:null};world.add(WE.g);
+const weLeg=()=>lastRoute&&lastRoute.legs&&lastRoute.legs.find(l=>l.key===WE.sel);
+function weToggle(on){WE.on=on==null?!WE.on:on;WE.sel=null;WE.drag=null;WE.last=-1;sel=null;selOp=null;tool=null;moveMode=false;
+  if(WE.on&&!devs.some(d=>d.type==='panel')){WE.on=false;flash('Place the electrical panel first');return;}
+  if(WE.on&&!xray){xray=true;}renderProps();weRebuild();weUI();if(WE.on)flash('Tap a wire to edit it');}
+function weRebuild(){lastRoute=devs.some(d=>d.type==='panel')?routeCircuits():(clear(gWires),null);weRender();kick();}
+function weRender(){clear(WE.g);const l=WE.on&&weLeg();if(!l)return;const n=l.pts.length,H=plan.height;
+  const mk=(c,r)=>new THREE.Mesh(shared('weS'+r,()=>new THREE.SphereGeometry(r,16,10)),shared('weM'+c,()=>new THREE.MeshBasicMaterial({color:c,depthTest:false,transparent:true,opacity:.95})));
+  for(let i=1;i<n-1;i++){const ext=i===1||i===n-2,m=mk(i===WE.last?0x2563eb:ext?0xff8a1f:0xffffff,ext?0.07:0.055);m.position.copy(l.pts[i]);m.renderOrder=60;m.userData.wi=i;WE.g.add(m);}
+  // end points sit on the devices; shown smaller, not draggable
+  [0,n-1].forEach(i=>{const m=mk(0x1fa45a,0.04);m.position.copy(l.pts[i]);m.renderOrder=60;WE.g.add(m);});
+  if(n===2){}void H;}
+// the leg's bend points become user-owned the first time they are touched
+function weOwn(l){const E=plan.wireEdit||(plan.wireEdit={});if(!E[l.key])E[l.key]=l.pts.slice(1,-1).map(v=>[+v.x.toFixed(3),+v.y.toFixed(3),+v.z.toFixed(3)]);return E[l.key];}
+function weUI(){const el=$('wireBar');if(!WE.on){el.hidden=true;return;}const l=weLeg();
+  if(!l){el.innerHTML=`<div class="wbh"><span><b>Edit wiring</b><small>Tap a wire · switch view to rotate</small></span><button class="btn primary" id="weDone">${ic('check')}Done</button></div>`;}
+  else{const c=l.c,cl=lastRoute.legs.filter(q=>q.c===c),tot=cl.reduce((t,q)=>t+q.len,0)*1.1;
+    el.innerHTML=`<div class="wbh"><span><b>${esc(KIND[c.kind].name)} ${c.idx+1} · ${secTxt(c.sec)}${c.brk&&c.brk!=='—'?' · '+c.brk:''}</b><small>${esc(TYPES[l.from.type].label)} → ${esc(TYPES[l.to.type].label)} · ${fmtL(l.len,2)} · circuit ${fmtL(tot,1)}${l.auto?'':' · edited'}</small></span><button class="icon" id="weX" aria-label="Deselect">${ic('close')}</button></div>
+      <div class="seg" role="group" aria-label="Drag"><button data-m="h" aria-pressed="${WE.mode==='h'}">${ic('cursor-move')}Move</button><button data-m="v" aria-pressed="${WE.mode==='v'}">${ic('arrow-expand-vertical')}Height</button></div>
+      <p class="note">Drag a point · tap the white wire to add a bend · orange = ends of the run</p>
+      <div class="row2"><button class="btn" id="weDel" ${WE.last<1?'disabled':''}>${ic('minus')}Delete point</button><button class="btn" id="weReset" ${l.auto?'disabled':''}>${ic('restore')}Auto route</button><button class="btn primary" id="weDone">${ic('check')}Done</button></div>`;}
+  el.hidden=false;
+  on('weDone','click',()=>{weToggle(false);save();});on('weX','click',()=>{WE.sel=null;WE.last=-1;weRebuild();weUI();});
+  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{WE.mode=b.dataset.m;weUI();});
+  on('weDel','click',()=>{const L_=weLeg();if(!L_||WE.last<1)return;const E=weOwn(L_);E.splice(WE.last-1,1);WE.last=-1;save();weRebuild();weUI();});
+  on('weReset','click',()=>{const L_=weLeg();if(!L_||!plan.wireEdit)return;delete plan.wireEdit[L_.key];WE.last=-1;save();weRebuild();weUI();});}
+function weLocal(x,y){castAt(x,y);const o=world.worldToLocal(ray.ray.origin.clone()),q=world.worldToLocal(ray.ray.origin.clone().add(ray.ray.direction));return{o,d:q.sub(o)};}
+canvas.addEventListener('pointerdown',e=>{if(!WE.on)return;WE.down=[e.clientX,e.clientY,performance.now()];castAt(e.clientX,e.clientY);
+  const h=ray.intersectObjects(WE.g.children.filter(m=>m.userData.wi!=null))[0];if(!h)return;
+  e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+  const l=weLeg(),i=h.object.userData.wi,P=l.pts[i];WE.drag={i,pid:e.pointerId,y:P.y,sy:e.clientY,moved:false};WE.last=i;weRender();weUI();},true);
+let weRAF=0;
+canvas.addEventListener('pointermove',e=>{const D=WE.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();const l=weLeg();if(!l)return;const E=weOwn(l),pt=E[D.i-1];if(!pt)return;
+  if(WE.mode==='v'){pt[1]=+Math.max(0.02,Math.min(plan.height-0.02,D.y-(e.clientY-D.sy)*0.006)).toFixed(3);}
+  else{const{o,d}=weLocal(e.clientX,e.clientY);if(Math.abs(d.y)<1e-6)return;const t=(pt[1]-o.y)/d.y;if(t<=0||t>60)return;pt[0]=+(o.x+d.x*t).toFixed(3);pt[2]=+(o.z+d.z*t).toFixed(3);}
+  D.moved=true;if(!weRAF)weRAF=requestAnimationFrame(()=>{weRAF=0;weRebuild();});},true);
+const weEnd=e=>{const D=WE.drag;if(D&&e.pointerId===D.pid){e.stopImmediatePropagation();WE.drag=null;if(D.moved)save();weRebuild();weUI();return;}
+  if(!WE.on||!WE.down||e.type!=='pointerup')return;const[x0,y0,t0]=WE.down;WE.down=null;if(Math.hypot(e.clientX-x0,e.clientY-y0)>8||performance.now()-t0>500)return;
+  castAt(e.clientX,e.clientY);const h=ray.intersectObjects(gWires.children)[0];if(!h)return;const key=h.object.userData.leg;
+  if(key!==WE.sel){WE.sel=key;WE.last=-1;weRebuild();weUI();return;}
+  // tap on the selected wire: new bend point at the nearest segment
+  const l=weLeg(),P=world.worldToLocal(h.point.clone());let best=0,bd=1e9;for(let i=0;i<l.pts.length-1;i++){const a=l.pts[i],b=l.pts[i+1],ab=b.clone().sub(a),t=Math.max(0,Math.min(1,P.clone().sub(a).dot(ab)/Math.max(1e-9,ab.lengthSq()))),d=a.clone().addScaledVector(ab,t).distanceTo(P);if(d<bd){bd=d;best=i;}}
+  const E=weOwn(l);E.splice(best,0,[+P.x.toFixed(3),+P.y.toFixed(3),+P.z.toFixed(3)]);WE.last=best+1;save();weRebuild();weUI();flash('Point added · drag it');};
+canvas.addEventListener('pointerup',weEnd,true);canvas.addEventListener('pointercancel',weEnd,true);
 function doubleTap(x,y){castAt(x,y);
   const h=ray.intersectObjects([...gWalls.children.filter(o=>o.isMesh),...gDevs.children,floorMesh],true)[0];if(!h)return;const P=h.point.clone();
   if(fps){let tx=P.x,tz=P.z;if(h.object!==floorMesh){const dx=cam.position.x-P.x,dz=cam.position.z-P.z,L=Math.hypot(dx,dz)||1;tx=P.x+dx/L*0.8;tz=P.z+dz/L*0.8;}
@@ -865,7 +948,7 @@ function pickDev(x,y){const r=canvas.getBoundingClientRect();let best=null,bd=34
     const dir=p.clone().sub(cam.position),L=dir.length();const rc=new THREE.Raycaster(cam.position,dir.normalize(),0.01,L-0.03);
     if(!xray&&rc.intersectObjects(walls).length)return;bd=dd;best=d.id;});
   return best;}
-function singleTap(x,y){if(typeof S!=='undefined'&&S&&!S.gate&&S.phase!=='locate'&&live){addSpot(x,y);return;}castAt(x,y);
+function singleTap(x,y){if(WE.on)return;if(typeof S!=='undefined'&&S&&!S.gate&&S.phase!=='locate'&&live){addSpot(x,y);return;}castAt(x,y);
   if(!tool&&!moveMode){const id=pickDev(x,y);if(id){sel=id;selOp=null;propsMin=false;refresh();return;}
     const ho=ray.intersectObjects(gOpen.children,true).find(h=>h.object.userData.opening!=null);if(ho){selOp=ho.object.userData.opening;sel=null;propsMin=false;refresh();return;}}
   const hw=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
@@ -1049,6 +1132,7 @@ function renderProps(){const el=$('props');if(selOp!=null&&view3d){const o=ops()
     <label class="f"><span class="lt">${ic(TYPES[d.type].ic)}Component</span><select id="iType">${Object.entries(TYPES).map(([k,T])=>`<option value="${k}" ${k===d.type?'selected':''} ${k==='panel'&&d.type!=='panel'&&devs.some(x=>x.type==='panel')?'disabled':''}>${T.label}</option>`).join('')}</select></label>
     <div class="row"><label class="f"><span class="lt">${ic('arrow-expand-vertical')}Height (m)</span><input id="iH" type="number" inputmode="decimal" step="0.05" min="0" max="${plan.height}" value="${d.h.toFixed(2)}"></label>
     <label class="f"><span class="lt">${ic('wall')}Wall</span><select id="iWall">${plan.walls.map((w,i)=>`<option value="${i}" ${i===d.wall?'selected':''}>Wall ${i+1} · ${fmtL(wallGeo(i).L,2)}</option>`).join('')}</select></label></div>
+    ${wsec(d)!=null?`<label class="f"><span class="lt">${ic('vector-polyline')}Wire section</span><select id="iSec">${SECS.map(v=>`<option value="${v}" ${v===wsec(d)?'selected':''}>${secTxt(v)} · ${SEC[v].brk}${v>=6?' · dedicated':''}</option>`).join('')}</select></label>`:''}
     <label class="f"><span class="lt">${ic('arrow-expand-horizontal')}Along wall · <span id="iTv">${(d.t*g.L).toFixed(2)}</span> m</span><input id="iT" type="range" min="0.02" max="0.98" step="0.005" value="${d.t}"></label>
     <div class="row"><button class="btn" id="iSide">${ic('flip-horizontal')}Flip</button><button class="btn ${moveMode?'primary':''}" id="iMove">${ic('cursor-move')}Move</button><button class="btn danger" id="iDel">${ic('trash-can-outline')}Delete</button></div>
     <ul class="msgs">${msgs.map(([s,m])=>`<li class="${s}">${esc(m)}</li>`).join('')}</ul></div>`;
@@ -1057,6 +1141,7 @@ function renderProps(){const el=$('props');if(selOp!=null&&view3d){const o=ops()
   on('iType','change',e=>{d.type=e.target.value;d.h=TYPES[d.type].h;save();refresh();});
   on('iH','change',e=>{d.h=Math.min(plan.height-0.05,Math.max(0,parseFloat(String(e.target.value).replace(',','.'))||0));save();refresh();});
   on('iWall','change',e=>{d.wall=+e.target.value;save();refresh();});
+  on('iSec','change',e=>{d.sec=+e.target.value;save();refresh();flash(`${secTxt(d.sec)} · chained only with devices on ${secTxt(d.sec)}`);});
   on('iT','input',e=>{d.t=+e.target.value;$('iTv').textContent=(d.t*wallGeo(d.wall).L).toFixed(2);save();requestBuild();});
   on('iT','change',()=>refresh());
   on('iSide','click',()=>{d.side*=-1;save();refresh();});
@@ -1088,7 +1173,7 @@ function metrics(){const rooms=plan.rooms&&plan.rooms.length?plan.rooms:null,b=b
   const dA=os.filter(o=>o.type==='door').reduce((t,o)=>t+o.w*o.h,0),wA=os.filter(o=>o.type==='window').reduce((t,o)=>t+o.w*o.h,0);
   return{area,per,vol:area*plan.height,h:plan.height,walls:per*plan.height-dA-wA,dA,wA,rooms:rooms?rooms.length:(plan.walls.length?1:0),
     doors:os.filter(o=>o.type==='door').length,windows:os.filter(o=>o.type==='window').length};}
-function goHome(){document.body.classList.add('home');sel=null;selOp=null;tool=null;moveMode=false;drawing=false;
+function goHome(){if(WE.on)weToggle(false);document.body.classList.add('home');sel=null;selOp=null;tool=null;moveMode=false;drawing=false;
   // a project left empty (scan cancelled) is dropped
   if(curId!=null&&!plan.walls.length&&!devs.length){projects=projects.filter(q=>q.id!==curId);curId=null;saveNow();}
   renderHome();}
@@ -1149,7 +1234,7 @@ function setView(is3d){view3d=is3d;syncTop();svg.toggleAttribute('hidden',is3d);
   if(!is3d)drawPlan();renderProps();setStatus();}
 function go(n){step=Math.max(1,Math.min(3,n));tool=null;moveMode=false;if(step>1&&drawing){drawing=false;draft=null;}if(step>1)setView(true);
   if(step===3){xray=true;}refresh();}
-function build(){buildWalls();needsRender=true;buildDevs();lastRoute=devs.some(d=>d.type==='panel')?routeCircuits():(clear(gWires),null);if(!view3d)drawPlan();}
+function build(){buildWalls();needsRender=true;buildDevs();lastRoute=devs.some(d=>d.type==='panel')?routeCircuits():(clear(gWires),null);if(WE.on){if(!weLeg())WE.sel=null;weRender();weUI();}if(!view3d)drawPlan();}
 function refresh(){build();renderSheet();
   $('stepIc').innerHTML=ic('home-outline');$('stepNum').textContent=step;syncTop();$('stepName').textContent=STEP_NAMES[step];$('xray').setAttribute('aria-pressed',xray);
   $('nextBtn').hidden=step>=3;$('nextLbl').textContent=step<3?STEP_NAMES[step+1]:'';
@@ -1164,6 +1249,7 @@ $('camBtn').onclick=e=>{e.stopPropagation();pop('camPop',$('camPop').hidden);};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pop,.tb'))pop(null,false);},true);
 $('v2d').onclick=()=>{setView(false);pop(null,false);};$('v3d').onclick=()=>{drawing=false;draft=null;setView(true);pop(null,false);};
 $('xray').onclick=()=>{xray=!xray;refresh();pop(null,false);};
+$('wEdit').onclick=()=>{pop(null,false);if(!view3d)setView(true);weToggle();};
 $('camFps').onclick=()=>{setCam(true);pop(null,false);};$('camFree').onclick=()=>{setCam(false);pop(null,false);};$('resetCam').onclick=()=>{resetCam();pop(null,false);};
 // ---- mini 3D model of the scan (top right while the camera is live) ----
 function themeScene(){scene.background=live?null:new THREE.Color(tok('--view-bg'));build();}
@@ -1183,7 +1269,7 @@ let buildQ=0;function requestBuild(){if(!buildQ)buildQ=requestAnimationFrame(()=
 document.addEventListener('visibilitychange',()=>{if(live==='xr')return;renderer.setAnimationLoop(document.hidden?null:loop);if(!document.hidden){last=performance.now();needsRender=true;}});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeScene);}catch(_){}
 new MutationObserver(themeScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-window.__ar={get route(){return lastRoute},get devList(){return devs},wallRoute:(a,b)=>wallRoute(a,b),refresh:()=>refresh(),get floor(){return floorMesh},get world(){return world},get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},get LT(){return LT},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
+window.__ar={get route(){return lastRoute},get we(){return WE},weToggle:o=>weToggle(o),get devList(){return devs},wallRoute:(a,b)=>wallRoute(a,b),refresh:()=>refresh(),get floor(){return floorMesh},get world(){return world},get renderer(){return renderer},wallPt(i,t,v){const g=wallGeo(i);const P=new THREE.Vector3(g.ax+g.dx*t+g.nx*(plan.thick/2+0.01),v,g.ay+g.dy*t+g.ny*(plan.thick/2+0.01)),Q=P.clone().project(cam);return[(Q.x+1)/2*innerWidth,(1-Q.y)/2*innerHeight,Q.z];},get L(){return L},get S(){return S},geoToPlan:(a,b)=>geoToPlan(a,b),get plan(){return plan},screenOf(id){const d=devs.find(v=>v.id===id);const v=devPos(d).p.project(cam);return[(v.x+1)/2*innerWidth,(1-v.y)/2*innerHeight];},cam,wallTarget:()=>wallTarget(),get VL(){return VL},get SP(){return SP},get LT(){return LT},spot:(x,y)=>addSpot(x,y),sample:()=>{fresh();save();refresh();},get OD(){return OD},get fps(){return fps},orb,get devs(){return devs},get sel(){return sel},get step(){return step}};
 // ---------- Live camera navigation ----------
 // Two tracking engines, picked automatically:
 //  1. WebXR "immersive-ar" (Chrome Android + ARCore, HTTPS): the camera itself tracks position and rotation (visual-inertial odometry).
@@ -1216,8 +1302,9 @@ async function startSensor(opts={}){
   // permissions must be requested inside the tap (iOS)
   try{if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission)await DeviceOrientationEvent.requestPermission();}catch(_){why.push('orientation');}
   try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission)await DeviceMotionEvent.requestPermission();}catch(_){why.push('motion');}
-  if(arStart()){AR.on=true;AR.prev=null;AR.y0=null;AR.ready=false;AR.tracked=false;AR.floorSeen=false;L.arBase=null;L.stream={getTracks:()=>[]};document.documentElement.classList.add('arcore');}
-  else try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
+  AR.failed=false;if(arStart()){AR.on=true;AR.prev=null;AR.y0=null;AR.ready=false;AR.tracked=false;AR.floorSeen=false;L.arBase=null;L.stream={getTracks:()=>[]};document.documentElement.classList.add('arcore');}
+  else AR.failed=!!(window.ArElecNative&&ArElecNative.arStart);
+  if(!AR.on)try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
   catch(e){why.push('camera');}
   live='sensor';L.headLock=false;L.offS=L.offC=0;L.gAvg=null;L.geoAvg=null;L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
   setCam(true);const s=fpsStartPoint();L.pos.set(s.x,EYE,s.z);L.calYaw=s.yaw;L.yawOff=null;
@@ -1387,8 +1474,8 @@ async function startSurvey(fresh){L.lockPos=false;if(fresh){VL.frames=[];VL.key=
 async function startLocate(){await vlLoad(curId);
   document.body.classList.remove('home');sel=null;tool=null;moveMode=false;drawing=false;setView(true);
   L.lockPos=true;S={phase:'locate',chain:[],chainWall0:plan.walls.length,assist:false,needFix:true,align:null,alignMode:false,placed:[],devType:devs.some(d=>d.type==='panel')?'socket':'panel'};
-  await startSensor({survey:true});aim.visible=true;svUI();openGate();}
-function finishSurvey(){if(!S)return;if(S.opDraw){S.opDraw=null;clear(ODR.g);$('odrCard').hidden=true;}if(editing)toggleEdit(false);odReset();ltReset();vlSave();$('vlBar').hidden=true;
+  await startSensor({survey:true});aim.visible=true;svUI();if(AR.on)arBoot();else{openGate();$('gpsNote').textContent=AR.failed?'ARCore is not available · using GPS, compass and camera':'';}}
+function finishSurvey(){if(!S)return;if(WE.on)weToggle(false);if(S.opDraw){S.opDraw=null;clear(ODR.g);$('odrCard').hidden=true;}if(editing)toggleEdit(false);odReset();ltReset();vlSave();$('vlBar').hidden=true;
   if(S.phase!=='locate'){if(S.rec&&S.rec.state==='recording')S.rec.stop();
     plan.geoFrame=fitGeoFrame()||plan.geoFrame;save();
   }
@@ -1412,7 +1499,7 @@ function fitGeoFrame(){const T=(plan.gpsTrack||[]).filter(s=>s.acc<=25);if(!T.le
 function clampInside(x,z){const b=bounds();if(x>=b.x0&&x<=b.x1&&z>=b.y0&&z<=b.y1&&!blocked(x,z))return[x,z];let best=[b.cx,b.cy],bd=Infinity;
   for(let i=0;i<=24;i++)for(let j=0;j<=24;j++){const px=b.x0+b.w*i/24,pz=b.y0+b.h*j/24;if(blocked(px,pz))continue;const d=Math.hypot(px-x,pz-z);if(d<bd){bd=d;best=[px,pz];}}return best;}
 // pin the building exactly where it is in the world: GPS gives the position, the compass the heading — never re-centred
-function applyFix(g){if(!plan.geoFrame||!S)return;const[x,z]=geoToPlan(g.lat,g.lon);L.pos.x=x;L.pos.z=z;cam.position.x=x;cam.position.z=z;S.needFix=false;
+function applyFix(g){if(!plan.geoFrame||!S)return;if(S.arBoot)S.arBoot.fixed=true;const[x,z]=geoToPlan(g.lat,g.lon);L.pos.x=x;L.pos.z=z;cam.position.x=x;cam.position.z=z;S.needFix=false;
   if(plan.geoFrame.method!=='none'&&L.ori&&L.ori.abs){L.yawOff=plan.geoFrame.theta;L.dragYaw=0;L.yawSrc='abs';L.qInit=false;}
   flash(`GPS ±${Math.round(g.acc)} m`);}
 // ---- GPS gate: the screen stays grey until GPS (precise) and compass are on ----
@@ -1428,6 +1515,31 @@ function gateUI(st){const T={off:'Turn on GPS',wait:'Waiting for GPS',weak:'GPS 
   const c=$('gcCmp');c.className=st.cmp==='wait'?'off':st.cmp;c.innerHTML=ic('compass-outline')+(st.cmp==='ok'?'On':st.cmp==='weak'?'Off':'…');}
 function gateTick(now){const G=S.gate;if(now-G.ui<200)return;G.ui=now;const st=gateState();gateUI(st);
   if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
+// ---- AR Viewer with ARCore: starts by itself, no grey GPS wait; GPS and compass place the model as soon as they are good ----
+function arBoot(){S.arBoot={t0:performance.now(),done:false};S.gate=null;$('gpsOv').hidden=true;L.headLock=false;
+  S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();
+  S.needFix=!!plan.geoFrame;L.yawOff=null;L.arBase=null;vlUI();svUI();dockTick(true);}
+const arPlaced=()=>!!(S&&(S.ok||(S.align&&S.align.two)||(S.vl&&S.vl.located)||S.spotFix||(S.arBoot&&S.arBoot.fixed)));
+// 10 % camera started · 50 % tracking · 75 % floor found · 100 % model placed (GPS fix, confirmed, aligned or recognised)
+function arPct(){const B=S&&S.arBoot;if(!B)return 0;if(B.done)return 100;const now=performance.now();
+  let p=!AR.pose?Math.min(10,(now-B.t0)/300):!AR.track?Math.min(45,10+(now-B.t0)/500):50;
+  if(AR.track&&AR.floorY!=null)p=75;if(AR.track&&arPlaced())p=100;return Math.round(p);}
+function arBootTick(now){const B=S.arBoot;if(!B||B.done)return;
+  if(AR.track&&!B.trackT)B.trackT=now;
+  if(B.trackT&&now-B.trackT>2500&&!B.asked&&!S.ask&&!arPlaced()){B.asked=true;arAsk('ask');}
+  if(arPct()>=100){B.done=true;L.headLock=true;flash('ARCore ready');dockTick(true);}
+  if(!AR.track&&!B.failAsk&&now-B.t0>15000){B.failAsk=true;arFail();}
+  if(AR.track&&S.ask==='arfail')arAsk(null);}
+function arFail(){const el=$('arAsk');S.ask='arfail';
+  el.innerHTML=`<span><b>ARCore can't track yet</b><small>Move slowly toward a lit, textured area · or use GPS, compass and camera</small></span><div class="akOpts"><button class="btn" id="afKeep">Keep trying</button><button class="btn primary" id="afOld">${ic('crosshairs-gps')}GPS + compass</button></div>`;
+  el.className='float how';el.hidden=false;
+  on('afKeep','click',()=>{arAsk(null);if(S&&S.arBoot){S.arBoot.failAsk=false;S.arBoot.t0=performance.now();}});
+  on('afOld','click',()=>{arAsk(null);arToLegacy();});}
+// switch an AR Viewer session from ARCore to the camera + GPS + compass method
+async function arToLegacy(){if(!S)return;S.arBoot=null;arStop();
+  try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
+  catch(e){L.stream=null;flash('No camera access');}
+  L.yawOff=null;L.qInit=false;L.arBase=null;S.ask=null;openGate();$('gpsNote').textContent='Using GPS, compass and camera';dockTick(true);}
 function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=true;
   L.headLock=true; // from here on the compass no longer turns the walls; only the gyroscope does
   if(S.phase==='locate'){S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();vlUI();}
@@ -1658,7 +1770,7 @@ const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
   const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
 function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);document.body.classList.toggle('arloc',act);$('svBack').hidden=!act;
-  if(!act){if(!el.hidden)el.hidden=true;return;}const loc=S.phase==='locate';
+  if(!act){if(!el.hidden)el.hidden=true;$('arPctTag').hidden=true;return;}const loc=S.phase==='locate';
   const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=loc?dockPct():{p:0,ok:false};
   const rows=[loc?['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true]:null,
     ['cam',L.stream?'ok':'off','camera-outline','Camera',(S.rec&&S.rec.state==='recording')?'Recording':L.stream?(AR.on?(AR.track?'ARCore tracking':'ARCore starting'):'On'):'Off'],
@@ -1669,12 +1781,13 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
     loc?['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']:null].filter(Boolean);
   const by={};rows.forEach(r=>by[r[0]]=r);const bad=['cam','cmp'].filter(k=>by[k]&&by[k][1]!=='ok');
   const hb=$('scanHud'),H=hb&&!hb.hidden&&hb.offsetHeight?hb.offsetHeight:44;el.style.setProperty('--dkH',H+'px');
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),placeConf(),H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),placeConf(),S.arBoot&&!S.arBoot.done?arPct():-1,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
   const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`,gp=by.gps;
-  const cf=placeConf(),R_=19,C=2*Math.PI*R_,prog=cf;
+  const boot=loc&&S.arBoot&&!S.arBoot.done,cf=boot?arPct():placeConf(),R_=19,C=2*Math.PI*R_,prog=cf;
   el.innerHTML=`<button class="dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
-  el.classList.toggle('open',DK.open);el.hidden=false;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
+  el.classList.toggle('open',DK.open);el.hidden=false;
+  const tg=$('arPctTag');if(loc){tg.textContent=boot?`ARCore ${cf}%`:`${AR.on?'ARCore · ':''}Placed ${cf}%`;tg.className='float '+(cf>=75?'ok':cf>=40?'weak':'off');tg.hidden=false;}else tg.hidden=true;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.phase!=='locate'||S.alignMode||S.respot||S.pend||S.opDraw))$('arAsk').hidden=true;if($('arAsk')&&!$('arAsk').hidden&&!S)$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
@@ -1776,7 +1889,7 @@ function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(h
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
   hlLbl=label(`Wall ${i+1} · ${fmtL(g.L,2)}`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
-function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.gate){gateTick(now);return;}try{spAimTick(now);spPendTick(now);vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
+function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.arBoot)arBootTick(now);if(S.gate){gateTick(now);return;}try{spAimTick(now);spPendTick(now);vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
     if(moved||now-S.intro.t>4000){S.intro=null;$('startOv').hidden=true;}}
   if(S.phase==='corners'&&S.autoOp!==false&&L.stream&&!editing&&now-OD.t>320&&jobFree()){OD.t=now;try{odTick();}catch(err){console.warn(err);}}
@@ -2160,13 +2273,14 @@ function devAimTick(){const w=S&&S.phase==='locate'&&!S.alignMode?wallTarget():n
 function svUI(){window.__survey=!!S;if(typeof spRender==='function')spRender();
   $('svRead').hidden=!S;if(!S){$('svPop').hidden=true;if(typeof devAim!=='undefined')devAim.visible=false;if(typeof navRefresh==='function')navRefresh();return;}
   const loc=S.phase==='locate';if(typeof navRefresh==='function')navRefresh();
-  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svWire','vector-polyline',`Wiring through ${(plan.wireVia||SET.wire||'ceiling')==='floor'?'floor':'ceiling'}`,false,false],['svOpDraw','window-closed-variant','Draw doors & windows',false,!!S.opDraw],['svAlign','target','Align on 2 corners',false,!!(S.alignMode&&S.al2&&S.al2.mode!=='img')],['svAlignImg','image-multiple','Align with corner photos',cpFrames().length<2,!!(S.alignMode&&S.al2&&S.al2.mode==='img')],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','shoe-print','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
+  const items=loc?[['svUndoDev','undo','Undo',!S.placed.length,false],['svWire','vector-polyline',`Wiring through ${(plan.wireVia||SET.wire||'ceiling')==='floor'?'floor':'ceiling'}`,false,false],['svOpDraw','window-closed-variant','Draw doors & windows',false,!!S.opDraw],['svWEdit','vector-polyline','Edit wiring',!devs.some(d=>d.type==='panel'),WE.on],['svAlign','target','Align on 2 corners',false,!!(S.alignMode&&S.al2&&S.al2.mode!=='img')],['svAlignImg','image-multiple','Align with corner photos',cpFrames().length<2,!!(S.alignMode&&S.al2&&S.al2.mode==='img')],['svGps','crosshairs-gps','Re-locate from GPS',!plan.geoFrame,false],['svLock','shoe-print','Follow my steps',false,!L.lockPos],['svGal','image-multiple','Photo gallery',!spots().length,false],['svRespot','camera','Re-place photos',!spots().length,!!S.respot],['svFloor','arrow-expand-vertical','Floor level',false,!!S.floorMode],['svAssist','magnet','Line assist',false,S.assist]]
     :[['svUndo','undo','Undo',!S.chain.length,false],['svMod','pencil-outline','Modify last corner',!S.chain.length,!!S.modify],['svClose','vector-square-close','Close room',S.chain.length<3,false],['svUndoOp','door','Remove last door/window',!(S.autoOps&&S.autoOps.length),false],['svUndoSpot','camera','Remove last spot',!spots().length,false],['svAuto','sparkles','Auto doors & windows',false,S.autoOp!==false],['svAssist','magnet','Line assist',false,S.assist]];
   $('svPop').innerHTML=items.filter(([id,,,dis])=>!dis||id==='svUndo'||id==='svUndoDev').map(([id,i,l,dis,pr])=>`<button id="${id}" role="menuitem" ${dis?'disabled':''} aria-pressed="${pr}">${ic(i)}${l}</button>`).join('');
   const done=()=>{$('svPop').hidden=true;};
   on('svUndo','click',()=>{S.modify=false;undoCorner();done();});
   on('svUndoDev','click',()=>{const id=S.placed.pop();devs=devs.filter(d=>d.id!==id);if(!devs.some(d=>d.type==='panel'))S.devType='panel';save();build();svUI();done();});
   on('svWire','click',()=>{plan.wireVia=(plan.wireVia||SET.wire||'ceiling')==='floor'?'ceiling':'floor';save();build();svUI();done();flash(`Wiring through the ${plan.wireVia}`);});
+  on('svWEdit','click',()=>{done();weToggle();svUI();});
   on('svOpDraw','click',()=>{done();if(S.opDraw)odrStop();else odrStart('window');});
   on('svAlign','click',()=>{done();if(S.alignMode&&S.al2&&S.al2.mode!=='img')al2Stop();else al2Start('manual');});on('svAlignImg','click',()=>{done();if(S.alignMode&&S.al2&&S.al2.mode==='img')al2Stop();else al2Start('img');});on('svClose','click',()=>{closeRoom();done();});
   on('svMod','click',()=>{S.modify=!S.modify;svUI();done();flash(S.modify?'Modify':'');});
