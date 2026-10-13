@@ -339,7 +339,7 @@ body.editing #lineCv{display:none}
 .cd.P{background:#8a4b22}.cd.N{background:#2f6fdb}.cd.R{background:#222}.cd.T{background:#f08a24}.cd.E{background:linear-gradient(135deg,#2fae4e 0 50%,#f5d000 50% 100%)}
 #arBadge{position:fixed;z-index:13;top:calc(42px + var(--st));right:calc(5px + var(--sr));width:12px;height:12px;border-radius:50%;border:2px solid var(--bg,#fff);padding:0;display:grid;place-items:center;font:800 0px/1 var(--f-display);color:#fff;letter-spacing:-.2px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 #arBadge[hidden]{display:none}
-body.gating #arDock{z-index:41}body.gating .gpsChips{display:none}body.gating #arBadge{z-index:42}#arBadge[data-st="ok"]{background:#1fa45a}#arBadge[data-st="wait"]{background:#e0a100}#arBadge[data-st="off"]{background:#9aa0a6}
+body.gating .gpsChips{display:none}#arBadge[data-st="ok"]{background:#1fa45a}#arBadge[data-st="wait"]{background:#e0a100}#arBadge[data-st="off"]{background:#9aa0a6}
 #miniBtn{position:fixed;z-index:11;right:calc(10px + var(--sr));width:38px;height:38px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:var(--glass);color:var(--fg);box-shadow:var(--sh);cursor:pointer}#miniBtn[hidden]{display:none}#miniBtn .ic{width:19px;height:19px}
 #miniX{position:fixed;z-index:12;width:22px;height:22px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:var(--fg);color:var(--bg);box-shadow:var(--sh);cursor:pointer}#miniX[hidden]{display:none}#miniX .ic{width:12px;height:12px}
 #wireBar small b{font-weight:700}
@@ -1595,7 +1595,7 @@ async function startSensor(opts={}){
   else AR.failed=!!(window.ArElecNative&&ArElecNative.arStart);
   if(!AR.on)try{L.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=L.stream;vid.hidden=false;await vid.play().catch(()=>{});}
   catch(e){why.push('camera');}
-  live='sensor';L.headLock=false;L.offS=L.offC=0;L.gAvg=null;L.geoAvg=null;L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;L.geo=null;
+  live='sensor';L.headLock=false;L.offS=L.offC=0;if(!(L.geoT&&performance.now()-L.geoT<120000)){L.gAvg=null;L.geoAvg=null;}L.qInit=false;L.ori=null;L.relO=L.absO=null;L.absOff=null;L.relSeen=false;L.walkT=[];L.steps=0;L.dragYaw=0;L.geoOrigin=null;if(!(L.geoT&&performance.now()-L.geoT<120000)){L.geo=null;L.gAvg=null;}
   setCam(true);const s=fpsStartPoint();L.pos.set(s.x,EYE,s.z);L.calYaw=s.yaw;L.yawOff=null;
   xray=true;scene.background=null;build();
   addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);addEventListener('devicemotion',onMotion,true);
@@ -1630,13 +1630,14 @@ function stepForward(){if(AR.on)return;const y=new THREE.Euler().setFromQuaterni
   if(!blocked(nx,L.pos.z))L.pos.x=nx;if(!blocked(L.pos.x,nz))L.pos.z=nz;}
 function onGeo(p){const c=p.coords;geoIn(c.latitude,c.longitude,c.accuracy,'web');}
 // fixes are averaged (weight 1/acc²) while the phone is not walking; walking restarts the average
-function geoIn(lat,lon,acc,src){const now=performance.now();if(src==='web'&&L.nat&&now-L.nat.t<3000)return;L.geo={lat,lon,acc,src};
+function geoIn(lat,lon,acc,src){const now=performance.now();if(src==='web'&&L.nat&&now-L.nat.t<3000)return;L.geo={lat,lon,acc,src};L.geoT=now;
   const walking=L.walkT&&L.walkT.length>=2&&now-L.lastStep<2500;let A=L.gAvg;
   if(walking||!A)A=L.gAvg={W:0,la:0,lo:0,n:0,best:acc};
   if(acc<=25){const w=1/(acc*acc);if(A.n>=30){A.W*=0.96;A.la*=0.96;A.lo*=0.96;}A.W+=w;A.la+=w*lat;A.lo+=w*lon;A.n++;A.best=Math.min(A.best,acc);}
   L.geoAvg=A.n?{lat:A.la/A.W,lon:A.lo/A.W,acc:Math.max(A.best*0.5,1/Math.sqrt(A.W)),n:A.n}:null;
+  if(!live)return; // warm-up: just remember the fixes
   const g=L.geoAvg&&L.geoAvg.n>=2?L.geoAvg:L.geo;geoUse({latitude:g.lat,longitude:g.lon,accuracy:g.acc});}
-window.__nativeGnss=(lat,lon,acc,alt,used,total,dual)=>{L.nat={t:performance.now(),used,total,dual:!!dual};if(live)geoIn(lat,lon,acc,'gnss');};
+window.__nativeGnss=(lat,lon,acc,alt,used,total,dual,prov)=>{L.nat={t:performance.now(),used,total,dual:!!dual,prov:prov||'gps'};geoIn(lat,lon,acc,'gnss');};
 window.__nativeCam=(fov)=>{let man=null;try{man=localStorage.getItem('arelec-fov');}catch(_){}if(fov>30&&fov<120&&!man)lensFov=fov;L.natFov=fov;};
 function geoUse(c){
   if(S&&S.phase!=='locate'&&c.accuracy<30&&(!plan.geo||c.accuracy<plan.geo.acc)){plan.geo={lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:L.pos.x,z:L.pos.z};save();}
@@ -1793,17 +1794,23 @@ function applyFix(g){if(!plan.geoFrame||!S||S.locked)return;if(S.arBoot)S.arBoot
   flash(`GPS ±${Math.round(g.acc)} m`);}
 // ---- GPS gate: the screen stays grey until GPS (precise) and compass are on ----
 const GPS_OK=10;
-let GPS_N=5;
+let GPS_N=3;
 function gateState(){const g=L.geo,a=L.geoAvg;const gps=!g?'wait':g.err&&!a?'off':a&&a.acc<=GPS_OK&&a.n>=GPS_N?'ok':'weak';const cmp=!L.ori?'wait':L.ori.abs?'ok':'weak';return{gps,cmp,acc:a?a.acc:g&&!g.err?g.acc:null,n:a?a.n:0};}
 function openGate(){if(!S)return;L.headLock=false;S.gate={t0:performance.now(),okT:0,ui:0};$('startOv').hidden=true;$('gpsOv').hidden=false;
   gateUI(gateState());}
-function gateUI(st){const T={off:'Turn on GPS',wait:'Waiting for GPS',weak:'GPS not precise'};
-  $('gpsT').textContent=st.gps!=='ok'?T[st.gps]:st.cmp!=='ok'?'Calibrate compass':'GPS ready';
+// accuracy accepted after t seconds on the grey screen
+const gateLimit=t=>t<6?GPS_OK:t<15?20:40;
+function gateUI(st){const T={off:'Turn on GPS',wait:'Searching GPS',weak:'Improving GPS'},G=S&&S.gate,t=G?(performance.now()-G.t0)/1000:0;
+  const acc=st.acc!=null?` · ±${st.acc<10?st.acc.toFixed(1):Math.round(st.acc)} m`:'';
+  $('gpsT').textContent=(st.gps==='ok'?'GPS ready':T[st.gps])+acc;
+  $('gpsNote').textContent=st.gps==='off'?'Turn on location in the phone settings':t>8&&st.gps!=='ok'?'Move near a window or outside for a faster fix':'';
+  const sk=$('gpsSkip');sk.textContent=st.acc!=null?'Continue now':'Without GPS';
   const nat=L.nat&&performance.now()-L.nat.t<3000?L.nat:null;
   const g=$('gcGps');g.className=st.gps==='wait'?'off':st.gps;g.innerHTML=ic('crosshairs-gps')+(st.acc!=null?`±${st.acc<10?st.acc.toFixed(1):Math.round(st.acc)} m`+(st.n<GPS_N?` · ${st.n}/${GPS_N}`:''):st.gps==='off'?'Off':'…')+(nat?` · ${nat.used} sat${nat.dual?' · L5':''}`:'');
   const c=$('gcCmp');c.className=st.cmp==='wait'?'off':st.cmp;c.innerHTML=ic('compass-outline')+(st.cmp==='ok'?'On':st.cmp==='weak'?'Off':'…');}
 function gateTick(now){const G=S.gate;try{dockTick();}catch(_){}if(AR.on&&geoGood(AR.geo)&&now-G.t0>800){passGate(false);return;}if(now-G.ui<200)return;G.ui=now;const st=gateState();gateUI(st);
-  if(st.gps==='ok'&&st.cmp==='ok'){if(!G.okT)G.okT=now;if(now-G.okT>1200)passGate(true);}else G.okT=0;}
+  const t=(now-G.t0)/1000,good=st.acc!=null&&st.acc<=gateLimit(t)&&(st.n>=GPS_N||t>=6);
+  if(good){if(!G.okT)G.okT=now;if(now-G.okT>800)passGate(true);}else G.okT=0;}
 // ---- AR Viewer with ARCore: starts by itself, no grey GPS wait; GPS and compass place the model as soon as they are good ----
 function arBoot(){S.arBoot={t0:performance.now(),done:false};S.gate=null;$('gpsOv').hidden=true;L.headLock=false;
   S.vl={votes:[],conf:0,located:false,recent:[]};S.obs=[];S.spotConf=0;S.rejected=new Map();S.t0=performance.now();
@@ -1878,7 +1885,8 @@ function passGate(withGps){if(!S||!S.gate)return;S.gate=null;$('gpsOv').hidden=t
   else{L.yawOff=null;L.qInit=false;if(S.fresh){L.pos.x=0;L.pos.z=0;} // heading is (re)calibrated now that the compass is settled
     if(S.phase==='locate'){S.needFix=false;}}
   if(S.phase!=='locate')S.intro={t:performance.now(),a:null},$('startOv').hidden=false;svUI();if(S.phase==='locate'){arAsk('ask');stepUI();}}
-$('gpsSkip').addEventListener('click',()=>passGate(false));
+setInterval(()=>{try{if(S&&S.gate&&live)gateTick(performance.now());}catch(_){}},250); // runs even without compass events
+$('gpsSkip').addEventListener('click',()=>{const st=gateState();passGate(st.acc!=null&&st.acc<=50);});
 $('gpsCancel').addEventListener('click',()=>{if(S){S.gate=null;$('gpsOv').hidden=true;finishSurvey();}});
 function recordGps(c){if(!S||S.phase==='locate'||c.accuracy>25)return;const T=plan.gpsTrack||(plan.gpsTrack=[]);const last=T[T.length-1];const now=Date.now();
   if(!last||Math.hypot(last.x-L.pos.x,last.z-L.pos.z)>1||now-last.t>8000){T.push({lat:c.latitude,lon:c.longitude,acc:c.accuracy,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),t:now});if(T.length>300)T.shift();}}
