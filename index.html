@@ -352,9 +352,10 @@ html.vr,html.vr body{background:#20232a!important}
 #vrPad .stk{position:absolute;bottom:0;width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);pointer-events:auto;touch-action:none;display:grid;place-items:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #vrPad .stk[data-k="mv"]{left:18px}#vrPad .stk[data-k="lk"]{right:18px}
 #vrPad .stk i{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:transform .08s linear}
-#zmBox{position:fixed;z-index:12;right:calc(8px + var(--sr));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 6px;border-radius:24px;background:var(--glass);box-shadow:var(--sh);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-#zmBox[hidden]{display:none}#zmBox button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}#zmBox button .ic{width:17px;height:17px}
-#zmRange{writing-mode:vertical-lr;direction:rtl;width:26px;height:150px;margin:0;accent-color:var(--fg);touch-action:none}#zmLbl{font:700 11px var(--f-display);font-variant-numeric:tabular-nums}
+#zmBox{position:fixed;z-index:12;right:calc(10px + var(--sr));top:110px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 8px;border-radius:0 0 19px 19px;box-sizing:border-box;background:var(--glass);box-shadow:var(--sh);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#zmBox[hidden]{display:none}#zmBox.att{border-radius:0}#arDock.att{border-bottom-left-radius:0;border-bottom-right-radius:0}
+#miniPlan.below{border-top-right-radius:0}#arDock .mi{cursor:pointer}#arDock .mi.sel{outline:2px solid var(--fg);outline-offset:1px}#zmBox button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}#zmBox button .ic{width:17px;height:17px}
+#zmRange{writing-mode:vertical-lr;direction:rtl;width:24px;height:140px;margin:0;accent-color:var(--fg);touch-action:none}#zmLbl{font:700 11px var(--f-display);font-variant-numeric:tabular-nums}
 #altDev{position:fixed;z-index:31;width:40px;height:40px;border-radius:50%;border:2px solid var(--bg);background:var(--surface);color:var(--fg);box-shadow:var(--sh);display:grid;place-items:center;padding:0;cursor:pointer;touch-action:none}
 #altDev[hidden]{display:none}#altDev .ic{width:20px;height:20px}#altDev:active{transform:scale(.9)}
 #wireBar{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:popUp .35s var(--ease)}
@@ -1681,11 +1682,12 @@ window.__arImg=b64=>{if(!AR.on||AR.busy)return;AR.busy=true;const im=new Image()
   AR.cv.getContext('2d').drawImage(im,0,0);AR.ready=true;AR.busy=false;};im.onerror=()=>{AR.busy=false;};im.src='data:image/jpeg;base64,'+b64;};
 
 // ---------- lens & zoom: digital zoom of the camera image and the 3D overlay together; lens = physical camera (no ARCore) or field of view (Edit in 3D) ----------
-const ZM={z:1,base:62};
+const ZM={z:1,base:62,open:false};const MAPV={open:false};
+const s2z=v=>v<0?1+v*0.5:1+v*2,z2s=z=>z<1?(z-1)/0.5:(z-1)/2;
 const zfov=f=>2*Math.atan(Math.tan(f*Math.PI/360)/ZM.z)*180/Math.PI;
-function zoomSet(z){ZM.z=Math.max(1,Math.min(5,+z||1));const v=$('camVid');if(v)v.style.transform=ZM.z>1?`scale(${ZM.z})`:'';
+function zoomSet(z){ZM.z=Math.max(0.5,Math.min(3,+z||1));const v=$('camVid');if(v)v.style.transform=ZM.z>1?`scale(${ZM.z})`:'';
   try{if(AR.on&&!(typeof VR!=='undefined'&&VR.on)&&window.ArElecNative&&ArElecNative.arZoom)ArElecNative.arZoom(ZM.z);}catch(_){}
-  const r=$('zmRange');if(r&&+r.value!==ZM.z)r.value=ZM.z;const t=$('zmLbl');if(t)t.textContent=(ZM.z<10?ZM.z.toFixed(1):Math.round(ZM.z))+'×';needsRender=true;}
+  const r=$('zmRange');if(r&&Math.abs(s2z(+r.value)-ZM.z)>0.01)r.value=z2s(ZM.z);const t=$('zmLbl');if(t)t.textContent=(ZM.z<10?ZM.z.toFixed(1):Math.round(ZM.z))+'×';needsRender=true;}
 async function lensList(){if(typeof VR!=='undefined'&&VR.on)return[['vr95','Ultra wide','0.6×'],['vr62','Wide','1×'],['vr40','Portrait','1.6×']];
   if(AR.on)return[['ar','Main camera','ARCore']];
   try{const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'&&!/front|user|avant/i.test(d.label));
@@ -1698,9 +1700,15 @@ async function lensSheet(){const L_=await lensList();xSheet(`<div class="ctH"><h
   <div class="gl">${L_.map(([id,l,t])=>`<button class="li" data-lz="${esc(id)}">${ic('camera')}<span>${esc(l)}</span><em>${esc(t)}</em></button>`).join('')||'<div class="li"><span>No other lens</span></div>'}</div>
   <p class="hint">${AR.on&&!(typeof VR!=='undefined'&&VR.on)?'ARCore uses the main camera; the slider zooms in on it.':'Use the slider on the right of the screen to zoom.'}</p>`,
   el=>{$('lzX').onclick=xClose;el.querySelectorAll('[data-lz]').forEach(b=>b.onclick=()=>{xClose();lensPick(b.dataset.lz);});});}
-(function(){const z=document.createElement('div');z.id='zmBox';z.hidden=true;z.innerHTML=`<button id="zmLens" aria-label="Lens">${ic('camera')}</button><input id="zmRange" type="range" min="1" max="5" step="0.1" value="1" aria-label="Zoom"><b id="zmLbl">1.0×</b>`;document.body.appendChild(z);
-  $('zmRange').addEventListener('input',e=>zoomSet(e.target.value));$('zmLens').onclick=()=>lensSheet();})();
-function zoomUI(){const b=$('zmBox'),on_=!!(S&&live&&!S.gate&&S.phase==='locate');if(b.hidden===on_)b.hidden=!on_;if(!on_&&ZM.z!==1)zoomSet(1);}
+(function(){const z=document.createElement('div');z.id='zmBox';z.hidden=true;z.innerHTML=`<button id="zmLens" aria-label="Lens">${ic('camera')}</button><input id="zmRange" type="range" min="-1" max="1" step="0.02" value="0" aria-label="Zoom"><b id="zmLbl">1.0×</b>`;document.body.appendChild(z);
+  $('zmRange').addEventListener('input',e=>{let v=+e.target.value;if(Math.abs(v)<0.05)v=0;zoomSet(s2z(v));});$('zmLbl').onclick=()=>{zoomSet(1);$('zmRange').value=0;};$('zmLens').onclick=()=>lensSheet();})();
+function zoomUI(){const act=!!(S&&live&&!S.gate&&S.phase==='locate'),b=$('zmBox'),on_=act&&ZM.open;if(b.hidden===on_)b.hidden=!on_;if(!act){if(ZM.z!==1)zoomSet(1);ZM.open=false;MAPV.open=false;}attachTick();}
+// zoom panel and map hang under the sensor menu as one column
+function attachTick(){const dk=$('arDock'),zb=$('zmBox'),mp=$('miniPlan');if(!dk||dk.hidden){return;}const r=dk.getBoundingClientRect();if(!r.width)return;let y=r.bottom;
+  const zo=!zb.hidden,mo=!mp.hidden;dk.classList.toggle('att',zo||mo);
+  if(zo){zb.style.top=y+'px';zb.style.right=(innerWidth-r.right)+'px';zb.style.width=r.width+'px';zb.classList.toggle('att',mo);y+=zb.offsetHeight;}
+  if(mo){mp.style.top=y+'px';mp.style.right=(innerWidth-r.right)+'px';mp.classList.toggle('below',zo||true);}}
+setInterval(()=>{try{attachTick();}catch(_){}},120);
 setInterval(()=>{try{zoomUI();}catch(_){}},300);
 function arStart(){if(typeof VR!=='undefined'&&VR.on)return true;try{return !!(window.ArElecNative&&ArElecNative.arStart&&ArElecNative.arStart());}catch(_){return false;}}
 function arReason(){let r='';try{r=window.ArElecNative&&ArElecNative.arReason?ArElecNative.arReason():'';}catch(_){}
@@ -2265,8 +2273,8 @@ function dockTick(force){const el=$('arDock');document.body.classList.toggle('ga
     loc?['mode',S.align&&S.align.two?'ok':S.ok?'ok':S.imgMode?'weak':'off','target','Placement',S.align&&S.align.two?'2 corners':S.ok?'Confirmed':S.imgMode?'Photos':'Not checked']:null].filter(Boolean);
   const by={};rows.forEach(r=>by[r[0]]=r);const bad=['cam','cmp'].filter(k=>by[k]&&by[k][1]!=='ok');
   const hb=$('scanHud'),H=hb&&!hb.hidden&&hb.offsetHeight?hb.offsetHeight:44;el.style.setProperty('--dkH',H+'px');
-  const sig=JSON.stringify([DK.open,rows.map(r=>r[1]),placeConf(),S.arBoot&&!S.arBoot.done?arPct():-1,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
-  const mi=([k,st,i,t,v])=>`<i class="mi ${st}" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`,gp=by.gps;
+  const sig=JSON.stringify([DK.open,ZM.open,MAPV.open,rows.map(r=>r[1]),placeConf(),S.arBoot&&!S.arBoot.done?arPct():-1,H]);if(sig===DK.sig&&!force&&!el.hidden)return;DK.sig=sig;
+  const mi=([k,st,i,t,v])=>`<i class="mi ${st}${(k==='cam'&&ZM.open)||(k==='site'&&MAPV.open)?' sel':''}" data-k="${k}" role="button" title="${t}: ${v}" aria-label="${t}: ${v}">${ic(i)}</i>`,gp=by.gps;
   const boot=loc&&S.arBoot&&!S.arBoot.done,cf=boot?arPct():placeConf(),R_=19,C=2*Math.PI*R_,prog=cf;
   el.innerHTML=`<button class="dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
@@ -2274,7 +2282,8 @@ function dockTick(force){const el=$('arDock');document.body.classList.toggle('ga
   const tg=$('arPctTag');tg.hidden=true;arBadge(act);if(false){tg.textContent=boot?`ARCore${S.geoLock?' · Geo':''} ${cf}%`:`${AR.on?'ARCore':'No ARCore'}${S.geoLock?' · Geo':''} · ${cf}%`;tg.className='float '+(cf>=75?'ok':cf>=40?'weak':'off');tg.hidden=false;}else tg.hidden=true;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.phase!=='locate'||S.alignMode||S.respot||S.pend||S.opDraw))$('arAsk').hidden=true;if($('arAsk')&&!$('arAsk').hidden&&!S)$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
-(()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
+(()=>{let y0=null,k0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;const m=e.target.closest('.mi');k0=m?m.dataset.k:null;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();return;}
+  if(k0==='cam'){ZM.open=!ZM.open;MAPV.open=MAPV.open&&!ZM.open?MAPV.open:MAPV.open;dockTick(true);attachTick();}else if(k0==='site'){MAPV.open=!MAPV.open;MP.sig='';dockTick(true);renderMini();attachTick();}k0=null;});})();
 
 // ---- ceiling: once a room is closed, its ceiling is drawn at the measured height (seen from inside, hidden from above) ----
 const gCeil=new THREE.Group();world.add(gCeil);
@@ -2297,13 +2306,13 @@ const MP={sig:'',last:0};
 function miniPlanTick(){const el=$('miniPlan');const on_=!!(S&&!S.gate&&live&&plan.walls.length&&!(S.alignMode)&&!PGS.length);
   const mb=$('miniBtn'),mx=$('miniX'),dk0=$('arDock').getBoundingClientRect(),top0=Math.round((dk0.bottom||54)+8);
   if(!on_){if(!el.hidden)el.hidden=true;mb.hidden=true;mx.hidden=true;return;}
-  if(SET.miniHide){el.hidden=true;mx.hidden=true;mb.style.top=top0+'px';mb.hidden=false;return;}mb.hidden=true;
+  mb.hidden=true;mx.hidden=true;if(!MAPV.open){el.hidden=true;return;}
   const sig=JSON.stringify(plan.walls)+(S.chain||[]).length+JSON.stringify(devs.map(d=>[d.type,d.wall,d.t,d.cx,d.cz]));if(sig!==MP.sig||el.hidden){MP.sig=sig;const cs=al2Corners(),r=0.22;
     const dv=devs.map(d=>{const q=devPos(d).p,k=TYPES[d.type].kind,col=k==='power'?'#e8590c':k==='light'?'#f2b705':k==='data'?'#3b82f6':'#6b7280';
       return d.wall<0?`<rect x="${q.x-r*0.75}" y="${q.z-r*0.75}" width="${r*1.5}" height="${r*1.5}" rx="${r*0.3}" fill="${col}" stroke="#fff" stroke-width="${r*0.3}"/>`:`<circle cx="${q.x}" cy="${q.z}" r="${r*0.8}" fill="${col}" stroke="#fff" stroke-width="${r*0.3}"/>`;}).join('');
     el.innerHTML=`<svg id="mpS" viewBox="0 0 10 10" aria-hidden="true"><g id="mpG"><g class="mw" stroke-width="${r*0.6}">${plan.walls.map(w=>`<line x1="${w[0][0]}" y1="${w[0][1]}" x2="${w[1][0]}" y2="${w[1][1]}"/>`).join('')}</g>
       ${cs.map(c=>`<circle cx="${c[0]}" cy="${c[1]}" r="${r*0.55}" class="cn"/>`).join('')}${dv}<g id="mpMe"><path d="M0 0L${-r*1.6} ${-r*3.6}A${r*3.9} ${r*3.9} 0 0 1 ${r*1.6} ${-r*3.6}Z" class="cone"/><circle r="${r*0.75}" class="me"/></g></g></svg>`;el.hidden=false;}
-  const dk=$('arDock').getBoundingClientRect();el.style.top=Math.round((dk.bottom||54)+8)+'px';{const r_=el.getBoundingClientRect();mx.style.top=(Math.round((dk.bottom||54)+8)-6)+'px';mx.style.left=(Math.round(r_.left)-6)+'px';mx.hidden=false;}
+
   // small fixed size: the view is centred on you (4 m around), the plan turns with your heading
   const R_=4,x=L.pos.x,z=L.pos.z,sv=$('mpS');if(sv)sv.setAttribute('viewBox',`${(x-R_).toFixed(2)} ${(z-R_).toFixed(2)} ${2*R_} ${2*R_}`);
   const d=new THREE.Vector3();cam.getWorldDirection(d);const a=Math.atan2(d.z,d.x)*180/Math.PI;const g=$('mpG'),me=$('mpMe');
@@ -2394,7 +2403,7 @@ wallHL.renderOrder=9;wallHL.visible=false;world.add(wallHL);let hlWall=-1,hlLbl=
 function highlightWall(i){if(i===hlWall)return;hlWall=i;if(hlLbl){world.remove(hlLbl);hlLbl.material.map.dispose();hlLbl.material.dispose();hlLbl=null;}
   if(i<0||!plan.walls[i]){wallHL.visible=false;return;}const g=wallGeo(i);
   wallHL.scale.set(g.L,plan.height,plan.thick+0.03);wallHL.position.set(g.mx,plan.height/2,g.my);wallHL.rotation.set(0,-Math.atan2(g.dy,g.dx),0);wallHL.visible=true;
-  hlLbl=label(`Wall ${i+1} · ${fmtL(g.L,2)}`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}
+  if(!live){hlLbl=label(`Wall ${i+1} · ${fmtL(g.L,2)}`,'#ffffff');hlLbl.position.set(g.mx,plan.height+0.2,g.my);world.add(hlLbl);}}
 const GREEN=0x1,ORANGE=0x0;const setAim=c=>{aimDisc.material.opacity=c===GREEN?0.85:0.45;};
 function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.arBoot)arBootTick(now);if(S.gate){gateTick(now);return;}try{spAimTick(now);spPendTick(now);vlTick(now);spAuto(now);spSuggestTick(now);}catch(err){console.warn(err);}
   if(S.intro){const o=L.ori;if(o&&!S.intro.a)S.intro.a=[o.a,o.b];const moved=o&&S.intro.a&&(Math.abs(o.a-S.intro.a[0])+Math.abs(o.b-S.intro.a[1])>8);
