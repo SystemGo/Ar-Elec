@@ -329,6 +329,19 @@ body.editing #lineCv{display:none}
 #opCtl .x{left:58px;top:-58px;width:32px;height:32px;margin:-16px 0 0 -16px}#opCtl .x .ic{width:16px;height:16px}
 #opCtlTxt{position:absolute;left:0;top:92px;transform:translateX(-50%);white-space:nowrap;pointer-events:none;background:var(--glass);border-radius:999px;padding:4px 10px;font:600 12px var(--f-display);box-shadow:var(--sh)}
 #opCtl.door #opCtlTxt{top:42px}
+#opCtl button{touch-action:none}
+#opCtl .mn{left:-58px;top:-58px;width:32px;height:32px;margin:-16px 0 0 -16px}#opCtl .mn .ic{width:18px;height:18px}
+#opCtl .inf{left:-58px;top:58px;width:32px;height:32px;margin:-16px 0 0 -16px}#opCtl .inf .ic{width:17px;height:17px}
+#opCtl.op .mn,#opCtl.op .inf{display:none}#opCtl.op.noinfo #opCtlTxt,#opCtl.dev.noinfo #opCtlTxt{display:none}#opCtl.noinfo .inf{opacity:.55}
+#opCtl.dev .c{width:34px;height:34px;margin:-17px 0 0 -17px;background:var(--accent,#2563eb);box-shadow:0 0 0 4px rgba(255,255,255,.85),var(--sh)}
+#opCtlTxt b{font-weight:700;margin-right:2px}#opCtlTxt em{font-style:normal;color:#b45309}
+.cds{display:inline-flex;gap:3px;margin-right:6px;vertical-align:-1px}.cd{display:inline-block;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+.cd.P{background:#8a4b22}.cd.N{background:#2f6fdb}.cd.R{background:#222}.cd.T{background:#f08a24}.cd.E{background:linear-gradient(135deg,#2fae4e 0 50%,#f5d000 50% 100%)}
+#arBadge{position:fixed;z-index:13;top:calc(5px + var(--st));right:calc(38px + var(--sr));width:17px;height:17px;border-radius:50%;border:2px solid var(--bg,#fff);padding:0;display:grid;place-items:center;font:800 7px/1 var(--f-display);color:#fff;letter-spacing:-.2px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+#arBadge[hidden]{display:none}#arBadge[data-st="ok"]{background:#1fa45a}#arBadge[data-st="wait"]{background:#e0a100}#arBadge[data-st="off"]{background:#9aa0a6}
+#miniBtn{position:fixed;z-index:11;right:calc(10px + var(--sr));width:38px;height:38px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:var(--glass);color:var(--fg);box-shadow:var(--sh);cursor:pointer}#miniBtn[hidden]{display:none}#miniBtn .ic{width:19px;height:19px}
+#miniX{position:fixed;z-index:12;width:22px;height:22px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:var(--fg);color:var(--bg);box-shadow:var(--sh);cursor:pointer}#miniX[hidden]{display:none}#miniX .ic{width:12px;height:12px}
+#wireBar small b{font-weight:700}
 #wireBar{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:popUp .35s var(--ease)}
 #wireBar .wbh{display:flex;align-items:center;gap:10px}#wireBar .wbh span{flex:1;min-width:0}#wireBar small{display:block;color:var(--muted);font-size:12.5px}#wireBar .note{margin:0}#wireBar .row2 .btn{padding:10px 8px;font-size:13px}
 body.surveying #wireBar{bottom:calc(var(--navH) + 84px)}
@@ -565,7 +578,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
   <h3>View</h3>
   <button id="v2d" data-ic="floor-plan"><span>2D plan</span></button>
   <button id="v3d" data-ic="cube-outline"><span>3D model</span></button>
-  <hr><button id="xray" data-ic="square-opacity"><span>X-ray walls</span></button><button id="wEdit" data-ic="vector-polyline"><span>Edit wiring</span></button><button id="cTags" data-ic="ruler"><span>Cable labels</span></button>
+  <hr><button id="xray" data-ic="square-opacity"><span>X-ray walls</span></button><button id="wEdit" data-ic="vector-polyline"><span>Edit wiring</span></button>
 </div>
 <div class="float pop" id="camPop" hidden role="menu" aria-label="Camera">
   <h3>Camera</h3>
@@ -580,7 +593,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 <button class="float fab" id="nextBtn" aria-label="Next step"><span id="nextLbl">Next</span></button>
 <div class="float" id="liveHud" hidden></div>
 <div class="float" id="vlBar" hidden role="status" aria-live="polite"></div>
-<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="arMode" class="float" hidden role="status"></div><div id="arSteps" class="float" hidden role="group" aria-label="Steps"></div><div id="arPctTag" class="float" hidden role="status" aria-live="polite"></div><div id="miniPlan" hidden></div><div class="float" id="odrCard" hidden role="dialog" aria-label="Draw doors and windows"></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
+<div class="float" id="alCard" hidden role="status"></div><div class="float" id="arAsk" hidden role="dialog" aria-label="Model position"></div><div id="arDock" hidden></div><div id="arMode" class="float" hidden role="status"></div><button id="miniBtn" class="float" hidden aria-label="Show the top view"></button><button id="miniX" hidden aria-label="Hide the top view"></button><button id="arBadge" hidden aria-label="ARCore"></button><div id="arSteps" class="float" hidden role="group" aria-label="Steps"></div><div id="arPctTag" class="float" hidden role="status" aria-live="polite"></div><div id="miniPlan" hidden></div><div class="float" id="odrCard" hidden role="dialog" aria-label="Draw doors and windows"></div><button id="svBack" hidden aria-label="Leave and save"></button><div id="spotLayer" hidden></div><div id="spotTray" class="float" hidden aria-label="Spots"></div><div id="spotGhost" hidden><b class="gimg"></b><i class="cx"></i></div><div id="spAim" hidden><div class="aimImg"></div><div class="aimRing"><i></i></div><div class="aimGuide"></div></div><div id="spPlace" hidden></div><div class="float" id="spConfirm" hidden role="dialog" aria-label="Spot found"></div><div id="spGal" hidden role="dialog" aria-label="Photos"></div><div class="float" id="spSuggest" hidden role="status"></div>
 <canvas id="lineCv" aria-hidden="true"></canvas>
 <div id="svTools" hidden></div>
 <div class="float" id="svRead" hidden role="status"></div>
@@ -727,6 +740,7 @@ Object.assign(ICONS,(()=>{const g=d=>`<g fill="none" stroke="currentColor" strok
   bell:g('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/>'),
   vmc:g('<circle cx="12" cy="12" r="9"/><path d="M12 12c0-4 3-5 4-3s-4 3-4 3c-4 0-5 3-3 4s3-4 3-4c0 4 3 5 4 3s-4-3-4-3"/>'),
   smoke:g('<path d="M5 14a7 7 0 0 1 14 0z"/><path d="M3 18h18M9 9c1-1 0-2 1-3M13 9c1-1 0-2 1-3"/>'),
+  'dots-horizontal':g('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'),
   grid:g('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'),
 };})());
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
@@ -873,12 +887,32 @@ function detour(pts){const H=plan.height,T=plan.thick,viaF=(plan.wireVia||SET.wi
   return out.filter((v,i)=>i===0||v.distanceTo(out[i-1])>1e-4);}
 // same size on screen whatever the distance (readable in the overview and in AR)
 function fixedLabel(sp,k){const im=sp.material.map.image,H=Math.max(300,innerHeight);sp.material.sizeAttenuation=false;sp.scale.set(im.width/H*k*0.32,im.height/H*k*0.32,1);return sp;}
+const CDN={P:'Phase',N:'Neutral',E:'Earth',R:'Switched return',T:'Traveller'};
+function condOf(what){if(!what)return[];const w=what.toLowerCase(),o=[];if(w.includes('phase'))o.push('P');if(w.includes('neutral'))o.push('N');if(w.includes('switched return'))o.push('R');
+  if(w.includes('2 travellers'))o.push('T','T');if(w.includes('earth'))o.push('E');return o;}
+// what arrives at a device
+function devCond(d){const T=TYPES[d.type];if(!T||!T.kind||T.kind==='data')return[];if(T.kind==='power')return['P','N','E'];
+  if(T.lp)return['R','N','E'];if(d.type==='switchVa')return['P','T','T','E'];if(d.type==='dimmer'||d.type==='detector')return['P','N','R','E'];return['P','R','E'];}
+const dots=cs=>cs.length?`<span class="cds">${cs.map(c=>`<i class="cd ${c}" title="${CDN[c]}"></i>`).join('')}</span>`:'';
 const cab=(n,sec,what)=>({n,what,txt:sec==null?'Cat 6':`${n}G${String(sec).replace('.',',')}`});
+// a cable piece is either vertical or level: a sloped piece becomes vertical + level
+// (leaving a device: straight up/down first; reaching a device: level first, then straight down/up to it)
+function ortho(pts){const out=[pts[0].clone()],n=pts.length,ws=plan.walls.map(([[ax,ay],[bx,by]])=>Math.atan2(by-ay,bx-ax)),a0=planAxisAng();
+  // add a level move from the last point to (x,z); squared off along the walls' directions when it would cross at an angle
+  const level=(x,z)=>{const r=out[out.length-1],hx=x-r.x,hz=z-r.z,hl=Math.hypot(hx,hz);if(hl<1e-4)return;
+    if(hl>0.02&&ws.length){const a=Math.atan2(hz,hx),ok=ws.some(w=>{let d=Math.abs(((a-w)%Math.PI+Math.PI)%Math.PI);d=Math.min(d,Math.PI-d,Math.abs(d-Math.PI/2));return d<0.035;});
+      if(!ok){const ux=Math.cos(a0),uz=Math.sin(a0),du=hx*ux+hz*uz;out.push(new THREE.Vector3(r.x+ux*du,r.y,r.z+uz*du));}}
+    out.push(new THREE.Vector3(x,r.y,z));};
+  const vert=y=>{const r=out[out.length-1];if(Math.abs(y-r.y)>1e-4)out.push(new THREE.Vector3(r.x,y,r.z));};
+  for(let k=1;k<n;k++){const q=pts[k];
+    if(k===1){vert(q.y);level(q.x,q.z);} // leaving a device: straight up/down first
+    else{level(q.x,q.z);vert(q.y);}}     // otherwise level first, then straight up/down
+  return out.filter((v,i)=>i===0||v.distanceTo(out[i-1])>1e-4);}
 const ptsLen=pts=>{let l=0;for(let i=1;i<pts.length;i++)l+=pts[i].distanceTo(pts[i-1]);return l;};
 
 // cable path between two wall devices following the walls (through corners), at the lower device height
-function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+lane*0.012,ga=wallGeo(a.wall),gb=wallGeo(b.wall);
-  const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=(plan.wireVia||SET.wire||'ceiling')==='floor'?0.05+lane*0.02:Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
+function wallRoute(a,b,extra=0,lane=0,hFix=null){const T=plan.thick,off=T/2+0.012+extra+lane*0.012,ga=wallGeo(a.wall),gb=wallGeo(b.wall);
+  const ua=a.t*ga.L,ub=b.t*gb.L,sa=a.side||1,sb=b.side||1,h=hFix!=null?hFix:(plan.wireVia||SET.wire||'ceiling')==='floor'?0.05+lane*0.02:Math.max(0.05,Math.min(a.h,b.h)-0.06-lane*0.02);
   const pa=devPos(a,extra).p,pb=devPos(b,extra).p,V=(x,z,y)=>new THREE.Vector3(x,y,z);
   const onW=(g,u,s,yy)=>V(g.ax+g.ux*u+g.nx*s*off,g.ay+g.uy*u+g.ny*s*off,yy);
   const fin=pts=>{const d=detour(pts);return{pts:d,len:ptsLen(d)};};
@@ -892,7 +926,7 @@ function wallRoute(a,b,extra=0,lane=0){const T=plan.thick,off=T/2+0.012+extra+la
   const N=nodes.length+2,dist=new Array(N).fill(1e9),prv=new Array(N).fill(-1),pw=new Array(N).fill(-1),done=new Array(N).fill(false);dist[A]=0;
   for(;;){let u=-1;for(let i=0;i<N;i++)if(!done[i]&&dist[i]<1e9&&(u<0||dist[i]<dist[u]))u=i;if(u<0||u===B)break;done[u]=true;
     E.forEach(([x,y,w,wi])=>{const v=x===u?y:y===u?x:-1;if(v<0||done[v])return;if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prv[v]=u;pw[v]=wi;}});}
-  if(dist[B]>=1e9)return fin([pa.clone(),V(pa.x,h,pa.z),V(pb.x,h,pb.z),pb.clone()]);
+  if(dist[B]>=1e9)return fin([pa.clone(),new THREE.Vector3(pa.x,h,pa.z),new THREE.Vector3(pb.x,h,pb.z),pb.clone()]); // walls not connected: straight across (squared off later)
   const seq=[];for(let v=B;v!==-1;v=prv[v])seq.unshift(v);
   // offset each corner into the room: average of the normals of the two walls it joins, on the device side
   const bc=bounds(),inN0=wi=>{const g=wallGeo(wi);const sgn=((bc.cx-(g.ax+g.bx)/2)*g.nx+(bc.cy-(g.ay+g.by)/2)*g.ny)>=0?1:-1;return[g.nx*sgn,g.ny*sgn];};
@@ -910,9 +944,10 @@ function routeCircuits(){
   list.forEach(c=>{const y=viaF&&c.kind!=='light'?0.05+c.lane*0.03:plan.height-0.1-c.lane*0.045;let len=0;
     const leg=(a,b,how,cb)=>{const pa=devPos(a,0.02).p,pb=devPos(b,0.02).p,key=a.id+'>'+b.id;let pts;
       if(how==='wall')pts=wallRoute(a,b,0.02,c.lane).pts; // socket → next socket along the walls, one cable each
-      else pts=detour([pa.clone(),new THREE.Vector3(pa.x,y,pa.z),new THREE.Vector3(pb.x,y,pb.z),pb.clone()]); // up to the ceiling (or floor), across, down
+      else pts=wallRoute(a,b,0.02,c.lane,y).pts; // up to the ceiling (or floor), along the walls, down
+      pts=ortho(pts);
       const ed=edits[key],auto=!ed;if(ed)pts=[pa.clone(),...ed.map(v=>new THREE.Vector3(v[0],v[1],v[2])),pb.clone()];
-      const L0=ptsLen(pts);len+=L0;legs.push({key,c,pts,len:L0,auto,from:a,to:b,cab:cb});};
+      const draw=ortho(pts),L0=ptsLen(draw);len+=L0;legs.push({key,c,pts,draw,len:L0,auto,from:a,to:b,cab:cb});};
     if(c.kind==='light'&&c.lights&&c.lights.length){let prevD=panel;const S_=c.sec;
       c.lights.forEach(L=>{leg(prevD,L,'ceil',cab(3,S_,'phase · neutral · earth'));prevD=L;
         const cs=(c.ctrl.get(L.id)||[]).slice(),va=cs.filter(d=>d.type==='switchVa');
@@ -921,12 +956,12 @@ function routeCircuits(){
         cs.forEach(d=>leg(L,d,'ceil',d.type==='detector'||d.type==='dimmer'?cab(4,S_,'phase · neutral · switched return · earth'):cab(3,S_,'phase · switched return · earth')));});}
     else{let prevD=panel;c.devs.forEach(d=>{leg(prevD,d,c.kind!=='light'&&prevD!==panel?'wall':'ceil',c.kind==='data'?cab(0,null,'data'):cab(3,c.sec,'phase · neutral · earth'));prevD=d;});}
     c.length=len*1.1;}); // +10 % slack for drops & boxes
-  legs.forEach(l=>{const pts=l.pts,on=typeof WE!=='undefined'&&WE.on&&WE.sel===l.key,r=0.006+(l.c.sec||1.5)*0.0012+(on?0.006:0);
+  legs.forEach(l=>{const pts=l.draw||l.pts,on=typeof WE!=='undefined'&&WE.on&&WE.sel===l.key,r=0.006+(l.c.sec||1.5)*0.0012+(on?0.006:0);
     const path=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)if(pts[i].distanceTo(pts[i+1])>1e-4)path.add(new THREE.LineCurve3(pts[i],pts[i+1]));if(!path.curves.length)return;
     const col=on?0xffffff:l.c.color;
     const tube=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*6),r,6,false),new THREE.MeshLambertMaterial({color:col,emissive:new THREE.Color(col).multiplyScalar(on?0.6:0.25)}));
     tube.userData.leg=l.key;gWires.add(tube);
-    if(SET.cabTags!==false&&typeof label==='function'&&l.cab){let bi=0,bl=0;for(let i=0;i<pts.length-1;i++){const d=pts[i].distanceTo(pts[i+1]);if(d>bl){bl=d;bi=i;}}
+    if(false&&l.cab){let bi=0,bl=0;for(let i=0;i<pts.length-1;i++){const d=pts[i].distanceTo(pts[i+1]);if(d>bl){bl=d;bi=i;}}
       if(bl>0.25){const sp=fixedLabel(label(l.cab.txt+(l.cab.n?' mm²':''),'pill'),0.75);sp.position.copy(pts[bi].clone().lerp(pts[bi+1],0.5));sp.position.y+=0.06;sp.userData.leg=l.key;gWires.add(sp);}}});
   return {panel,list,legs};
 }
@@ -1012,7 +1047,7 @@ function weOwn(l){const E=plan.wireEdit||(plan.wireEdit={});if(!E[l.key])E[l.key
 function weUI(){const el=$('wireBar');if(!WE.on){el.hidden=true;return;}const l=weLeg();
   if(!l){el.innerHTML=`<div class="wbh"><span><b>Edit wiring</b><small>Tap a wire to add a point</small></span><button class="btn primary" id="weDone">${ic('check')}Done</button></div>`;}
   else{const c=l.c,cl=lastRoute.legs.filter(q=>q.c===c),tot=cl.reduce((t,q)=>t+q.len,0)*1.1;
-    el.innerHTML=`<div class="wbh"><span><b>${esc(KIND[c.kind].name)} ${c.idx+1} · ${secTxt(c.sec)}${c.brk&&c.brk!=='—'?' · '+c.brk:''}</b><small>${l.cab?`<b>${l.cab.txt}${l.cab.n?' mm²':''}</b>${l.cab.n?' · '+l.cab.what:''} · `:''}${esc(TYPES[l.from.type].label)} → ${esc(TYPES[l.to.type].label)} · ${fmtL(l.len,2)} · circuit ${fmtL(tot,1)}${l.auto?'':' · edited'}</small></span><button class="icon" id="weX" aria-label="Deselect">${ic('close')}</button></div>
+    el.innerHTML=`<div class="wbh"><span><b>${esc(KIND[c.kind].name)} ${c.idx+1}${c.brk&&c.brk!=='—'?' · '+c.brk:''}</b><small>${l.cab?dots(condOf(l.cab.what))+`<b>${l.cab.txt}</b> · `:''}${fmtL(l.len,2)}${SET.info===false?'':` · ${esc(DEV_SHORT[l.from.type]||TYPES[l.from.type].short)} → ${esc(DEV_SHORT[l.to.type]||TYPES[l.to.type].short)}`}</small></span><button class="icon" id="weX" aria-label="Deselect">${ic('close')}</button></div>
       <p class="note">Drag a point: it slides along the wall · tap the wire to add a point</p>
       <div class="row2"><button class="btn" id="weDel" ${WE.last<1?'disabled':''}>${ic('minus')}Delete point</button><button class="btn" id="weReset" ${l.auto?'disabled':''}>${ic('restore')}Auto route</button><button class="btn primary" id="weDone">${ic('check')}Done</button></div>`;}
   el.hidden=false;
@@ -1021,13 +1056,13 @@ function weUI(){const el=$('wireBar');if(!WE.on){el.hidden=true;return;}const l=
   on('weDel','click',()=>{const L_=weLeg();if(!L_||WE.last<1)return;const E=weOwn(L_);E.splice(WE.last-1,1);WE.last=-1;save();weRebuild();weUI();});
   on('weReset','click',()=>{const L_=weLeg();if(!L_||!plan.wireEdit)return;delete plan.wireEdit[L_.key];WE.last=-1;save();weRebuild();weUI();});}
 function weLocal(x,y){castAt(x,y);const o=world.worldToLocal(ray.ray.origin.clone()),q=world.worldToLocal(ray.ray.origin.clone().add(ray.ray.direction));return{o,d:q.sub(o)};}
-canvas.addEventListener('pointerdown',e=>{if(!WE.on)return;WE.down=[e.clientX,e.clientY,performance.now()];castAt(e.clientX,e.clientY);
+canvas.addEventListener('pointerdown',e=>{if(!WE.on)return;if(pickDev(e.clientX,e.clientY)){WE.down=null;return;}WE.down=[e.clientX,e.clientY,performance.now()];castAt(e.clientX,e.clientY);
   const h=ray.intersectObjects(WE.g.children.filter(m=>m.userData.wi!=null))[0];if(!h)return;
   e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}
   const l=weLeg(),i=h.object.userData.wi,P=l.pts[i];WE.drag={i,pid:e.pointerId,y:P.y,sy:e.clientY,moved:false};WE.last=i;weRender();weUI();},true);
 let weRAF=0;
 canvas.addEventListener('pointermove',e=>{const D=WE.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();const l=weLeg();if(!l)return;const E=weOwn(l),pt=E[D.i-1];if(!pt)return;
-  castAt(e.clientX,e.clientY);const surf=[...gWalls.children.filter(o=>o.isMesh),...gCeil.children.filter(o=>o.isMesh)];if(floorMesh)surf.push(floorMesh);
+  castAt(e.clientX,e.clientY);const surf=[...wallMeshes(),...gCeil.children.filter(o=>o.isMesh)];if(floorMesh)surf.push(floorMesh);
   const hs=ray.intersectObjects(surf)[0];
   if(hs){const P=world.worldToLocal(hs.point.clone()),n=hs.face?hs.face.normal.clone().transformDirection(hs.object.matrixWorld):new THREE.Vector3(0,1,0);
     if(n.dot(ray.ray.direction)>0)n.negate();P.addScaledVector(n,0.025);pt[0]=+P.x.toFixed(3);pt[1]=+Math.max(0.02,Math.min(plan.height-0.02,P.y)).toFixed(3);pt[2]=+P.z.toFixed(3);}
@@ -1041,16 +1076,18 @@ const weEnd=e=>{const D=WE.drag;if(D&&e.pointerId===D.pid){e.stopImmediatePropag
 canvas.addEventListener('pointerup',weEnd,true);canvas.addEventListener('pointercancel',weEnd,true);
 
 const DD={drag:null};
-canvas.addEventListener('pointerdown',e=>{if(sel==null||selOp!=null||(typeof WE!=='undefined'&&WE.on)||tool||!view3d)return;if(typeof S!=='undefined'&&S&&S.phase==='locate'&&S.step!=='dev')return;
-  const id=pickDev(e.clientX,e.clientY);if(id!==sel)return;e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}DD.drag={pid:e.pointerId,moved:false,x:e.clientX,y:e.clientY};},true);
-canvas.addEventListener('pointermove',e=>{const D=DD.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();if(!D.moved&&Math.hypot(e.clientX-D.x,e.clientY-D.y)<6)return;D.moved=true;
-  const d=devs.find(x=>x.id===sel);if(!d)return;castAt(e.clientX,e.clientY);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return;
-  const at=wallHitInfo(h),P=world.worldToLocal(h.point.clone()),L0=Math.min(TYPES[d.type].h,plan.height-0.05);let y=P.y;const snapped=Math.abs(y-L0)<SNAP;if(snapped)y=L0;
-  Object.assign(d,{wall:at.wall,t:+at.t.toFixed(4),side:at.side,h:+Math.max(0.05,Math.min(plan.height-0.05,y)).toFixed(3)});requestBuild();snapRender();opCtlTick(true);},true);
-const ddEnd=e=>{const D=DD.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();DD.drag=null;if(D.moved){save();build();const d=devs.find(x=>x.id===sel);if(d)flash(onLine(d)?`On its line · ${fmtL(d.h,2)}`:`Off the line · ${fmtL(d.h,2)}`);}};
+canvas.addEventListener('pointerdown',e=>{if(tool||!view3d||e.button>0)return;if(typeof S!=='undefined'&&S&&(S.phase!=='locate'||S.step!=='dev'||S.opDraw))return;
+  const id=pickDev(e.clientX,e.clientY);if(!id)return;e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+  const sp=(()=>{const d=devs.find(q=>q.id===id);if(!d)return null;const a=world.localToWorld(devPos(d,0.02).p.clone()).project(cam),r=canvas.getBoundingClientRect();return[r.left+(a.x+1)/2*r.width,r.top+(1-a.y)/2*r.height];})();
+  DD.drag={pid:e.pointerId,moved:false,x:e.clientX,y:e.clientY,id,ox:sp?sp[0]-e.clientX:0,oy:sp?sp[1]-e.clientY:0};},true);
+canvas.addEventListener('pointermove',e=>{const D=DD.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();if(!D.moved&&Math.hypot(e.clientX-D.x,e.clientY-D.y)<8)return;
+  if(!D.moved){D.moved=true;if(sel!==D.id){sel=D.id;selOp=null;devMenu=false;renderProps();}}dragTo(e.clientX+D.ox,e.clientY+D.oy);if(typeof WE!=='undefined'&&WE.on)weRebuild();},true);
+const ddEnd=e=>{const D=DD.drag;if(!D||e.pointerId!==D.pid)return;e.stopImmediatePropagation();DD.drag=null;
+  if(D.moved){save();build();const d=devs.find(x=>x.id===sel);if(d)flash(onLine(d)?`On its line · ${fmtL(d.h,2)}`:`Off the line · ${fmtL(d.h,2)}`);return;}
+  if(typeof WE!=='undefined'&&WE.on)return;sel=D.id;selOp=null;devMenu=false;propsMin=false;refresh();};
 canvas.addEventListener('pointerup',ddEnd,true);canvas.addEventListener('pointercancel',ddEnd,true);
 function doubleTap(x,y){castAt(x,y);
-  const h=ray.intersectObjects([...gWalls.children.filter(o=>o.isMesh),...gDevs.children,floorMesh],true)[0];if(!h)return;const P=h.point.clone();
+  const h=ray.intersectObjects([...wallMeshes(),...gDevs.children,floorMesh],true)[0];if(!h)return;const P=h.point.clone();
   if(fps){let tx=P.x,tz=P.z;if(h.object!==floorMesh){const dx=cam.position.x-P.x,dz=cam.position.z-P.z,L=Math.hypot(dx,dz)||1;tx=P.x+dx/L*0.8;tz=P.z+dz/L*0.8;}
     for(let i=0;i<25&&blocked(tx,tz);i++){tx+=(cam.position.x-tx)*0.15;tz+=(cam.position.z-tz)*0.15;}
     if(blocked(tx,tz)){flash('Too close to a wall to stand there.');return;}
@@ -1058,7 +1095,7 @@ function doubleTap(x,y){castAt(x,y);
     flyTo({mode:'fps',p0:cam.position.clone(),p1:new THREE.Vector3(tx,EYE,tz)});}
   else flyTo({mode:'orbit',t0:orb.target.clone(),t1:P,r0:orb.r,r1:Math.min(orb.r,4)});}
 // finger-friendly picking: nearest visible device within 34 px of the tap
-function pickDev(x,y){const r=canvas.getBoundingClientRect();let best=null,bd=34;const walls=gWalls.children.filter(o=>o.isMesh);
+function pickDev(x,y){const r=canvas.getBoundingClientRect();let best=null,bd=34;const walls=wallMeshes();
   devs.forEach(d=>{const p=world.localToWorld(devPos(d).p),v=p.clone().project(cam);if(v.z>1||v.z<-1)return;
     const sx=r.left+(v.x+1)/2*r.width,sy=r.top+(1-v.y)/2*r.height,dd=Math.hypot(sx-x,sy-y);if(dd>=bd)return;
     const dir=p.clone().sub(cam.position),L=dir.length();const rc=new THREE.Raycaster(cam.position,dir.normalize(),0.01,L-0.03);
@@ -1068,6 +1105,8 @@ function pickDev(x,y){const r=canvas.getBoundingClientRect();let best=null,bd=34
 // ---------- device catalog: opens when you tap a wall (devices step, 3D view); the device goes where you tapped ----------
 const CATS=[['power','Sockets','power-socket-fr'],['control','Switches','light-switch'],['light','Lights','wall-sconce-flat-variant-outline'],['network','Network & media','ethernet'],['other','Other','fuse']];
 let catTab='power';
+// every wall mesh, including the pieces of walls cut by a door or window (they inherit the wall index)
+function wallMeshes(){const out=[];gWalls.children.forEach(o=>{const wi=o.userData.wall;o.traverse(m=>{if(m.isMesh){if(m.userData.wall==null&&wi!=null)m.userData.wall=wi;if(m.userData.wall!=null)out.push(m);}});});return out;}
 function wallHitInfo(h){const i=h.object.userData.wall,g=wallGeo(i),P=world.worldToLocal(h.point.clone());let t=((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L;t=Math.min(0.98,Math.max(0.02,t));
   const side=((P.x-g.ax)*g.nx+(P.z-g.ay)*g.ny)>=0?1:-1;return{wall:i,t,side};}
 function addDevice(type,at){const T=TYPES[type];if(!T||!at)return null;
@@ -1084,8 +1123,8 @@ function openCatalog(at){const hasPanel=devs.some(d=>d.type==='panel');
         if(at){const d=addDevice(ty,at);if(d&&!(typeof S!=='undefined'&&S)){sel=d.id;refresh();}}});});}
 // finger-friendly wire picking: nearest cable segment on screen within 26 px; returns the leg and the 3D point under the finger
 function pickWire(x,y){if(!lastRoute||!lastRoute.legs)return null;const r=canvas.getBoundingClientRect(),S2=v=>{const q=world.localToWorld(v.clone()).project(cam);return q.z>1?null:[r.left+(q.x+1)/2*r.width,r.top+(1-q.y)/2*r.height];};
-  let best=null,bd=20;lastRoute.legs.forEach(l=>{for(let i=0;i<l.pts.length-1;i++){const a=S2(l.pts[i]),b=S2(l.pts[i+1]);if(!a||!b)continue;const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L2)),d=Math.hypot(a[0]+dx*t-x,a[1]+dy*t-y);
-    if(d<bd){bd=d;best={key:l.key,point:world.localToWorld(l.pts[i].clone().lerp(l.pts[i+1],t))};}}});return best;}
+  let best=null,bd=20;lastRoute.legs.forEach(l=>{const P_=l.draw||l.pts;for(let i=0;i<P_.length-1;i++){const a=S2(P_[i]),b=S2(P_[i+1]);if(!a||!b)continue;const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L2)),d=Math.hypot(a[0]+dx*t-x,a[1]+dy*t-y);
+    if(d<bd){bd=d;best={key:l.key,point:world.localToWorld(P_[i].clone().lerp(P_[i+1],t))};}}});return best;}
 // tap on a wire: a new bend point exactly there, ready to drag along the wall
 function weTapWire(h){const key=h.key;if(!WE.on){WE.on=true;xray=true;sel=null;selOp=null;renderProps();}
   WE.sel=key;weRebuild();const l=weLeg();if(!l){weUI();return;}
@@ -1093,14 +1132,14 @@ function weTapWire(h){const key=h.key;if(!WE.on){WE.on=true;xray=true;sel=null;s
   const E=weOwn(l);E.splice(best,0,[+P.x.toFixed(3),+P.y.toFixed(3),+P.z.toFixed(3)]);WE.last=best+1;save();weRebuild();weUI();if(typeof svUI==='function'&&typeof S!=='undefined'&&S)svUI();}
 function singleTap(x,y){if(WE.on)return;if(typeof S!=='undefined'&&S&&!S.gate&&S.phase!=='locate'&&live){addSpot(x,y);return;}castAt(x,y);
   if(!tool&&!moveMode&&!(typeof S!=='undefined'&&S&&S.phase!=='locate')){ // finger right on a door/window: it wins over nearby devices
-    const ho0=ray.intersectObjects(gOpen.children,true).find(h=>h.object.userData.opening!=null),hd0=ray.intersectObjects(gDevs.children,true)[0],hw0=xray?null:ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
+    const ho0=ray.intersectObjects(gOpen.children,true).find(h=>h.object.userData.opening!=null),hd0=ray.intersectObjects(gDevs.children,true)[0],hw0=xray?null:ray.intersectObjects(wallMeshes())[0];
     if(ho0&&(!hd0||ho0.distance<hd0.distance)&&(!hw0||ho0.distance<hw0.distance+0.05)){selOp=ho0.object.userData.opening;opMenu=false;sel=null;propsMin=false;refresh();return;}}
   if(!tool&&!moveMode){const id=pickDev(x,y);if(id){sel=id;devMenu=false;selOp=null;propsMin=false;refresh();return;}
     const wiresOk=!(typeof S!=='undefined'&&S&&S.phase==='locate'&&S.step!=='dev');
-    const hwire=wiresOk?pickWire(x,y):null,hw0=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
+    const hwire=wiresOk?pickWire(x,y):null,hw0=ray.intersectObjects(wallMeshes())[0];
     if(hwire&&(xray||!hw0||cam.position.distanceTo(hwire.point)<hw0.distance+0.08)){weTapWire(hwire);return;}
     const ho=ray.intersectObjects(gOpen.children,true).find(h=>h.object.userData.opening!=null);if(ho&&!(typeof S!=='undefined'&&S&&S.phase!=='locate')){selOp=ho.object.userData.opening;opMenu=false;sel=null;propsMin=false;refresh();return;}}
-  const hw=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
+  const hw=ray.intersectObjects(wallMeshes())[0];
   if(hw&&(tool||(moveMode&&sel))){const i=hw.object.userData.wall,g=wallGeo(i),P=hw.point;
     let t=((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L;t=Math.min(0.98,Math.max(0.02,t));
     const side=((P.x-g.mx)*g.nx+(P.z-g.my)*g.ny)>=0?1:-1;
@@ -1288,7 +1327,7 @@ function devNudge(dir){const d=devs.find(x=>x.id===sel);if(!d)return;const g=wal
 function snapRender(dragH){clear(gSnap);const d=devs.find(x=>x.id===sel);if(!d||d.wall>=plan.walls.length||!view3d)return;const g=wallGeo(d.wall),L0=devStdH(d),off=d.side*(plan.thick/2+0.006),on_=Math.abs((dragH!=null?dragH:d.h)-L0)<0.005;
   const mk=(h,col,op)=>{const m=new THREE.LineDashedMaterial({color:col,dashSize:0.08,gapSize:0.05,transparent:true,opacity:op,depthTest:false});const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(g.ax+g.nx*off,h,g.ay+g.ny*off),new THREE.Vector3(g.bx+g.nx*off,h,g.by+g.ny*off)]),m);ln.computeLineDistances();ln.renderOrder=20;gSnap.add(ln);};
   mk(L0,on_?0x1fa45a:0xffffff,on_?1:0.9);
-  if(typeof label==='function'){const sp=fixedLabel(label(`${TYPES[d.type].label.split(' (')[0]} line · ${fmtL(L0,2)}`,'pill'),0.85);sp.position.set(g.ax+g.ux*0.35+g.nx*off,L0+0.07,g.ay+g.uy*0.35+g.ny*off);gSnap.add(sp);}
+  if(false){const sp=null;sp.position.set(g.ax+g.ux*0.35+g.nx*off,L0+0.07,g.ay+g.uy*0.35+g.ny*off);gSnap.add(sp);}
   kick();}
 function opNudge(dir){if(sel!=null&&selOp==null)return devNudge(dir);const o=ops().find(q=>q.id===selOp);if(!o)return;const g=wallGeo(o.wall),st=0.05;
   if(dir==='l'||dir==='r'){const k=(dir==='r'?1:-1)*(OPC.flip?-1:1),t=o.t+k*st/g.L,half=(o.w/2+0.05)/g.L,nt=Math.min(1-half,Math.max(half,t));
@@ -1298,21 +1337,21 @@ function opNudge(dir){if(sel!=null&&selOp==null)return devNudge(dir);const o=ops
 function devCtlTick(el,d,force){if(d.wall>=plan.walls.length){el.hidden=true;return;}const g=wallGeo(d.wall),P=devPos(d,0.02).p,Q=P.clone().add(new THREE.Vector3(g.ux*0.5,0,g.uy*0.5));
   const a=world.localToWorld(P.clone()).project(cam),b=world.localToWorld(Q.clone()).project(cam);if(a.z>1||Math.abs(a.x)>1.2||Math.abs(a.y)>1.2){el.hidden=true;return;}
   OPC.flip=b.x<a.x;const r=canvas.getBoundingClientRect(),x=Math.max(90,Math.min(innerWidth-90,r.left+(a.x+1)/2*r.width)),y=Math.max(130,Math.min(innerHeight-230,r.top+(1-a.y)/2*r.height));
-  el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;el.classList.remove('door');el.classList.add('dev');
-  const sig='d'+d.id+d.t+d.h+d.type;if(force||sig!==OPC.sig){OPC.sig=sig;$('opCtlTxt').textContent=`${TYPES[d.type].label.split(' (')[0]} · ${fmtL(d.h,2)} · ${onLine(d)?'on its line':'off the line'}`;}
+  el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;el.classList.remove('door','op');el.classList.add('dev');
+  const sig='d'+d.id+d.t+d.h+d.type+(SET.info!==false);if(force||sig!==OPC.sig){OPC.sig=sig;const s_=wsec(d);$('opCtlTxt').innerHTML=`${dots(devCond(d))}<b>${esc(DEV_SHORT[d.type]||TYPES[d.type].label.split(' (')[0])}</b> ${fmtL(d.h,2)}${s_!=null?' · '+secTxt(s_):''}${onLine(d)?'':' · <em>off line</em>'}`;el.classList.toggle('noinfo',SET.info===false);}
   el.hidden=false;const tx=$('opCtlTxt'),w=tx.offsetWidth||0,lft=x-w/2,sh=lft<8?8-lft:lft+w>innerWidth-8?innerWidth-8-(lft+w):0;tx.style.marginLeft=sh+'px';}
 // true (unclamped) screen position of the selected device or opening
 function selScreen(){let P=null;if(selOp==null&&sel!=null){const d=devs.find(q=>q.id===sel);if(d)P=devPos(d,0.02).p;}
   else{const o=ops().find(q=>q.id===selOp);if(o){const g=wallGeo(o.wall),side=((cam.position.x-g.mx)*g.nx+(cam.position.z-g.my)*g.ny)>=0?1:-1;P=new THREE.Vector3(g.ax+g.ux*o.t*g.L+g.nx*side*plan.thick/2,(o.sill||0)+o.h/2,g.ay+g.uy*o.t*g.L+g.ny*side*plan.thick/2);}}
   if(!P)return null;const a=world.localToWorld(P.clone()).project(cam),r=canvas.getBoundingClientRect();return[r.left+(a.x+1)/2*r.width,r.top+(1-a.y)/2*r.height];}
-function dragTo(x,y){castAt(x,y);const walls=gWalls.children.filter(o=>o.isMesh);
-  if(selOp==null&&sel!=null){const d=devs.find(q=>q.id===sel);if(!d)return;const h=ray.intersectObjects(walls)[0];if(!h)return;
-    let at=wallHitInfo(h),P=world.worldToLocal(h.point.clone());const L0=devStdH(d);
+function dragTo(x,y){castAt(x,y);const walls=wallMeshes();
+  if(selOp==null&&sel!=null){const d=devs.find(q=>q.id===sel);if(!d)return;const h=ray.intersectObjects(walls)[0];
+    let at=h?wallHitInfo(h):{wall:d.wall,t:d.t,side:d.side},P=h?world.worldToLocal(h.point.clone()):new THREE.Vector3(0,d.h,0);const L0=devStdH(d);
     // same wall: follow the face the device is mounted on (no jump to the other face from an outside view)
-    const wi=at.wall===d.wall||ray.intersectObjects(walls).some(q=>q.object.userData.wall===d.wall)?d.wall:at.wall;
+    const wi=!h||at.wall===d.wall||ray.intersectObjects(walls).some(q=>q.object.userData.wall===d.wall)?d.wall:at.wall; // past the wall's end: keep sliding along it
     if(wi===d.wall){const g=wallGeo(wi),org=world.worldToLocal(ray.ray.origin.clone()),dir=world.worldToLocal(ray.ray.origin.clone().add(ray.ray.direction)).sub(org),den=dir.x*g.nx+dir.z*g.ny;
       if(Math.abs(den)>1e-6){const tt=((g.ax+g.nx*d.side*plan.thick/2-org.x)*g.nx+(g.ay+g.ny*d.side*plan.thick/2-org.z)*g.ny)/den;
-        if(tt>0){P=org.addScaledVector(dir,tt);at={wall:wi,t:Math.min(0.98,Math.max(0.02,((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L)),side:d.side};}}}
+        if(tt>0){P=org.addScaledVector(dir,tt);if(!h&&P.distanceTo(devPos(d).p)>0.4)return;at={wall:wi,t:Math.min(0.98,Math.max(0.02,((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L)),side:d.side};}}}
     let yy=P.y;if(Math.abs(yy-L0)<SNAP)yy=L0;
     Object.assign(d,{wall:at.wall,t:+at.t.toFixed(4),side:at.side,h:+Math.max(0.05,Math.min(plan.height-0.05,yy)).toFixed(3)});requestBuild();snapRender();opCtlTick(true);return;}
   const o=ops().find(q=>q.id===selOp);if(!o)return;const g=wallGeo(o.wall),side=((cam.position.x-g.mx)*g.nx+(cam.position.z-g.my)*g.ny)>=0?1:-1,
@@ -1322,7 +1361,7 @@ function dragTo(x,y){castAt(x,y);const walls=gWalls.children.filter(o=>o.isMesh)
   if(!opsOn(o.wall).some(q=>q!==o&&Math.abs(q.t-nt)*g.L<(q.w+o.w)/2))o.t=+nt.toFixed(4);
   if(o.type==='window')o.sill=+Math.max(0,Math.min(plan.height-o.h-0.02,P.y-o.h/2)).toFixed(3);requestBuild();opCtlTick(true);}
 function opCtlBuild(){const el=document.createElement('div');el.id='opCtl';el.hidden=true;
-  el.innerHTML=`<button data-d="u" aria-label="Up">${ic('chevron-up')}</button><button data-d="l" aria-label="Left">${ic('chevron-left')}</button><button class="c" id="opCtlMid" aria-label="Precise settings"><i></i></button><button data-d="r" aria-label="Right">${ic('chevron-right')}</button><button data-d="d" aria-label="Down">${ic('chevron-down')}</button><span id="opCtlTxt"></span><button class="x" id="opCtlX" aria-label="Deselect">${ic('close')}</button>`;
+  el.innerHTML=`<button data-d="u" aria-label="Up">${ic('chevron-up')}</button><button data-d="l" aria-label="Left">${ic('chevron-left')}</button><button class="c" id="opCtlMid" aria-label="Precise settings"><i></i></button><button data-d="r" aria-label="Right">${ic('chevron-right')}</button><button data-d="d" aria-label="Down">${ic('chevron-down')}</button><span id="opCtlTxt"></span><button class="x" id="opCtlX" aria-label="Deselect">${ic('close')}</button><button class="mn" id="opCtlMenu" aria-label="Settings">${ic('dots-horizontal')}</button><button class="inf" id="opCtlInfo" aria-label="Show or hide information">${ic('information-outline')}</button>`;
   document.body.appendChild(el);
   el.querySelectorAll('[data-d]').forEach(b=>{const d=b.dataset.d,stop=()=>{clearTimeout(OPC.hold);clearInterval(OPC.hold);OPC.hold=null;};
     b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();opNudge(d);stop();OPC.hold=setTimeout(()=>{OPC.hold=setInterval(()=>opNudge(d),90);},380);});
@@ -1333,22 +1372,24 @@ function opCtlBuild(){const el=document.createElement('div');el.id='opCtl';el.hi
   mid.addEventListener('pointermove',e=>{if(!md)return;e.stopPropagation();if(!md.moved&&Math.hypot(e.clientX-md.x,e.clientY-md.y)<6)return;md.moved=true;dragTo(e.clientX+md.ox,e.clientY+md.oy);});
   mid.addEventListener('pointerup',e=>{if(!md)return;e.stopPropagation();const m=md;md=null;
     if(m.moved){save();build();const d=selOp==null?devs.find(x=>x.id===sel):null;if(d)flash(onLine(d)?`On its line · ${fmtL(d.h,2)}`:`Off the line · ${fmtL(d.h,2)}`);opCtlTick(true);return;}
-    if(selOp==null&&sel!=null)devMenu=true;else opMenu=true;propsMin=false;renderProps();opCtlTick(true);});
+    if(selOp==null&&sel!=null){flash('Drag the point to move it · ⋯ for settings');return;}opMenu=true;propsMin=false;renderProps();opCtlTick(true);});
   mid.addEventListener('pointercancel',()=>{md=null;});
+  $('opCtlMenu').onclick=e=>{e.stopPropagation();if(selOp==null&&sel!=null)devMenu=true;else opMenu=true;propsMin=false;renderProps();opCtlTick(true);};
+  $('opCtlInfo').onclick=e=>{e.stopPropagation();SET.info=SET.info===false;setSave();OPC.sig='';opCtlTick(true);if(typeof weUI==='function'&&WE.on)weUI();};
   $('opCtlX').onclick=e=>{e.stopPropagation();selOp=null;opMenu=false;sel=null;devMenu=false;moveMode=false;refresh();};
   return el;}
 function opCtlTick(force){const el=OPC.el||(OPC.el=opCtlBuild());const o=selOp!=null&&!opMenu&&view3d&&!editing?ops().find(q=>q.id===selOp):null;
   const dv=!o&&selOp==null&&sel!=null&&!devMenu&&view3d&&!editing&&!(typeof WE!=='undefined'&&WE.on)?devs.find(x=>x.id===sel):null;
   if(dv)return devCtlTick(el,dv,force);
-  if(!o||o.wall>=plan.walls.length){if(!el.hidden)el.hidden=true;return;}el.classList.remove('dev');
+  if(!o||o.wall>=plan.walls.length){if(!el.hidden)el.hidden=true;return;}el.classList.remove('dev');el.classList.add('op');
   const g=wallGeo(o.wall),c=o.t*g.L,mid=(o.sill||0)+o.h/2,side=((cam.position.x-g.mx)*g.nx+(cam.position.z-g.my)*g.ny)>=0?1:-1,off=side*(plan.thick/2+0.02);
   const P=new THREE.Vector3(g.ax+g.ux*c+g.nx*off,mid,g.ay+g.uy*c+g.ny*off),Q=P.clone().add(new THREE.Vector3(g.ux*0.5,0,g.uy*0.5));
   const a=world.localToWorld(P.clone()).project(cam),b=world.localToWorld(Q.clone()).project(cam);if(a.z>1||Math.abs(a.x)>1.2||Math.abs(a.y)>1.2){el.hidden=true;return;}
   OPC.flip=b.x<a.x; // the wall runs right-to-left on screen: swap so the right arrow moves right
   const r=canvas.getBoundingClientRect(),x=Math.max(90,Math.min(innerWidth-90,r.left+(a.x+1)/2*r.width)),y=Math.max(130,Math.min(innerHeight-230,r.top+(1-a.y)/2*r.height));
   el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
-  const sig=o.type+o.w+o.h+o.sill+o.t;if(force||sig!==OPC.sig){OPC.sig=sig;el.classList.toggle('door',o.type==='door');
-    $('opCtlTxt').textContent=`${OPEN[o.type].label} ${fmtL(o.w,2)} × ${fmtL(o.h,2)}${o.type==='window'?' · sill '+fmtL(o.sill||0,2):''}`;}
+  const sig=o.type+o.w+o.h+o.sill+o.t+(SET.info!==false);if(force||sig!==OPC.sig){OPC.sig=sig;el.classList.toggle('door',o.type==='door');
+    $('opCtlTxt').textContent=`${OPEN[o.type].label} ${fmtL(o.w,2)} × ${fmtL(o.h,2)}${o.type==='window'?' · sill '+fmtL(o.sill||0,2):''}`;el.classList.toggle('noinfo',SET.info===false);}
   el.hidden=false;const tx=$('opCtlTxt'),w=tx.offsetWidth||0,lft=x-w/2,sh=lft<8?8-lft:lft+w>innerWidth-8?innerWidth-8-(lft+w):0;tx.style.marginLeft=sh+'px';}
 function renderProps(){const el=$('props');if(selOp!=null&&view3d){const o=ops().find(q=>q.id===selOp);if(o){if(!opMenu){el.hidden=true;opCtlTick(true);return;}return renderOpProps(el,o);}selOp=null;}opCtlTick(true);const d=devs.find(x=>x.id===sel);snapRender();
   if(!d||!view3d){el.hidden=true;return;}if(!devMenu){el.hidden=true;return;}el.hidden=false;el.classList.toggle('min',propsMin);
@@ -1472,13 +1513,12 @@ $('nextBtn').addEventListener('click',()=>go(step+1));$('stepTag').addEventListe
 function pop(id,open){['viewPop','camPop'].forEach(p=>{const o=p===id&&open;$(p).hidden=!o;$(p==='viewPop'?'viewBtn':'camBtn').setAttribute('aria-expanded',o);});}
 function syncTop(){$('viewBtn').innerHTML=ic(view3d?'cube-outline':'floor-plan');$('camBtn').innerHTML=ic(fps?'walk':'rotate-orbit');
   $('v2d').setAttribute('aria-pressed',!view3d);$('v3d').setAttribute('aria-pressed',view3d);$('xray').setAttribute('aria-pressed',xray);
-  $('camFps').setAttribute('aria-pressed',fps);$('cTags').setAttribute('aria-pressed',SET.cabTags!==false);$('camFree').setAttribute('aria-pressed',!fps);}
+  $('camFps').setAttribute('aria-pressed',fps);$('camFree').setAttribute('aria-pressed',!fps);}
 $('viewBtn').onclick=e=>{e.stopPropagation();pop('viewPop',$('viewPop').hidden);};
 $('camBtn').onclick=e=>{e.stopPropagation();pop('camPop',$('camPop').hidden);};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pop,.tb'))pop(null,false);},true);
 $('v2d').onclick=()=>{setView(false);pop(null,false);};$('v3d').onclick=()=>{drawing=false;draft=null;setView(true);pop(null,false);};
 $('xray').onclick=()=>{xray=!xray;refresh();pop(null,false);};
-$('cTags').onclick=()=>{SET.cabTags=SET.cabTags===false;setSave();pop(null,false);build();flash(SET.cabTags===false?'Cable labels hidden':'Cable labels shown');};
 $('wEdit').onclick=()=>{pop(null,false);if(!view3d)setView(true);weToggle();};
 $('camFps').onclick=()=>{setCam(true);pop(null,false);};$('camFree').onclick=()=>{setCam(false);pop(null,false);};$('resetCam').onclick=()=>{resetCam();pop(null,false);};
 // ---- mini 3D model of the scan (top right while the camera is live) ----
@@ -1487,7 +1527,8 @@ function themeScene(){scene.background=live?null:new THREE.Color(tok('--view-bg'
 // ---------- Loop ----------
 function size(){needsRender=true;const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h,false);cam.aspect=w/Math.max(1,h);cam.updateProjectionMatrix();}
 window.addEventListener('resize',size);window.addEventListener('orientationchange',()=>setTimeout(size,200));
-let last=performance.now();function loop(t,frame){const dt=Math.min(0.1,(t-last)/1000);last=t;tickScan(dt);if(!live)tickFly(dt);tickLive(dt,frame);
+function ceilTick(){if(live)return;const above=world.worldToLocal(cam.position.clone()).y>plan.height;gCeil.children.forEach(m=>{if(!m.userData.ceil)return;const op=xray?0.22:above?0.42:0.95;if(m.material.opacity!==op){m.material.opacity=op;m.material.depthWrite=op>0.5;m.material.needsUpdate=true;}});}
+let last=performance.now();function loop(t,frame){const dt=Math.min(0.1,(t-last)/1000);last=t;try{ceilTick();}catch(_){}tickScan(dt);if(!live)tickFly(dt);tickLive(dt,frame);
   // without the camera, draw only when something changed (or once a second as a safety net); the 2D plan needs no WebGL at all
   if(!live){if(!view3d)return;if(!needsRender&&t-lastDraw<1000)return;}
   else if(!needsRender&&t-lastDraw<250&&camLast.p.distanceToSquared(cam.position)<1e-7&&camLast.q.angleTo(cam.quaternion)<0.0004)return; // nothing moved
@@ -1521,7 +1562,10 @@ function arStart(){try{return !!(window.ArElecNative&&ArElecNative.arStart&&ArEl
 function arReason(){let r='';try{r=window.ArElecNative&&ArElecNative.arReason?ArElecNative.arReason():'';}catch(_){}
   if(!window.ArElecNative)return 'Not running in the AR Elec app';
   return {unsupported:'This phone does not support ARCore',install:'Install “Google Play Services for AR”, then reopen the AR Viewer',camera:'Camera permission is missing',error:'ARCore could not start',old:'Update the AR Elec app to use ARCore'}[r]||(ArElecNative.arReason?'ARCore could not start':'Update the AR Elec app to use ARCore');}
-function arBanner(){const on_=AR.on,el=$('arMode');el.className='float '+(on_?'on':'off');
+function arBadge(on_){const b=$('arBadge');if(!on_){b.hidden=true;return;}const st=AR.on?(AR.track?'ok':'wait'):'off';
+  if(b.dataset.st!==st){b.dataset.st=st;b.textContent=AR.on?'AR':'';b.setAttribute('aria-label',AR.on?(AR.track?'ARCore tracking':'ARCore starting'):'ARCore not used');}b.hidden=false;}
+$('arBadge').onclick=()=>flash(AR.on?(AR.track?`ARCore tracking${S&&S.geoLock?' · Geospatial anchor':''}`:'ARCore starting · move slowly'):'ARCore not used · '+arReason());
+function arBanner(){return;const on_=AR.on,el=$('arMode');el.className='float '+(on_?'on':'off');
   el.innerHTML=on_?`${ic('cube-scan')}<span><b>ARCore active</b><small>The camera tracks your movement · the model stays in place</small></span>`
     :`${ic('crosshairs-gps')}<span><b>ARCore not used</b><small>${esc(arReason())} · GPS, compass and steps instead</small></span>`;
   el.hidden=false;clearTimeout(arBanner.t);arBanner.t=setTimeout(()=>{el.hidden=true;},on_?3500:6000);}
@@ -2041,7 +2085,7 @@ const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
   const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
 function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);document.body.classList.toggle('arloc',act);$('svBack').hidden=!act;
-  if(!act){if(!el.hidden)el.hidden=true;$('arPctTag').hidden=true;$('arSteps').hidden=true;return;}const loc=S.phase==='locate';
+  if(!act){if(!el.hidden)el.hidden=true;$('arPctTag').hidden=true;$('arSteps').hidden=true;arBadge(false);return;}const loc=S.phase==='locate';
   const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=loc?dockPct():{p:0,ok:false};
   const rows=[loc?['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true]:null,
     ['cam',L.stream?'ok':'off','camera-outline','Camera',(S.rec&&S.rec.state==='recording')?'Recording':L.stream?(AR.on?(AR.track?'ARCore tracking':'ARCore starting'):'On'):'Off'],
@@ -2059,7 +2103,7 @@ function dockTick(force){const el=$('arDock');const act=!!(S&&!S.gate&&live);doc
   el.innerHTML=`<button class="dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
   el.classList.toggle('open',DK.open);el.hidden=false;
-  const tg=$('arPctTag');if(loc){tg.textContent=boot?`ARCore${S.geoLock?' · Geo':''} ${cf}%`:`${AR.on?'ARCore':'No ARCore'}${S.geoLock?' · Geo':''} · ${cf}%`;tg.className='float '+(cf>=75?'ok':cf>=40?'weak':'off');tg.hidden=false;}else tg.hidden=true;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
+  const tg=$('arPctTag');tg.hidden=true;arBadge(act);if(false){tg.textContent=boot?`ARCore${S.geoLock?' · Geo':''} ${cf}%`:`${AR.on?'ARCore':'No ARCore'}${S.geoLock?' · Geo':''} · ${cf}%`;tg.className='float '+(cf>=75?'ok':cf>=40?'weak':'off');tg.hidden=false;}else tg.hidden=true;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.phase!=='locate'||S.alignMode||S.respot||S.pend||S.opDraw))$('arAsk').hidden=true;if($('arAsk')&&!$('arAsk').hidden&&!S)$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
 (()=>{let y0=null;const el=$('arDock');el.addEventListener('pointerdown',e=>{y0=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});el.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;if(Math.abs(d)>24){DK.open=d>0;DK.sw=performance.now();dockTick(true);e.preventDefault();}});})();
@@ -2067,26 +2111,34 @@ setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.
 // ---- ceiling: once a room is closed, its ceiling is drawn at the measured height (seen from inside, hidden from above) ----
 const gCeil=new THREE.Group();world.add(gCeil);
 const buildWalls0=buildWalls;
-buildWalls=function(){buildWalls0();clear(gCeil);const rooms=(plan.rooms||[]).filter(r=>r.pts&&r.pts.length>=3);if(!rooms.length)return;
+// outline used when no rooms are defined: convex hull of the wall ends
+function wallHull(){const P=[];plan.walls.forEach(w=>{P.push(w[0],w[1]);});if(P.length<3)return null;const pts=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]),cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];pts.forEach(p=>{while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});pts.slice().reverse().forEach(p=>{while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);});
+  const h=lo.slice(0,-1).concat(up.slice(0,-1));return h.length>=3?h:null;}
+buildWalls=function(){buildWalls0();clear(gCeil);let rooms=(plan.rooms||[]).filter(r=>r.pts&&r.pts.length>=3);if(!rooms.length){const h=wallHull();if(!h)return;rooms=[{pts:h}];}
   const isLive=typeof live!=='undefined'&&!!live,H=plan.height;
   const mat=isLive?new THREE.MeshBasicMaterial({map:gridTex(),transparent:true,depthWrite:false,side:THREE.FrontSide})
-    :new THREE.MeshLambertMaterial({color:tok('--wall'),transparent:true,opacity:xray?0.22:0.95,depthWrite:!xray,side:THREE.FrontSide});
+    :new THREE.MeshLambertMaterial({color:tok('--wall'),transparent:true,opacity:xray?0.22:0.95,depthWrite:!xray,side:THREE.DoubleSide});
   const edge=new THREE.LineBasicMaterial({color:isLive?0xffffff:tok('--plan-ink'),transparent:true,opacity:isLive?0.9:0.6});
   rooms.forEach(r=>{const sh=new THREE.Shape(r.pts.map(p=>new THREE.Vector2(p[0],p[1])));const geo=new THREE.ShapeGeometry(sh).rotateX(Math.PI/2);if(isLive){const uv=geo.attributes.uv;for(let k=0;k<uv.count;k++)uv.setXY(k,uv.getX(k)/0.3,uv.getY(k)/0.3);}
-    const m=new THREE.Mesh(geo,mat);m.position.y=H-0.002;m.renderOrder=2;gCeil.add(m);
+    const m=new THREE.Mesh(geo,mat);m.position.y=H-0.002;m.renderOrder=2;m.userData.ceil=true;gCeil.add(m);
     const ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(r.pts.map(p=>new THREE.Vector3(p[0],H,p[1]))),edge);gCeil.add(ln);});};
 
 // ---------- mini plan (top right): the room seen from above, forward is up, you are the blue cone ----------
 const MP={sig:'',last:0};
 function miniPlanTick(){const el=$('miniPlan');const on_=!!(S&&!S.gate&&live&&plan.walls.length&&!(S.alignMode)&&!PGS.length);
-  if(!on_){if(!el.hidden)el.hidden=true;return;}
+  const mb=$('miniBtn'),mx=$('miniX'),dk0=$('arDock').getBoundingClientRect(),top0=Math.round((dk0.bottom||54)+8);
+  if(!on_){if(!el.hidden)el.hidden=true;mb.hidden=true;mx.hidden=true;return;}
+  if(SET.miniHide){el.hidden=true;mx.hidden=true;mb.style.top=top0+'px';mb.hidden=false;return;}mb.hidden=true;
   const sig=JSON.stringify(plan.walls)+(S.chain||[]).length;if(sig!==MP.sig||el.hidden){MP.sig=sig;const cs=al2Corners(),b=plBounds(plan),cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,R_=Math.max(b.x1-b.x0,b.z1-b.z0)*0.62+0.6,r=R_*0.075;
     el.innerHTML=`<svg viewBox="${cx-R_} ${cz-R_} ${2*R_} ${2*R_}" aria-hidden="true"><g id="mpG"><g class="mw" stroke-width="${r*0.45}">${plan.walls.map(w=>`<line x1="${w[0][0]}" y1="${w[0][1]}" x2="${w[1][0]}" y2="${w[1][1]}"/>`).join('')}</g>
       ${cs.map(c=>`<circle cx="${c[0]}" cy="${c[1]}" r="${r*0.8}" class="cn"/>`).join('')}<g id="mpMe"><path d="M0 0L${-r*1.6} ${-r*3.6}A${r*3.9} ${r*3.9} 0 0 1 ${r*1.6} ${-r*3.6}Z" class="cone"/><circle r="${r*0.75}" class="me"/></g></g></svg>`;el.hidden=false;MP.c=[cx,cz];}
-  const dk=$('arDock').getBoundingClientRect();el.style.top=Math.round((dk.bottom||54)+8)+'px';
+  const dk=$('arDock').getBoundingClientRect();el.style.top=Math.round((dk.bottom||54)+8)+'px';{const r_=el.getBoundingClientRect();mx.style.top=(Math.round((dk.bottom||54)+8)-6)+'px';mx.style.left=(Math.round(r_.left)-6)+'px';mx.hidden=false;}
   const d=new THREE.Vector3();cam.getWorldDirection(d);const a=Math.atan2(d.z,d.x)*180/Math.PI;const g=$('mpG'),me=$('mpMe');
   if(g)g.setAttribute('transform',`rotate(${(-90-a).toFixed(1)} ${MP.c[0]} ${MP.c[1]})`);if(me)me.setAttribute('transform',`translate(${L.pos.x.toFixed(2)} ${L.pos.z.toFixed(2)}) rotate(${(a+90).toFixed(1)})`);}
 $('miniPlan').addEventListener('click',()=>{const el=$('miniPlan');el.classList.toggle('big');});
+$('miniBtn').innerHTML=ic('floor-plan');$('miniX').innerHTML=ic('close');
+$('miniBtn').onclick=()=>{SET.miniHide=false;setSave();MP.sig='';renderMini();};$('miniX').onclick=e=>{e.stopPropagation();SET.miniHide=true;setSave();$('miniPlan').classList.remove('big');renderMini();};
 function renderMini(){try{miniPlanTick();}catch(_){}try{opCtlTick();}catch(_){}}
 setInterval(()=>{try{if(!$('miniPlan').hidden||S)miniPlanTick();}catch(_){}},250);
 
@@ -2107,7 +2159,7 @@ function odrRect(D,u0,v0,u1,v1){clear(ODR.g);const g=D.g,off=D.s*(plan.thick/2+0
   const pts=[P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1),P(u0,v0)];const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:S.opDraw==='door'?0xff8a1f:0x38bdf8,depthTest:false,transparent:true}));ln.renderOrder=40;ODR.g.add(ln);
   const fill=new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(u1-u0),Math.abs(v1-v0)),new THREE.MeshBasicMaterial({color:S.opDraw==='door'?0xff8a1f:0x38bdf8,transparent:true,opacity:0.22,depthTest:false,side:THREE.DoubleSide}));
   const c=P((u0+u1)/2,(v0+v1)/2);fill.position.copy(c);fill.rotation.y=-Math.atan2(g.dy,g.dx);fill.renderOrder=39;ODR.g.add(fill);kick();}
-canvas.addEventListener('pointerdown',e=>{if(!S||S.phase!=='locate'||!S.opDraw)return;{castAt(e.clientX,e.clientY);const ho=ray.intersectObjects(gOpen.children,true).find(q=>q.object.userData.opening!=null),hw=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(ho&&(!hw||ho.distance<=hw.distance+0.05))return;}const h=odrHit(e.clientX,e.clientY);if(!h){odrCard('Start on a wall of the model');return;}
+canvas.addEventListener('pointerdown',e=>{if(!S||S.phase!=='locate'||!S.opDraw)return;{castAt(e.clientX,e.clientY);const ho=ray.intersectObjects(gOpen.children,true).find(q=>q.object.userData.opening!=null),hw=ray.intersectObjects(wallMeshes())[0];if(ho&&(!hw||ho.distance<=hw.distance+0.05))return;}const h=odrHit(e.clientX,e.clientY);if(!h){odrCard('Start on a wall of the model');return;}
   e.stopImmediatePropagation();e.preventDefault();try{canvas.setPointerCapture(e.pointerId);}catch(_){}ODR.drag={...h,u0:h.u,v0:h.v,u1:h.u,v1:h.v,id:e.pointerId};},true);
 canvas.addEventListener('pointermove',e=>{const D=ODR.drag;if(!D||e.pointerId!==D.id)return;e.stopImmediatePropagation();const q=odrPlaneUV(e.clientX,e.clientY,D);if(!q)return;
   D.u1=Math.max(0,Math.min(D.g.L,q.u));D.v1=Math.max(0,Math.min(plan.height,q.v));odrRect(D,D.u0,D.v0,D.u1,D.v1);
@@ -2184,7 +2236,7 @@ function svTick(){if(!S)return;const now=performance.now();JOB.n=0;if(S.arBoot)a
   if(S.phase==='locate'&&!S.alignMode&&S.step!=='dev'){devAim.visible=false;aim.visible=false;highlightWall(-1);read='';}
   else if(S.phase==='locate'&&!S.alignMode){const w=devAimTick();aim.visible=false;highlightWall(w?w.wall:-1);
     read=w?`${TYPES[S.devType].label} · ${fmtL(TYPES[S.devType].h,2)} · ${fmtL(w.dist,1)}`:'Aim at a wall';}
-  else if(S.phase==='locate'){devAim.visible=false;castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];
+  else if(S.phase==='locate'){devAim.visible=false;castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(wallMeshes())[0];
     highlightWall(h?h.object.userData.wall:-1);const ap=aimPoint();
     if(ap){aim.visible=true;aim.position.set(ap.x,0,ap.z);aimLine.scale.y=0.01;aimTop.visible=false;setAim(ap.snap?GREEN:ORANGE);}else aim.visible=false;
     const g=L.geo;read=(h?`Wall ${h.object.userData.wall+1} · ${fmtL(h.distance,1)} away`:'Look at a wall')+(S.align?' · locked':g&&!g.err?` · GPS ±${Math.round(g.acc)} m`:'');}
@@ -2383,7 +2435,7 @@ function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
 const SP={FW:160,cv:document.createElement('canvas'),last:0,drag:null};SP.g=SP.cv.getContext('2d',{willReadFrequently:true});
 const spots=()=>plan.spots||(plan.spots=[]);
 function spGray(){return frame();}
-function spPoint(x,y){castAt(x,y);const hits=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh));let p=null,kind='floor';
+function spPoint(x,y){castAt(x,y);const hits=ray.intersectObjects(wallMeshes());let p=null,kind='floor';
   const o=ray.ray.origin,d=ray.ray.direction;if(d.y<-0.02){const t=-o.y/d.y;p=o.clone().addScaledVector(d,t);}
   if(hits[0]&&(!p||hits[0].distance<o.distanceTo(p))){p=hits[0].point.clone();kind='wall';}return p&&o.distanceTo(p)<12?{p,kind,dist:o.distanceTo(p)}:null;}
 function addSpot(x,y){const hit=spPoint(x,y);if(!hit){flash('Aim at the floor or a wall');return;}const G=spGray();if(!G){flash('Camera not ready');return;}
@@ -2540,7 +2592,7 @@ function spPendTick(now){const p=S&&S.pend;if(!p||SP.drag||p.dragging||now-(p.t|
   else{el.classList.remove('snapped');const t=$('pendTxt');if(t)t.textContent='Align the photo';}}
 
 // AR view: the device goes on the wall in the middle of the screen, at its standard height
-function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(gWalls.children.filter(o=>o.isMesh))[0];if(!h)return null;
+function wallTarget(){castAt(innerWidth/2,innerHeight/2);const h=ray.intersectObjects(wallMeshes())[0];if(!h)return null;
   const i=h.object.userData.wall,g=wallGeo(i),P=h.point;let t=((P.x-g.ax)*g.ux+(P.z-g.ay)*g.uy)/g.L;t=Math.min(0.98,Math.max(0.02,t));
   const side=((cam.position.x-g.mx)*g.nx+(cam.position.z-g.my)*g.ny)>=0?1:-1;return{wall:i,t,side,dist:h.distance};}
 function placeDevice(){const w=wallTarget();if(!w){flash('Aim at a wall');return;}const type=S.devType;
