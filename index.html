@@ -185,6 +185,10 @@ button.li:active,label.li:active{background:var(--surface-2)}
 .gpsBox b{font-size:19px;font-weight:600}
 .gpsNote{font-size:13px;color:rgba(255,255,255,.8);margin-top:-8px;max-width:280px}.gpsNote:empty{display:none}
 .gpsChips{display:flex;gap:10px}
+.gpsSteps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:330px}.gpsSteps span{display:inline-flex;align-items:center;gap:5px;padding:5px 9px 5px 5px;border-radius:999px;background:rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.65)}
+.gpsSteps span i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);font:700 10px/1 var(--f-display);font-style:normal}.gpsSteps span em{font-style:normal;font-weight:700;color:#fff}
+.gpsSteps span.on{background:rgba(255,255,255,.22);color:#fff}.gpsSteps span.on i{background:#fff;color:#222}.gpsSteps span.done{color:#fff}.gpsSteps span.done i{background:#1fa45a}
+.gpsBar{width:220px;height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.gpsBar i{display:block;height:100%;width:3%;background:#1fa45a;border-radius:3px;transition:width .6s var(--ease)}
 .gpsChips span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.12);font-size:14px;transition:background .3s}
 .gpsChips span svg{width:18px;height:18px}
 .gpsChips span.ok{background:#1fa45a}.gpsChips span.weak{background:#c98a12}.gpsChips span.off{color:rgba(255,255,255,.7)}
@@ -348,6 +352,11 @@ html.vr,html.vr body{background:#20232a!important}
 #vrPad .stk{position:absolute;bottom:0;width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);pointer-events:auto;touch-action:none;display:grid;place-items:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #vrPad .stk[data-k="mv"]{left:18px}#vrPad .stk[data-k="lk"]{right:18px}
 #vrPad .stk i{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:transform .08s linear}
+#zmBox{position:fixed;z-index:12;right:calc(8px + var(--sr));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 6px;border-radius:24px;background:var(--glass);box-shadow:var(--sh);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#zmBox[hidden]{display:none}#zmBox button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}#zmBox button .ic{width:17px;height:17px}
+#zmRange{writing-mode:vertical-lr;direction:rtl;width:26px;height:150px;margin:0;accent-color:var(--fg);touch-action:none}#zmLbl{font:700 11px var(--f-display);font-variant-numeric:tabular-nums}
+#altDev{position:fixed;z-index:31;width:40px;height:40px;border-radius:50%;border:2px solid var(--bg);background:var(--surface);color:var(--fg);box-shadow:var(--sh);display:grid;place-items:center;padding:0;cursor:pointer;touch-action:none}
+#altDev[hidden]{display:none}#altDev .ic{width:20px;height:20px}#altDev:active{transform:scale(.9)}
 #wireBar{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:popUp .35s var(--ease)}
 #wireBar .wbh{display:flex;align-items:center;gap:10px}#wireBar .wbh span{flex:1;min-width:0}#wireBar small{display:block;color:var(--muted);font-size:12.5px}#wireBar .note{margin:0}#wireBar .row2 .btn{padding:10px 8px;font-size:13px}
 body.surveying #wireBar{bottom:calc(var(--navH) + 84px)}
@@ -609,7 +618,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 
 <div id="gpsOv" hidden aria-live="polite"><div class="gpsBox">
 <svg class="fig8" viewBox="0 0 160 90" aria-hidden="true"><path d="M80 45 C55 10 15 10 15 45 S55 80 80 45 S145 10 145 45 S105 80 80 45Z" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="4 5"/><g class="ph"><rect x="-11" y="-19" width="22" height="38" rx="4" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="2.4"/><circle cx="0" cy="13" r="1.8" fill="#fff"/></g></svg>
-<b id="gpsT">Turn on GPS</b><small id="gpsNote" class="gpsNote"></small>
+<b id="gpsT">Turn on GPS</b><div id="gpsSteps" class="gpsSteps"></div><div id="gpsBar" class="gpsBar"><i></i></div><small id="gpsNote" class="gpsNote"></small>
 <div class="gpsChips"><span id="gcGps"></span><span id="gcCmp"></span></div>
 <div class="gpsBtns"><button id="gpsSkip" class="lnk">Without GPS</button><button id="gpsCancel" class="lnk">Cancel</button></div></div></div>
 <div id="startOv" hidden aria-live="polite"><div><svg viewBox="0 0 160 90" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"><path d="M10 70 L50 40 L150 40 L110 70 Z" opacity=".9"/><rect x="66" y="10" width="26" height="46" rx="5" fill="rgba(255,255,255,.18)"/><circle cx="79" cy="50" r="2" fill="#fff" stroke="none"/></svg><span>Move phone to start</span></div></div>
@@ -978,7 +987,7 @@ function routeCircuits(){
     c.length=len*1.1;}); // +10 % slack for drops & boxes
   legs.forEach(l=>{const pts=l.draw||l.pts,on=typeof WE!=='undefined'&&WE.on&&WE.sel===l.key,r=0.006+(l.c.sec||1.5)*0.0012+(on?0.006:0);
     const path=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)if(pts[i].distanceTo(pts[i+1])>1e-4)path.add(new THREE.LineCurve3(pts[i],pts[i+1]));if(!path.curves.length)return;
-    const col=on?0xffffff:l.c.color;
+    const w_=l.cab&&l.cab.what||'',col=on?0xffffff:l.c.kind==='light'?(/switched return|travellers|^phase · earth$/.test(w_)?0xd32f2f:0x2f6fdb):l.c.kind==='power'?0xd32f2f:l.c.color;
     const tube=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*6),r,6,false),new THREE.MeshLambertMaterial({color:col,emissive:new THREE.Color(col).multiplyScalar(on?0.6:0.25)}));
     tube.userData.leg=l.key;gWires.add(tube);
     if(false&&l.cab){let bi=0,bl=0;for(let i=0;i<pts.length-1;i++){const d=pts[i].distanceTo(pts[i+1]);if(d>bl){bl=d;bi=i;}}
@@ -1142,13 +1151,25 @@ function addDevice(type,at){const T=TYPES[type];if(!T||!at)return null;
   if(type==='panel'){const old=devs.find(d=>d.type==='panel');if(old){Object.assign(old,{wall:at.wall,t:at.t,side:at.side});save();build();flash('Panel moved');return old;}}
   const d={id:uid++,type,wall:at.wall,t:at.t,h:Math.min(T.h,plan.height-0.05),side:at.side};devs.push(d);
   if(typeof S!=='undefined'&&S&&S.placed)S.placed.push(d.id);save();build();flash(`${T.label} · ${fmtL(d.h,2)}`);return d;}
+
+// ---------- quick switch: the main button places the current device; the small button beside it holds a second one — tap it to swap, hold it to choose ----------
+SET.devAlt=SET.devAlt||'switch';
+(function(){const b=document.createElement('button');b.id='altDev';b.hidden=true;b.setAttribute('aria-label','Switch device');document.body.appendChild(b);let t=null,long=false;
+  b.addEventListener('pointerdown',e=>{e.stopPropagation();long=false;clearTimeout(t);t=setTimeout(()=>{long=true;CATPICK.alt=true;catTab=TYPES[SET.devAlt]?TYPES[SET.devAlt].cat:'power';openCatalog(null);},550);});
+  b.addEventListener('pointerup',e=>{e.stopPropagation();clearTimeout(t);if(long||!S)return;const cur=S.devType;if(!devs.some(d=>d.type==='panel')&&cur==='panel')return;S.devType=SET.devAlt;SET.devAlt=cur;setSave();svUI();altUI(true);flash(TYPES[S.devType].label);});
+  b.addEventListener('pointercancel',()=>clearTimeout(t));})();
+const CATPICK={alt:false};
+function altUI(force){const b=$('altDev'),on_=!!(S&&live&&!S.gate&&S.phase==='locate'&&S.step==='dev'&&devs.some(d=>d.type==='panel')&&TYPES[SET.devAlt]);
+  if(!on_){b.hidden=true;return;}const r=bubEl.getBoundingClientRect();if(!r.width){b.hidden=true;return;}
+  b.style.left=Math.round(r.left-34)+'px';b.style.top=Math.round(r.top-8)+'px';if(force||b.dataset.t!==SET.devAlt){b.dataset.t=SET.devAlt;b.innerHTML=ic(TYPES[SET.devAlt].ic);}b.hidden=false;}
+setInterval(()=>{try{altUI();}catch(_){}},300);
 function openCatalog(at){const hasPanel=devs.some(d=>d.type==='panel');
   const items=Object.entries(TYPES).filter(([,T])=>T.cat===catTab);
-  xSheet(`<div class="ctH"><h2>Add a device</h2><button class="icon" id="ctX" aria-label="Close">${ic('close')}</button></div>
+  xSheet(`<div class="ctH"><h2>${CATPICK.alt?'Second device':'Add a device'}</h2><button class="icon" id="ctX" aria-label="Close">${ic('close')}</button></div>
     <div class="chips ctTabs">${CATS.map(([k,l,i])=>`<button class="chip" data-ct="${k}" aria-pressed="${catTab===k}">${ic(i)}${l}</button>`).join('')}</div>
     <div class="ctGrid">${items.map(([k,T])=>{const s=wsec({type:k});return `<button class="ctI" data-ty="${k}"><span class="ctIc">${ic(T.ic)}</span><b>${esc(T.label)}</b><small>${fmtL(T.h,2)}${s!=null?' · '+secTxt(s):''}${T.ded?' · dedicated':''}${k==='panel'&&hasPanel?' · moves the panel':''}</small></button>`;}).join('')}</div>`,
-    el=>{$('ctX').onclick=xClose;el.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{catTab=b.dataset.ct;openCatalog(at);});
-      el.querySelectorAll('[data-ty]').forEach(b=>b.onclick=()=>{const ty=b.dataset.ty;xClose();if(typeof S!=='undefined'&&S&&S.phase==='locate'){S.devType=ty;svUI();}
+    el=>{$('ctX').onclick=()=>{CATPICK.alt=false;xClose();};el.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{catTab=b.dataset.ct;openCatalog(at);});
+      el.querySelectorAll('[data-ty]').forEach(b=>b.onclick=()=>{const ty=b.dataset.ty;xClose();if(CATPICK.alt){CATPICK.alt=false;if(ty!=='panel'){SET.devAlt=ty;setSave();altUI(true);flash(`Second device: ${TYPES[ty].label}`);}return;}if(typeof S!=='undefined'&&S&&S.phase==='locate'){S.devType=ty;svUI();}
         if(at){const d=addDevice(ty,at);if(d&&!(typeof S!=='undefined'&&S)){sel=d.id;refresh();}}});});}
 // finger-friendly wire picking: nearest cable segment on screen within 26 px; returns the leg and the 3D point under the finger
 function pickWire(x,y){if(!lastRoute||!lastRoute.legs)return null;const r=canvas.getBoundingClientRect(),S2=v=>{const q=world.localToWorld(v.clone()).project(cam);return q.z>1?null:[r.left+(q.x+1)/2*r.width,r.top+(1-q.y)/2*r.height];};
@@ -1658,6 +1679,29 @@ const camW=()=>AR.on?(AR.ready?AR.cv.width:0):vid.videoWidth,camH=()=>AR.on?(AR.
 window.__arPose=(x,y,z,qx,qy,qz,qw,fov,tr,fy)=>{if(!AR.on)return;AR.pose={x,y,z,qx,qy,qz,qw};if(fov>5)AR.fov=fov;AR.track=!!tr;AR.floorY=isFinite(fy)?fy:null;needsRender=true;};
 window.__arImg=b64=>{if(!AR.on||AR.busy)return;AR.busy=true;const im=new Image();im.onload=()=>{if(AR.cv.width!==im.width||AR.cv.height!==im.height){AR.cv.width=im.width;AR.cv.height=im.height;}
   AR.cv.getContext('2d').drawImage(im,0,0);AR.ready=true;AR.busy=false;};im.onerror=()=>{AR.busy=false;};im.src='data:image/jpeg;base64,'+b64;};
+
+// ---------- lens & zoom: digital zoom of the camera image and the 3D overlay together; lens = physical camera (no ARCore) or field of view (Edit in 3D) ----------
+const ZM={z:1,base:62};
+const zfov=f=>2*Math.atan(Math.tan(f*Math.PI/360)/ZM.z)*180/Math.PI;
+function zoomSet(z){ZM.z=Math.max(1,Math.min(5,+z||1));const v=$('camVid');if(v)v.style.transform=ZM.z>1?`scale(${ZM.z})`:'';
+  try{if(AR.on&&!(typeof VR!=='undefined'&&VR.on)&&window.ArElecNative&&ArElecNative.arZoom)ArElecNative.arZoom(ZM.z);}catch(_){}
+  const r=$('zmRange');if(r&&+r.value!==ZM.z)r.value=ZM.z;const t=$('zmLbl');if(t)t.textContent=(ZM.z<10?ZM.z.toFixed(1):Math.round(ZM.z))+'×';needsRender=true;}
+async function lensList(){if(typeof VR!=='undefined'&&VR.on)return[['vr95','Ultra wide','0.6×'],['vr62','Wide','1×'],['vr40','Portrait','1.6×']];
+  if(AR.on)return[['ar','Main camera','ARCore']];
+  try{const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'&&!/front|user|avant/i.test(d.label));
+    return ds.map((d,i)=>[d.deviceId,d.label?d.label.replace(/\(.*?\)/g,'').trim():'Camera '+(i+1),/ultra|wide|0\.5/i.test(d.label)?'0.5×':/tele|zoom|[23]x/i.test(d.label)?'tele':'']);}catch(_){return[];}}
+async function lensPick(id){if(id.startsWith('vr')){ZM.base=+id.slice(2);flash(`Field of view ${ZM.base}°`);return;}if(id==='ar')return;
+  try{const st=await navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:id},width:{ideal:1280},height:{ideal:720}},audio:false});
+    if(L.stream)L.stream.getTracks().forEach(t=>t.stop());L.stream=st;vid.srcObject=st;await vid.play().catch(()=>{});
+    const lb=(st.getVideoTracks()[0]||{}).label||'';lensFov=/ultra|0\.5/i.test(lb)?100:/tele|[23]x/i.test(lb)?35:67;flash('Lens changed · check the camera angle in Settings if the walls do not line up');}catch(e){flash('This lens cannot be opened');}}
+async function lensSheet(){const L_=await lensList();xSheet(`<div class="ctH"><h2>Lens & zoom</h2><button class="icon" id="lzX" aria-label="Close">${ic('close')}</button></div>
+  <div class="gl">${L_.map(([id,l,t])=>`<button class="li" data-lz="${esc(id)}">${ic('camera')}<span>${esc(l)}</span><em>${esc(t)}</em></button>`).join('')||'<div class="li"><span>No other lens</span></div>'}</div>
+  <p class="hint">${AR.on&&!(typeof VR!=='undefined'&&VR.on)?'ARCore uses the main camera; the slider zooms in on it.':'Use the slider on the right of the screen to zoom.'}</p>`,
+  el=>{$('lzX').onclick=xClose;el.querySelectorAll('[data-lz]').forEach(b=>b.onclick=()=>{xClose();lensPick(b.dataset.lz);});});}
+(function(){const z=document.createElement('div');z.id='zmBox';z.hidden=true;z.innerHTML=`<button id="zmLens" aria-label="Lens">${ic('camera')}</button><input id="zmRange" type="range" min="1" max="5" step="0.1" value="1" aria-label="Zoom"><b id="zmLbl">1.0×</b>`;document.body.appendChild(z);
+  $('zmRange').addEventListener('input',e=>zoomSet(e.target.value));$('zmLens').onclick=()=>lensSheet();})();
+function zoomUI(){const b=$('zmBox'),on_=!!(S&&live&&!S.gate&&S.phase==='locate');if(b.hidden===on_)b.hidden=!on_;if(!on_&&ZM.z!==1)zoomSet(1);}
+setInterval(()=>{try{zoomUI();}catch(_){}},300);
 function arStart(){if(typeof VR!=='undefined'&&VR.on)return true;try{return !!(window.ArElecNative&&ArElecNative.arStart&&ArElecNative.arStart());}catch(_){return false;}}
 function arReason(){let r='';try{r=window.ArElecNative&&ArElecNative.arReason?ArElecNative.arReason():'';}catch(_){}
   if(!window.ArElecNative)return 'Not running in the AR Elec app';
@@ -1749,7 +1793,7 @@ function tickLive(dt,frame){
     const ang=cam.quaternion.angleTo(_qt);
     if(!L.qInit||ang>0.6){cam.quaternion.copy(_qt);L.qInit=true;}
     else if(ang>0.0035)cam.quaternion.slerp(_qt,Math.min(1,dt*(4+ang*90)));
-    if(camW()){const vw=camW(),vh=camH(),sc=Math.max(innerWidth/vw,innerHeight/vh),f=(Math.max(vw,vh)/2)/Math.tan(lensFov*Math.PI/360),fv=2*Math.atan(innerHeight/(2*sc*f))*180/Math.PI;
+    if(camW()){const vw=camW(),vh=camH(),sc=Math.max(innerWidth/vw,innerHeight/vh)*ZM.z,f=(Math.max(vw,vh)/2)/Math.tan(lensFov*Math.PI/360),fv=2*Math.atan(innerHeight/(2*sc*f))*180/Math.PI;
       if(Math.abs(cam.fov-fv)>0.02){cam.fov=fv;cam.updateProjectionMatrix();}}
     L.pos.y=S?(S.h||hPhone):EYE;if(S&&typeof spLayout==='function')spLayout(); // in survey/locate the virtual camera sits at the real phone height so overlays match the image
     cam.position.lerp(L.pos,Math.min(1,dt*6));if(S)svTick();}
@@ -1773,7 +1817,7 @@ function arTick(){const P=AR.pose;
   if(AR.y0==null)AR.y0=P.y;
   const h=AR.floorY!=null&&P.y-AR.floorY>0.3?P.y-AR.floorY:(S&&S.phase==='locate'&&S.h?S.h:hPhone)+(P.y-AR.y0);
   L.pos.y=S?Math.max(0.2,h+(S.hAdj||0)):EYE;cam.position.copy(L.pos);
-  if(AR.fov&&Math.abs(cam.fov-AR.fov)>0.02){cam.fov=AR.fov;cam.updateProjectionMatrix();}
+  {const f_=zfov(typeof VR!=='undefined'&&VR.on?ZM.base:AR.fov||62);if(Math.abs(cam.fov-f_)>0.02){cam.fov=f_;cam.updateProjectionMatrix();}}
   if(!AR.track){const now=performance.now();if(now-AR.lostT>4000){AR.lostT=now;flash('Tracking paused · move slowly, aim at a textured area');}}
   if(S&&typeof spLayout==='function')spLayout();}
 function fpsStartPoint(){const save=[cam.position.clone(),yaw,pitch];fpsStart();const r={x:cam.position.x,z:cam.position.z,yaw};cam.position.copy(save[0]);yaw=save[1];pitch=save[2];applyLook();return r;}
@@ -1897,6 +1941,13 @@ function gateUI(st){const T={off:'Turn on GPS',wait:'Searching GPS',weak:'Improv
   $('gpsT').textContent=(st.gps==='ok'?'GPS ready':T[st.gps])+acc;
   $('gpsNote').textContent=st.gps==='off'?'Turn on location in the phone settings':t>8&&st.gps!=='ok'?'Move near a window or outside for a faster fix':'';
   const sk=$('gpsSkip');sk.textContent=st.acc!=null?'Continue now':'Without GPS';
+  // steps: 1 searching satellites · 2 first position · 3 improving towards the target · 4 ready; the bar shows how far the accuracy has come
+  if(G){const nat=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,lim=gateLimit(t);if(st.acc!=null&&G.acc0==null)G.acc0=st.acc;
+    const k=st.gps==='off'?0:st.acc==null?1:st.acc<=lim?4:G.acc0!=null&&st.acc<G.acc0-0.5?3:2;
+    const lbl=[['Satellites',nat?`${nat.used}/${nat.total}`:''],['First fix',G.acc0!=null?'±'+Math.round(G.acc0)+' m':''],['Improving',st.acc!=null&&G.acc0!=null&&G.acc0-st.acc>0.5?'−'+Math.round(G.acc0-st.acc)+' m':''],['Ready',`≤ ${lim} m`]];
+    $('gpsSteps').innerHTML=lbl.map(([l,v],i)=>`<span class="${i+1<k?'done':i+1===k?'on':''}"><i>${i+1<k?'✓':i+1}</i>${l}${v?`<em>${v}</em>`:''}</span>`).join('');
+    const pr=st.acc==null?(nat&&nat.total?Math.min(0.25,nat.used/20):0.03):G.acc0==null||G.acc0<=lim?1:Math.max(0.3,Math.min(1,0.3+0.7*(G.acc0-st.acc)/(G.acc0-lim)));
+    $('gpsBar').firstChild.style.width=Math.round(pr*100)+'%';}
   const nat=L.nat&&performance.now()-L.nat.t<3000?L.nat:null;
   const g=$('gcGps');g.className=st.gps==='wait'?'off':st.gps;g.innerHTML=ic('crosshairs-gps')+(st.acc!=null?`±${st.acc<10?st.acc.toFixed(1):Math.round(st.acc)} m`+(st.n<GPS_N?` · ${st.n}/${GPS_N}`:''):st.gps==='off'?'Off':'…')+(nat?` · ${nat.used} sat${nat.dual?' · L5':''}`:'');
   const c=$('gcCmp');c.className=st.cmp==='wait'?'off':st.cmp;c.innerHTML=ic('compass-outline')+(st.cmp==='ok'?'On':st.cmp==='weak'?'Off':'…');}
@@ -2201,7 +2252,7 @@ function placeConf(){if(!S)return 0;const g=L.geoAvg||L.geo,gps=!g||g.err?0:Math
 const DK={open:false,sig:''};
 function dockPct(){const V=S&&S.vl;if(!V)return{p:0,ok:false};const ok=!!V.located;
   const p=ok?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);return{p:ok?Math.max(p,100*!!S.spotFix):p,ok};}
-function dockTick(force){const el=$('arDock');document.body.classList.toggle('gating',!!(S&&S.gate&&live));const act=!!(S&&live&&!(typeof VR!=='undefined'&&VR.on));document.body.classList.toggle('arloc',act);$('svBack').hidden=!act;
+function dockTick(force){const el=$('arDock');document.body.classList.toggle('gating',!!(S&&S.gate&&live));const act=!!(S&&live);document.body.classList.toggle('arloc',act);$('svBack').hidden=!act;
   if(!act){if(!el.hidden)el.hidden=true;$('arPctTag').hidden=true;$('arSteps').hidden=true;arBadge(false);return;}const loc=S.phase==='locate';
   const g=L.geoAvg||L.geo,n=L.nat&&performance.now()-L.nat.t<3000?L.nat:null,{p,ok}=loc?dockPct():{p:0,ok:false};
   const rows=[loc?['vl',ok?'ok':p>40?'weak':'off','image-multiple','Identification',ok?`Pinned · ${p}%`:`${p}%`,true]:null,
@@ -2219,7 +2270,7 @@ function dockTick(force){const el=$('arDock');document.body.classList.toggle('ga
   const boot=loc&&S.arBoot&&!S.arBoot.done,cf=boot?arPct():placeConf(),R_=19,C=2*Math.PI*R_,prog=cf;
   el.innerHTML=`<button class="dkRing c-${cf>=75?'ok':cf>=40?'weak':'off'} g-${gp[1]}" id="dkTgl" aria-expanded="${DK.open}" aria-label="GPS ${gp[4]} · placement ${cf}%" title="Placement ${cf}%"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R_}" class="bg"/>${prog>0?`<circle cx="22" cy="22" r="${R_}" class="fg" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg>${ic('crosshairs-gps')}</button>
     ${DK.open||bad.length?`<div class="dkMini">${DK.open?rows.filter(r=>!['mode','vl','gps'].includes(r[0])).map(mi).join(''):bad.map(k=>mi(by[k])).join('')}</div>`:''}`;
-  el.classList.toggle('open',DK.open);el.hidden=false;
+  el.classList.toggle('open',DK.open);el.hidden=!!(typeof VR!=='undefined'&&VR.on);
   const tg=$('arPctTag');tg.hidden=true;arBadge(act);if(false){tg.textContent=boot?`ARCore${S.geoLock?' · Geo':''} ${cf}%`:`${AR.on?'ARCore':'No ARCore'}${S.geoLock?' · Geo':''} · ${cf}%`;tg.className='float '+(cf>=75?'ok':cf>=40?'weak':'off');tg.hidden=false;}else tg.hidden=true;$('dkTgl').onclick=()=>{if(performance.now()-(DK.sw||0)<400)return;DK.open=!DK.open;dockTick(true);};}
 setInterval(()=>{try{dockTick();if($('arAsk')&&!$('arAsk').hidden&&S&&S.ask&&(S.phase!=='locate'||S.alignMode||S.respot||S.pend||S.opDraw))$('arAsk').hidden=true;if($('arAsk')&&!$('arAsk').hidden&&!S)$('arAsk').hidden=true;}catch(e){}},400);
 // swipe down on the menu opens it, swipe up closes it
@@ -2384,7 +2435,7 @@ const FR={cv:document.createElement('canvas'),W:192,t:-1e9,d:null};FR.g=FR.cv.ge
 function frame(maxAge=100){const vw=camW(),vh=camH();if(!vw||camOff())return null;const now=performance.now();
   if(FR.d&&now-FR.t<maxAge&&FR.d.iw===innerWidth&&FR.d.ih===innerHeight)return FR.d;
   const W=FR.W,H=Math.round(W*innerHeight/innerWidth);if(FR.cv.width!==W||FR.cv.height!==H){FR.cv.width=W;FR.cv.height=H;}
-  const sc=Math.max(innerWidth/vw,innerHeight/vh),cw=innerWidth/sc,ch=innerHeight/sc;try{FR.g.drawImage(camEl(),(vw-cw)/2,(vh-ch)/2,cw,ch,0,0,W,H);}catch(_){return null;}
+  const sc=Math.max(innerWidth/vw,innerHeight/vh)*ZM.z,cw=innerWidth/sc,ch=innerHeight/sc;try{FR.g.drawImage(camEl(),(vw-cw)/2,(vh-ch)/2,cw,ch,0,0,W,H);}catch(_){return null;}
   const d=FR.g.getImageData(0,0,W,H).data,Y=new Float32Array(W*H);for(let i=0,j=0;i<Y.length;i++,j+=4)Y[i]=d[j]*.299+d[j+1]*.587+d[j+2]*.114;
   FR.t=now;return FR.d={Y,W,H,k:W/innerWidth,iw:innerWidth,ih:innerHeight};}
 // at most one heavy image job per frame, so the camera view never stutters
@@ -2544,7 +2595,7 @@ function vlEvaluate(V){let best=null;for(const v of V.votes){const cl=V.votes.fi
     let wx=0,wz=0,ww=0;best.forEach(v=>{const w=v.s*v.s;wx+=v.kf.x*w;wz+=v.kf.z*w;ww+=w;});const kx=wx/ww,kz=wz/ww,ga=g?g.acc:99,wg=1/(ga*ga),wk=1/(1.6*1.6);
     if(!plan.geoFrame||ga>25){L.pos.x=kx;L.pos.z=kz;}else{L.pos.x=(L.pos.x*wg+kx*wk)/(wg+wk);L.pos.z=(L.pos.z*wg+kz*wk)/(wg+wk);}
     V.located=true;V.recent=[];if(!S.al2)S.alignMode=false;S.needFix=false;svUI();flash('Position found');}}
-function vlUI(){const el=$('vlBar');if(!S||S.gate){el.hidden=true;return;}
+function vlUI(){const el=$('vlBar');if(!S||S.gate||(typeof VR!=='undefined'&&VR.on)){el.hidden=true;return;}
   if(S.phase!=='locate'){el.hidden=!L.headLock;el.className='float learn';el.innerHTML=`${ic('camera')}<span>${cpFrames().length} corner photo${cpFrames().length===1?"":"s"}</span>`;return;}
   const V=S.vl;if(!V){el.hidden=true;return;}const p=V.located?Math.round(Math.max(.5,Math.min(1,Math.max(V.lastScore||0,S.spotFix?1:0)/.6))*100):Math.round(Math.max(V.conf,S.spotConf||0,S.lineConf||0)*100);
   el.hidden=false;el.className='float'+(V.located?' ok':'');el.innerHTML=`<span>${V.located?'Pinned':'Identifying'}</span><i><b style="width:${V.located?100:p}%"></b></i><em>${p}%</em>`;}
@@ -2563,7 +2614,7 @@ function addSpot(x,y){const hit=spPoint(x,y);if(!hit){flash('Aim at the floor or
   const tpl=[];for(let j=0;j<T;j++)for(let i=0;i<T;i++)tpl.push(Math.round(G.Y[(cy-T/2+j)*G.W+cx-T/2+i]));
   let m=0;tpl.forEach(v=>m+=v);m/=tpl.length;let sd=0;tpl.forEach(v=>sd+=(v-m)*(v-m));if(Math.sqrt(sd/tpl.length)<4){flash('Pick a spot with more detail');return;}
   // round photo for display
-  const DI=220,c=document.createElement('canvas');c.width=c.height=192;const g=c.getContext('2d'),vw=camW(),vh=camH(),sc=Math.max(innerWidth/vw,innerHeight/vh),R=DI/2/sc;
+  const DI=220,c=document.createElement('canvas');c.width=c.height=192;const g=c.getContext('2d'),vw=camW(),vh=camH(),sc=Math.max(innerWidth/vw,innerHeight/vh)*ZM.z,R=DI/2/sc;
   const vx=(vw-innerWidth/sc)/2+x/sc,vy=(vh-innerHeight/sc)/2+y/sc;g.drawImage(camEl(),vx-R,vy-R,2*R,2*R,0,0,192,192);
   const s={id:spots().reduce((a,q)=>Math.max(a,q.id),0)+1,p:[+hit.p.x.toFixed(3),+hit.p.y.toFixed(3),+hit.p.z.toFixed(3)],kind:hit.kind,dist:+hit.dist.toFixed(2),diam:DI,img:c.toDataURL('image/jpeg',0.75),tpl,T,fw:G.W,t:Date.now(),fx:+(x/innerWidth).toFixed(4),fy:+(y/innerHeight).toFixed(4)};
   {_ae.setFromQuaternion(cam.quaternion,'YXZ');s.ori={yaw:+_ae.y.toFixed(4),pitch:+_ae.x.toFixed(4),roll:+_ae.z.toFixed(4),fx:s.fx,fy:s.fy,x:+L.pos.x.toFixed(2),z:+L.pos.z.toFixed(2),dist:s.dist};}
@@ -2974,12 +3025,19 @@ function openPjSheet(id){useProject(id);const p=projects.find(q=>q.id===id);if(!
   $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p)+(p.plan.address?' · '+p.plan.address:'');const has=p.plan.walls.length>0,nv=(p.plan.versions||[]).length;
   const tile=(id_,icn,l,dis)=>`<button id="${id_}" ${dis?'disabled':''}>${ic(icn)}<span>${l}</span></button>`;
   $('pjsActs').innerHTML=(has?`<div class="qa">${tile('paPrev','cube-outline','3D view')}${tile('paPlan','floor-plan','Plan')}${tile('paExp','download','Export')}${tile('paShare','share','Share')}</div>`:'')
-    +`<div class="gl">${(has?row('paAR','video-3d','AR Viewer'):'')+(has?row('paVR','walk','Edit in 3D'):'')+row('paScan','cube-scan',has?'Scan more rooms':'Scan')+(has?row('paProg','stairs','Floors & rooms',`${(p.plan.rooms||[]).length}/${Math.max(p.plan.target||0,(p.plan.rooms||[]).length)}`):'')
+    +`<div class="gl">${(has?row('paEdit','pencil-outline','Edit','AR · 3D · 2D · rooms'):row('paScan','cube-scan','Scan'))+(has?row('paProg','stairs','Floors & rooms',`${(p.plan.rooms||[]).length}/${Math.max(p.plan.target||0,(p.plan.rooms||[]).length)}`):'')
     +(has?row('paCmp','compare','Compare versions',nv||null):'')+row('paShow','information-outline','Show',null)+row('paDel','trash-can-outline','Move to trash',null,'danger')}</div>`;
   $('pjSheet').hidden=false;const close=()=>{$('pjSheet').hidden=true;};
   on('paAR','click',()=>{close();pgCloseAll();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
   on('paVR','click',()=>{close();pgCloseAll();openVirtual();});
   on('paScan','click',()=>{close();pgCloseAll();startSurvey(!has);});
+  on('paEdit','click',()=>{close();xSheet(`<div class="ctH"><h2>Edit</h2><button class="icon" id="edX" aria-label="Close">${ic('close')}</button></div>
+    <div class="gl">${row('edAR','video-3d','AR Viewer','camera')}${row('edVR','walk','Edit in 3D','walk inside')}${row('ed2D','floor-plan','Edit in 2D','plan')}${row('edScan','cube-scan','More rooms','scan')}</div>`,
+    ()=>{$('edX').onclick=xClose;
+      on('edAR','click',()=>{xClose();pgCloseAll();startLocate().catch(e=>{flash('Camera failed');if(S)finishSurvey();});});
+      on('edVR','click',()=>{xClose();pgCloseAll();openVirtual();});
+      on('ed2D','click',()=>{xClose();toPlanEditor();});
+      on('edScan','click',()=>{xClose();pgCloseAll();startSurvey(false);});});});
   on('paPlan','click',()=>{close();toPlanEditor();});
   on('paPrev','click',()=>{close();openPreview(bldOf(p),'3d',id);});
   on('paExp','click',()=>{close();openExport(id);});on('paShare','click',()=>{close();openShare(id);});
