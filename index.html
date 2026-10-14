@@ -1221,7 +1221,7 @@ const svg=$('plan');let draft=null,bgImg=null,bgW=10,drawing=false,hover=null;
 let osel=null,planRAF=0,planLast=null;
 function reqPlan(){if(!planRAF)planRAF=requestAnimationFrame(()=>{planRAF=0;drawPlanFast();});}
 function drawPlanFast(){const V=curPV(),L0=planLast,{W:SW,H:SH}=svgSize(),vw=SW/V.s;
-  if(L0&&L0.s===V.s&&L0.rot===V.rot&&Math.hypot(V.cx-L0.cx,V.cy-L0.cy)<vw*0.8&&!(wdrag&&wdrag.refs)&&PG.mode!=='op'){const vh=SH/V.s,g=svg.querySelector('#pvg');
+  if(L0&&L0.s===V.s&&L0.rot===V.rot&&Math.hypot(V.cx-L0.cx,V.cy-L0.cy)<vw*0.8&&!(wdrag&&wdrag.refs)&&PG.mode!=='op'&&PG.mode!=='room'){const vh=SH/V.s,g=svg.querySelector('#pvg');
     svg.setAttribute('viewBox',`${V.cx-vw/2} ${V.cy-vh/2} ${vw} ${vh}`);if(g)g.setAttribute('transform',`rotate(${V.rot} ${V.cx} ${V.cy})`);return;}
   drawPlan();}
 function drawPlan(){
@@ -1256,7 +1256,7 @@ function drawPlan(){
     s+=`<g transform="translate(${g.mx+nx*o} ${g.my+ny*o}) rotate(${ang}) scale(${k})"><rect x="${-bw/2}" y="-9.5" width="${bw}" height="19" fill="${surf}" stroke="${fg}" stroke-width="0.8"/><text x="0" y="0.5" font-size="11" font-family="${F}" fill="${fg}" text-anchor="middle" dominant-baseline="middle">${txt}</text></g>`;});
   // room names with area
   (plan.rooms||[]).forEach(r=>{if(r.pts.length<3)return;const cx=r.pts.reduce((t,p)=>t+p[0],0)/r.pts.length,cy=r.pts.reduce((t,p)=>t+p[1],0)/r.pts.length;
-    s+=`<g transform="translate(${cx} ${cy}) rotate(${-RT}) scale(${k})"><text x="0" y="-3" font-size="13" font-weight="500" font-family="${F}" fill="${fg}" text-anchor="middle">${esc(r.name)}</text><text x="0" y="12" font-size="11" font-family="${F}" fill="${muted}" text-anchor="middle">(S=${fmtA(polyArea(r.pts))})</text></g>`;});
+    s+=`<g transform="translate(${cx} ${cy}) rotate(${-RT}) scale(${k})" style="pointer-events:none">${editing?`<g transform="translate(0 -30)"><circle r="13" fill="${fg}" opacity=".9"/><path d="M0-8v16M-8 0h16M0-8l-3 3M0-8l3 3M0 8l-3-3M0 8l3-3M-8 0l3-3M-8 0l3 3M8 0l-3-3M8 0l-3 3" stroke="${surf==='#fff'?'#fff':'#fff'}" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`:''}<text x="0" y="-3" font-size="13" font-weight="500" font-family="${F}" fill="${fg}" text-anchor="middle">${esc(r.name)}</text><text x="0" y="12" font-size="11" font-family="${F}" fill="${muted}" text-anchor="middle">(S=${fmtA(polyArea(r.pts))})</text></g>`;});
   devs.forEach(d=>{const{p}=devPos(d,0.08);const T=TYPES[d.type];const c=T.kind?KIND[T.kind].cols[0]:ink;
     s+=`<g><circle cx="${p.x}" cy="${p.z}" r="${4.5*k}" fill="${d.id===sel?acc:c}" stroke="${tok('--surface')}" stroke-width="0.025"/></g>`;});
   if(draft){s+=`<circle cx="${draft[0]}" cy="${draft[1]}" r="0.08" fill="${acc}"/>`;}
@@ -3031,7 +3031,7 @@ function renderHome(){const cur=projects.find(q=>q.id===curId);$('hmAR').disable
 
 // ---------- project sheet ----------
 function useProject(id){if(id!==curId){saveNow();loadProject(id);refresh();}}
-function toPlanEditor(){pgCloseAll();$('pjSheet').hidden=true;document.body.classList.remove('home');sel=null;setView(true);setCam(false);refresh();}
+function toPlanEditor(){pgCloseAll();$('pjSheet').hidden=true;document.body.classList.remove('home');sel=null;setView(false);refresh();toggleEdit(true);drawPlan();if((plan.rooms||[]).length>1)flash('Drag a room to move it · it snaps wall to wall');}
 function openPjSheet(id){useProject(id);const p=projects.find(q=>q.id===id);if(!p)return;renderHome();
   $('pjsName').textContent=p.plan.name||'Project';$('pjsMeta').textContent=projMeta(p)+(p.plan.address?' · '+p.plan.address:'');const has=p.plan.walls.length>0,nv=(p.plan.versions||[]).length;
   const tile=(id_,icn,l,dis)=>`<button id="${id_}" ${dis?'disabled':''}>${ic(icn)}<span>${l}</span></button>`;
