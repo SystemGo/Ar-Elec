@@ -352,12 +352,12 @@ html.vr,html.vr body{background:#20232a!important}
 #vrPad .stk{position:absolute;bottom:0;width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);pointer-events:auto;touch-action:none;display:grid;place-items:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #vrPad .stk[data-k="mv"]{left:18px}#vrPad .stk[data-k="lk"]{right:18px}
 #vrPad .stk i{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:transform .08s linear}
-#zmBox{position:fixed;z-index:12;right:calc(10px + var(--sr));top:110px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 8px;border-radius:0 0 19px 19px;box-sizing:border-box;background:var(--glass);box-shadow:var(--sh);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#zmBox{position:fixed;z-index:12;right:calc(10px + var(--sr));top:50%;transform:translateY(-50%);width:38px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 8px;border-radius:19px;box-sizing:border-box;background:var(--glass);box-shadow:var(--sh);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #zmBox[hidden]{display:none}#zmBox.att{border-radius:0}#arDock.att{border-bottom-left-radius:0;border-bottom-right-radius:0}
-#miniPlan.below{border-top-right-radius:0}#arDock .mi{cursor:pointer}#arDock .mi.sel{outline:2px solid var(--fg);outline-offset:1px}#zmBox button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}#zmBox button .ic{width:17px;height:17px}
+#arDock .mi{cursor:pointer}#arDock .dkMini .mi.sel{background:#fff;color:#1fa45a;box-shadow:0 0 0 1.5px #1fa45a,0 1px 4px rgba(0,0,0,.18)}#arDock .dkMini .mi.sel .ic{color:#1fa45a}#zmBox button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}#zmBox button .ic{width:17px;height:17px}
 #zmRange{writing-mode:vertical-lr;direction:rtl;width:24px;height:140px;margin:0;accent-color:var(--fg);touch-action:none}#zmLbl{font:700 11px var(--f-display);font-variant-numeric:tabular-nums}
-#altDev{position:fixed;z-index:31;width:40px;height:40px;border-radius:50%;border:2px solid var(--bg);background:var(--surface);color:var(--fg);box-shadow:var(--sh);display:grid;place-items:center;padding:0;cursor:pointer;touch-action:none}
-#altDev[hidden]{display:none}#altDev .ic{width:20px;height:20px}#altDev:active{transform:scale(.9)}
+#altDev{position:fixed;z-index:31;width:32px;height:32px;border-radius:50%;border:2px solid var(--bg);background:#111;color:#fff;box-shadow:var(--sh);display:grid;place-items:center;padding:0;cursor:pointer;touch-action:none}
+#altDev[hidden]{display:none}#altDev .ic{width:16px;height:16px;color:#fff}#altDev:active{transform:scale(.9)}
 #wireBar{left:12px;right:12px;bottom:calc(var(--navH) + 14px);z-index:16;border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:popUp .35s var(--ease)}
 #wireBar .wbh{display:flex;align-items:center;gap:10px}#wireBar .wbh span{flex:1;min-width:0}#wireBar small{display:block;color:var(--muted);font-size:12.5px}#wireBar .note{margin:0}#wireBar .row2 .btn{padding:10px 8px;font-size:13px}
 body.surveying #wireBar{bottom:calc(var(--navH) + 84px)}
@@ -561,7 +561,7 @@ small.addr{display:flex!important;align-items:center;gap:4px;margin-top:2px;whit
 #arMode{left:12px;right:12px;top:calc(60px + var(--st));margin-inline:auto;max-width:420px;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;z-index:14;animation:popUp .35s var(--ease)}
 #arMode[hidden]{display:none}#arMode .ic{width:24px;height:24px;flex:none}#arMode small{display:block;color:var(--muted);font-size:12.5px}#arMode b{font-size:15px}
 #arMode.on{background:#1fa45a;color:#fff}#arMode.on small{color:rgba(255,255,255,.88)}#arMode.off{background:#fdf0cc;color:#5e4200}#arMode.off small{color:#5e4200}
-#arSteps{top:calc(60px + var(--st));left:12px;right:auto;border-radius:999px;padding:4px;display:flex;gap:2px;background:var(--glass);z-index:12;max-width:calc(100vw - 140px);overflow:hidden}
+#arSteps{top:calc(12px + var(--st));left:calc(58px + var(--sl,0px));right:auto;border-radius:999px;padding:4px;display:flex;gap:2px;background:var(--glass);z-index:12;max-width:calc(100vw - 140px);overflow:hidden}
 #arSteps[hidden]{display:none}#arSteps button{display:flex;align-items:center;gap:5px;border:0;background:transparent;border-radius:999px;padding:5px 7px 5px 5px;font:600 12px var(--f-display);color:var(--muted);cursor:pointer;white-space:nowrap}
 #arSteps button i{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--f-display);font-style:normal;background:var(--surface-2)}#arSteps button i .ic{width:12px;height:12px}
 #arSteps button.on{background:var(--fg);color:var(--bg)}#arSteps button.on i{background:var(--bg);color:var(--fg)}#arSteps button.done i{background:var(--ok);color:#fff}
@@ -1162,7 +1162,7 @@ SET.devAlt=SET.devAlt||'switch';
 const CATPICK={alt:false};
 function altUI(force){const b=$('altDev'),on_=!!(S&&live&&!S.gate&&S.phase==='locate'&&S.step==='dev'&&devs.some(d=>d.type==='panel')&&TYPES[SET.devAlt]);
   if(!on_){b.hidden=true;return;}const r=bubEl.getBoundingClientRect();if(!r.width){b.hidden=true;return;}
-  b.style.left=Math.round(r.left-34)+'px';b.style.top=Math.round(r.top-8)+'px';if(force||b.dataset.t!==SET.devAlt){b.dataset.t=SET.devAlt;b.innerHTML=ic(TYPES[SET.devAlt].ic);}b.hidden=false;}
+  b.style.left=Math.round(r.right-24)+'px';b.style.top=Math.round(r.top-6)+'px';if(force||b.dataset.t!==SET.devAlt){b.dataset.t=SET.devAlt;b.innerHTML=ic(TYPES[SET.devAlt].ic);}b.hidden=false;}
 setInterval(()=>{try{altUI();}catch(_){}},300);
 function openCatalog(at){const hasPanel=devs.some(d=>d.type==='panel');
   const items=Object.entries(TYPES).filter(([,T])=>T.cat===catTab);
@@ -1706,8 +1706,10 @@ function zoomUI(){const act=!!(S&&live&&!S.gate&&S.phase==='locate'),b=$('zmBox'
 // zoom panel and map hang under the sensor menu as one column
 function attachTick(){const dk=$('arDock'),zb=$('zmBox'),mp=$('miniPlan');if(!dk||dk.hidden){return;}const r=dk.getBoundingClientRect();if(!r.width)return;let y=r.bottom;
   const zo=!zb.hidden,mo=!mp.hidden;dk.classList.toggle('att',zo||mo);
-  if(zo){zb.style.top=y+'px';zb.style.right=(innerWidth-r.right)+'px';zb.style.width=r.width+'px';zb.classList.toggle('att',mo);y+=zb.offsetHeight;}
-  if(mo){mp.style.top=y+'px';mp.style.right=(innerWidth-r.right)+'px';mp.classList.toggle('below',zo||true);}}
+  dk.classList.remove('att');
+  if(mo){const st=$('arSteps'),sb=st&&!st.hidden?st.getBoundingClientRect():null;let top=r.top,H=Math.max(112,Math.round(r.height));
+    const right=innerWidth-r.left+6,left=innerWidth-right-H;if(sb&&sb.right>left-4){top=Math.round(sb.bottom+6);H=Math.max(112,Math.round(r.bottom-top));} // keep the steps row free
+    mp.style.top=top+'px';mp.style.right=right+'px';mp.style.width=H+'px';mp.style.height=H+'px';}}
 setInterval(()=>{try{attachTick();}catch(_){}},120);
 setInterval(()=>{try{zoomUI();}catch(_){}},300);
 function arStart(){if(typeof VR!=='undefined'&&VR.on)return true;try{return !!(window.ArElecNative&&ArElecNative.arStart&&ArElecNative.arStart());}catch(_){return false;}}
@@ -2860,7 +2862,7 @@ function navRefresh(){if(!navEl)return;
       if(!devs.some(d=>d.type==='panel'))S.devType='panel';else if(!TYPES[S.devType]||S.devType==='panel')S.devType='socket';
       const aimAt=()=>{castAt(innerWidth/2,innerHeight/2);const hc=ceilHit(),w=wallTarget();if(hc&&(!w||hc.distance<(w.dist||99))){catTab='light';openCatalog(hc.at);return;}openCatalog(w?{wall:w.wall,t:w.t,side:w.side}:null);};
       navRender([{k:'tools',ic:'menu',label:'Tools',on:toggleSvPop},{k:'cat',ic:'grid',label:'Catalog',on:aimAt},{k:'cur',ic:TYPES[S.devType].ic,label:DEV_SHORT[S.devType]||(TYPES[S.devType].label.length<=11?TYPES[S.devType].label:TYPES[S.devType].label.split(' ')[0]),on:svPrimary},{k:'wire',ic:'vector-polyline',label:'Wiring',dis:!devs.some(d=>d.type==='panel'),on:()=>{weToggle();svUI();}},{k:'done',ic:'check',label:'Done',on:finishSurvey}],
-        'cur',{ic:TYPES[S.devType].ic,badge:'plus',label:'Place '+TYPES[S.devType].label,on:svPrimary});return;}
+        'cur',{ic:TYPES[S.devType].ic,badge:TYPES[SET.devAlt]&&devs.some(d=>d.type==='panel')?null:'plus',label:'Place '+TYPES[S.devType].label,on:svPrimary});return;}
     const ph=svPhase(),p=S.modify&&ph==='corner'?['pencil-outline','Move the last corner here']:PH[ph],lbl={low:'Floor',high:'Ceiling',corner:S.modify?'Move':'Corner'}[ph];
     navRender([{k:'tools',ic:'menu',label:'Tools',on:toggleSvPop},{k:'photos',ic:'image-multiple',label:'Photos',dis:editing,on:()=>spGallery(true)},
       {k:'cap',ic:p[0],label:lbl,dis:editing,on:svPrimary},{k:'edit',ic:'wall-edit',label:'Edit',dis:!plan.walls.length,on:()=>toggleEdit()},{k:'done',ic:'check',label:'Done',on:finishSurvey}],
